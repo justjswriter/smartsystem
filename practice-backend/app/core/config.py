@@ -1,5 +1,6 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -25,6 +26,20 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
 
     LOG_LEVEL: str = "INFO"
+
+    # Sensor thresholds for alert generation (MVP defaults).
+    MOISTURE_MIN: float = 30.0
+    TEMPERATURE_MAX: float = 35.0
+    HUMIDITY_MIN: float = 30.0
+    LIGHT_MIN: float = 200.0
+
+    # Optional bootstrapped admin account.
+    ADMIN_EMAIL: str | None = None
+    ADMIN_PASSWORD: str | None = None
+
+    PAGE_SIZE_DEFAULT: int = 20
+    PAGE_SIZE_MAX: int = 100
+    SSE_HEARTBEAT_SECONDS: int = Field(default=15, ge=5, le=60)
 
 
 settings = Settings()
