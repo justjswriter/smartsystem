@@ -1,4 +1,4 @@
-# Practice Backend (MVP Demo)
+# Practice Backend (Final Diploma Prototype)
 
 Backend for plant monitoring built with FastAPI, async SQLAlchemy, Alembic, and PostgreSQL.
 
@@ -144,6 +144,7 @@ Base prefix: `/api/v1`
 - `GET /sensors`
 - `POST /sensors/{sensor_id}/attach`
 - `POST /sensors/{sensor_id}/detach`
+- `POST /sensors/{sensor_id}/rotate-token`
 
 ### US4 - Dashboard and current status
 - `GET /dashboard/plants/{plant_id}?hours=24`
@@ -154,6 +155,7 @@ Base prefix: `/api/v1`
 
 ### US6 - Care recommendations (rule-based)
 - Recommendation creation is triggered inside ingest/alert pipeline.
+- Dashboard returns explainable plant condition scoring and active recommendation.
 - User-facing alert visibility:
   - `GET /alerts`
   - `GET /alerts/{alert_id}`
@@ -219,6 +221,15 @@ curl -X POST http://127.0.0.1:8000/api/v1/plants \
 
 ### Attach sensor
 
+Registering a sensor requires a user token and returns a one-time `device_token` for IoT ingest.
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/sensors \
+  -H "Authorization: Bearer <USER_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"device_id":"demo-sensor-001","type":"multi"}'
+```
+
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/sensors/<SENSOR_ID>/attach \
   -H "Authorization: Bearer <USER_TOKEN>" \
@@ -230,6 +241,7 @@ curl -X POST http://127.0.0.1:8000/api/v1/sensors/<SENSOR_ID>/attach \
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/ingest/sensors/demo-sensor-001/data \
+  -H "X-Device-Token: <DEVICE_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"moisture":18.0,"temperature":37.2,"humidity":24.5,"light":160.0}'
 ```

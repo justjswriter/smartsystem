@@ -66,7 +66,9 @@ class Sensor(Base, TimestampMixin):
     __tablename__ = "sensors"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), index=True, nullable=True)
     device_id: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    device_token_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     type: Mapped[SensorType] = mapped_column(
         Enum(SensorType, name="sensor_type", values_callable=_enum_values),
         default=SensorType.MULTI,
@@ -80,6 +82,9 @@ class Sensor(Base, TimestampMixin):
     plant_id: Mapped[int | None] = mapped_column(ForeignKey("plants.id"), index=True, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_ingest_source: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    last_error_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     plant: Mapped[Plant | None] = relationship(back_populates="sensors")
     data_points: Mapped[list[SensorData]] = relationship(back_populates="sensor")
@@ -139,6 +144,14 @@ class Alert(Base, TimestampMixin):
     recommendations: Mapped[list[Recommendation]] = relationship(back_populates="alert")
 
     __table_args__ = (Index("ix_alerts_user_status_created", "user_id", "status", "created_at"),)
+
+    @property
+    def recommendation(self) -> str | None:
+        if not self.recommendations:
+            return None
+        active = [item for item in self.recommendations if item.is_active]
+        item = active[0] if active else self.recommendations[0]
+        return item.text
 
 
 class AlertTransition(Base):

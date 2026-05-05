@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.domain.enums import UserRole
 
@@ -16,14 +16,13 @@ class LoginRequest(BaseModel):
 
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     full_name: str
     email: EmailStr
     role: UserRole
     is_active: bool
-
-    class Config:
-        from_attributes = True
 
 
 class TokenResponse(BaseModel):

@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel, Field
+from pydantic import ConfigDict
 
 from app.domain.enums import SensorStatus, SensorType
 
@@ -15,18 +16,25 @@ class SensorAttachRequest(BaseModel):
 
 
 class SensorResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
+    user_id: int | None
     device_id: str
     type: SensorType
     status: SensorStatus
     plant_id: int | None
     is_active: bool
     last_seen_at: datetime | None
+    last_ingest_source: str | None
+    last_error_at: datetime | None
+    last_error_message: str | None
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+class SensorProvisionResponse(BaseModel):
+    sensor: SensorResponse
+    device_token: str
 
 
 class SensorDataIngest(BaseModel):

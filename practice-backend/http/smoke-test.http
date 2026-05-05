@@ -32,6 +32,7 @@ Content-Type: application/json
 @sensorId = 1
 @alertId = 1
 @deviceId = smoke-sensor-001
+@deviceToken = REPLACE_WITH_DEVICE_TOKEN
 
 ### US1 /me
 GET {{api}}/auth/me
@@ -55,6 +56,7 @@ Authorization: Bearer {{userToken}}
 
 ### US3 Register sensor
 POST {{api}}/sensors
+Authorization: Bearer {{userToken}}
 Content-Type: application/json
 
 {
@@ -77,6 +79,7 @@ Authorization: Bearer {{userToken}}
 
 ### US5 Ingest critical data -> should generate alert/recommendation
 POST {{api}}/ingest/sensors/{{deviceId}}/data
+X-Device-Token: {{deviceToken}}
 Content-Type: application/json
 
 {

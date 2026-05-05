@@ -1,11 +1,13 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.domain.enums import AlertSeverity, AlertStatus
 
 
 class AlertResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     plant_id: int
@@ -19,9 +21,10 @@ class AlertResponse(BaseModel):
     threshold: float | None
     created_at: datetime
     updated_at: datetime
+    recommendation: str | None = None
 
-    class Config:
-        from_attributes = True
+class AlertDetailResponse(AlertResponse):
+    transitions: list["AlertTransitionResponse"] = []
 
 
 class AlertTransitionRequest(BaseModel):
@@ -30,6 +33,8 @@ class AlertTransitionRequest(BaseModel):
 
 
 class AlertTransitionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     alert_id: int
     from_status: AlertStatus
@@ -38,5 +43,3 @@ class AlertTransitionResponse(BaseModel):
     note: str | None
     changed_at: datetime
 
-    class Config:
-        from_attributes = True

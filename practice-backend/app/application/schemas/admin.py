@@ -1,11 +1,13 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 from app.domain.enums import AlertStatus, SensorStatus, UserRole
 
 
 class AdminUserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     full_name: str
     email: EmailStr
@@ -13,23 +15,25 @@ class AdminUserResponse(BaseModel):
     is_active: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class AdminSensorResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
+    user_id: int | None
     device_id: str
     status: SensorStatus
     plant_id: int | None
     last_seen_at: datetime | None
+    last_ingest_source: str | None
+    last_error_at: datetime | None
+    last_error_message: str | None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class AdminAlertResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     plant_id: int
     user_id: int
@@ -37,11 +41,10 @@ class AdminAlertResponse(BaseModel):
     title: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class SystemLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int | None
     event_type: str
@@ -49,5 +52,3 @@ class SystemLogResponse(BaseModel):
     payload: dict | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True

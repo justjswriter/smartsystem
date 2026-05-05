@@ -4,7 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.services.recommendation_service import RecommendationService
 from app.core.config import settings
-from app.domain.enums import AlertSeverity, AlertStatus
+from app.core.security import verify_device_token
+from app.domain.enums import AlertSeverity, AlertStatus, SensorStatus
 from app.infrastructure.repositories import (
     AlertRepository,
     PlantRepository,
@@ -34,11 +35,24 @@ class AlertService:
             return AlertSeverity.MEDIUM
         return AlertSeverity.LOW
 
-    async def ingest_sensor_data(self, *, device_id: str, payload: dict):
+    async def ingest_sensor_data(self, *, device_id: str, device_token: str | None, source: str | None, payload: dict):
         sensor = await self.sensor_repo.get_by_device_id(device_id)
         if not sensor:
             raise ValueError("Sensor not found")
+        if not device_token or not verify_device_token(device_token, sensor.device_token_hash):
+            await self.sensor_repo.mark_error(sensor, "Invalid device token", source)
+            await self.log_repo.create(
+                event_type="ingest_auth_failed",
+                message=f"Invalid ingest token for sensor {device_id}",
+                user_id=sensor.user_id,
+                payload={"sensor_id": sensor.id, "source": source},
+            )
+            raise PermissionError("Invalid device token")
+        if not sensor.is_active or sensor.status == SensorStatus.DISABLED:
+            await self.sensor_repo.mark_error(sensor, "Sensor is disabled or inactive", source)
+            raise ValueError("Sensor is disabled or inactive")
         if not sensor.plant_id:
+            await self.sensor_repo.mark_error(sensor, "Sensor is not attached to any plant", source)
             raise ValueError("Sensor is not attached to any plant")
 
         data = await self.sensor_data_repo.create(
@@ -46,7 +60,7 @@ class AlertService:
             plant_id=sensor.plant_id,
             payload=payload,
         )
-        await self.sensor_repo.touch_seen(sensor)
+        await self.sensor_repo.touch_seen(sensor, source=source)
         await self._evaluate_thresholds(sensor_id=sensor.id, plant_id=sensor.plant_id, payload=payload)
         await event_bus.publish(
             f"dashboard:{sensor.plant_id}",

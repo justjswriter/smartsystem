@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
-from app.application.schemas.alert import AlertResponse, AlertTransitionRequest, AlertTransitionResponse
+from app.application.schemas.alert import AlertDetailResponse, AlertResponse, AlertTransitionRequest, AlertTransitionResponse
 from app.application.services import AlertWorkflowService
 from app.core.database import get_db
-from app.domain.enums import AlertStatus
+from app.domain.enums import AlertSeverity, AlertStatus
 from app.infrastructure.models import User
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
@@ -15,6 +15,8 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 async def list_alerts(
     status_filter: AlertStatus | None = Query(default=None, alias="status"),
     plant_id: int | None = Query(default=None),
+    severity: AlertSeverity | None = Query(default=None),
+    metric: str | None = Query(default=None),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
@@ -24,12 +26,14 @@ async def list_alerts(
         user_id=current_user.id,
         status_filter=status_filter,
         plant_id=plant_id,
+        severity=severity,
+        metric=metric,
         limit=limit,
         offset=offset,
     )
 
 
-@router.get("/{alert_id}", response_model=AlertResponse)
+@router.get("/{alert_id}", response_model=AlertDetailResponse)
 async def get_alert(
     alert_id: int,
     db: AsyncSession = Depends(get_db),

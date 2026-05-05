@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.enums import AlertStatus
+from app.domain.enums import AlertSeverity, AlertStatus
 from app.infrastructure.repositories import AlertRepository, SystemLogRepository
 from app.infrastructure.services.event_bus import event_bus
 
@@ -20,12 +20,22 @@ class AlertWorkflowService:
         self.log_repo = SystemLogRepository(db)
 
     async def list_for_user(
-        self, *, user_id: int, status_filter: AlertStatus | None, plant_id: int | None, limit: int, offset: int
+        self,
+        *,
+        user_id: int,
+        status_filter: AlertStatus | None,
+        plant_id: int | None,
+        severity: AlertSeverity | None,
+        metric: str | None,
+        limit: int,
+        offset: int,
     ):
         return await self.alert_repo.list_for_user(
             user_id=user_id,
             status=status_filter,
             plant_id=plant_id,
+            severity=severity,
+            metric=metric,
             limit=limit,
             offset=offset,
         )

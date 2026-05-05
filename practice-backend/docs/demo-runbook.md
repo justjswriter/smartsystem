@@ -13,6 +13,7 @@ Use seeded credentials and entities from `scripts/bootstrap_demo.py`:
 - Demo user: `demo@example.com` / `DemoPass123!`
 - Admin user: `admin@example.com` / `AdminPass123!`
 - Demo sensor device id: `demo-sensor-001`
+- Demo sensor token: `DemoDeviceToken123!`
 
 ## 0) Pre-demo setup (1-2 minutes)
 
@@ -93,9 +94,12 @@ Register sensor (if needed):
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/sensors \
+  -H "Authorization: Bearer USER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"device_id":"live-sensor-001","type":"soil_moisture"}'
 ```
+
+Copy the returned `device_token`; it is shown only once and must be used by the IoT device as `X-Device-Token`.
 
 Attach sensor to chosen plant:
 
@@ -114,6 +118,7 @@ Send critical telemetry:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/ingest/sensors/demo-sensor-001/data \
+  -H "X-Device-Token: DemoDeviceToken123!" \
   -H "Content-Type: application/json" \
   -d '{"moisture":12.0,"temperature":39.0,"humidity":20.0,"light":120.0}'
 ```
@@ -127,7 +132,7 @@ curl -X GET "http://127.0.0.1:8000/api/v1/dashboard/plants/PLANT_ID?hours=24" \
   -H "Authorization: Bearer USER_TOKEN"
 ```
 
-Expected result: `current` and `history` with latest sensor values.
+Expected result: `current`, `history`, `condition.health_score`, `condition.condition_status`, and active recommendation when risk exists.
 
 Check alerts:
 
@@ -136,7 +141,7 @@ curl -X GET http://127.0.0.1:8000/api/v1/alerts \
   -H "Authorization: Bearer USER_TOKEN"
 ```
 
-Expected result: new alert(s) with severity/metric and recommendation side effects in DB.
+Expected result: new alert(s) with severity/metric and a user-visible recommendation.
 
 ## 5) US7 Alert FSM transitions (45-60 sec)
 

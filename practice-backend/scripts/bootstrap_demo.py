@@ -11,7 +11,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.core.database import AsyncSessionLocal
-from app.core.security import hash_password
+from app.core.security import hash_device_token, hash_password
 from app.domain.enums import AlertSeverity, AlertStatus, SensorStatus, SensorType, UserRole
 from app.infrastructure.models import Alert, Plant, Sensor, User
 
@@ -57,6 +57,7 @@ async def get_or_create_plant(session, *, user_id: int) -> Plant:
 
 async def get_or_create_sensor(session, *, plant_id: int) -> Sensor:
     device_id = "demo-sensor-001"
+    device_token = "DemoDeviceToken123!"
     result = await session.execute(select(Sensor).where(Sensor.device_id == device_id))
     sensor = result.scalar_one_or_none()
     if sensor:
@@ -64,11 +65,15 @@ async def get_or_create_sensor(session, *, plant_id: int) -> Sensor:
             sensor.plant_id = plant_id
             sensor.status = SensorStatus.ONLINE
             sensor.last_seen_at = datetime.now(timezone.utc)
-            await session.commit()
-            await session.refresh(sensor)
+        if not sensor.device_token_hash:
+            sensor.device_token_hash = hash_device_token(device_token)
+        await session.commit()
+        await session.refresh(sensor)
         return sensor
     sensor = Sensor(
+        user_id=None,
         device_id=device_id,
+        device_token_hash=hash_device_token(device_token),
         type=SensorType.SOIL_MOISTURE,
         status=SensorStatus.ONLINE,
         plant_id=plant_id,
@@ -141,6 +146,7 @@ async def main() -> None:
         print(f"- admin user: {admin_user.email} / AdminPass123!")
         print(f"- demo plant id: {demo_plant.id}")
         print(f"- demo sensor id: {demo_sensor.id} (device_id={demo_sensor.device_id})")
+        print("- demo sensor token: DemoDeviceToken123!")
         print(f"- demo alert id: {demo_alert.id} (status={demo_alert.status.value})")
 
 

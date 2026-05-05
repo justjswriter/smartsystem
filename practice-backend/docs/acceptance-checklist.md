@@ -1,4 +1,4 @@
-# Acceptance Checklist by User Story (MVP)
+# Acceptance Checklist by User Story (Functional Prototype)
 
 This checklist maps each user story to implemented API endpoints, application services, and DB tables.
 
@@ -31,16 +31,19 @@ This checklist maps each user story to implemented API endpoints, application se
 ## US3 - Подключение и привязка IoT-сенсора к растению
 
 - **Endpoints**
-  - `POST /api/v1/sensors`
-  - `GET /api/v1/sensors`
+  - `POST /api/v1/sensors` (authenticated, returns one-time `device_token`)
+  - `GET /api/v1/sensors` (user-scoped, admin sees all)
   - `POST /api/v1/sensors/{sensor_id}/attach`
   - `POST /api/v1/sensors/{sensor_id}/detach`
+  - `POST /api/v1/sensors/{sensor_id}/rotate-token`
 - **Services**
   - `SensorService`
 - **DB Tables**
   - `sensors`
   - `plants`
   - `system_logs`
+- **Security**
+  - IoT ingest uses `X-Device-Token`; only token hash is stored.
 
 ## US4 - Просмотр dashboard и текущего состояния растения
 
@@ -51,6 +54,8 @@ This checklist maps each user story to implemented API endpoints, application se
 - **DB Tables**
   - `sensor_data`
   - `plants`
+- **AI / Decision Support**
+  - Dashboard returns `condition` with `condition_status`, `health_score`, `risk_factors`, `confidence`, and `explanation`.
 
 ## US5 - Получение уведомления о критическом состоянии растения
 
@@ -66,6 +71,8 @@ This checklist maps each user story to implemented API endpoints, application se
   - `alert_transitions`
   - `recommendations`
   - `system_logs`
+- **Security**
+  - Ingest requires `X-Device-Token`; failed auth is logged.
 
 ## US6 - Просмотр AI-рекомендации (rule-based)
 
@@ -79,6 +86,8 @@ This checklist maps each user story to implemented API endpoints, application se
   - `recommendations`
   - `alerts`
   - `plants`
+- **UI/API**
+  - Alert responses expose recommendation text; dashboard exposes active recommendation.
 
 ## US7 - Подтверждение и отслеживание alert (FSM)
 
@@ -86,6 +95,8 @@ This checklist maps each user story to implemented API endpoints, application se
   - `GET /api/v1/alerts`
   - `GET /api/v1/alerts/{alert_id}`
   - `POST /api/v1/alerts/{alert_id}/transition`
+- **Filters**
+  - `status`, `plant_id`, `severity`, `metric`
 - **Services**
   - `AlertWorkflowService`
 - **DB Tables**
@@ -100,6 +111,8 @@ This checklist maps each user story to implemented API endpoints, application se
   - `GET /api/v1/admin/sensors`
   - `GET /api/v1/admin/alerts`
   - `GET /api/v1/admin/logs`
+- **UI**
+  - `/admin` read-only monitoring page for admin role.
 - **Services**
   - `AdminService`
 - **DB Tables**

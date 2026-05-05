@@ -30,3 +30,12 @@ class RecommendationRepository:
         await self.db.commit()
         await self.db.refresh(recommendation)
         return recommendation
+
+    async def active_for_plant(self, plant_id: int) -> Recommendation | None:
+        result = await self.db.execute(
+            select(Recommendation)
+            .where(Recommendation.plant_id == plant_id, Recommendation.is_active.is_(True))
+            .order_by(Recommendation.created_at.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
