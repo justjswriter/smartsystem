@@ -45,8 +45,10 @@ python-jose==3.5.0
 python-multipart==0.0.22
 pytokens==0.4.1
 PyYAML==6.0.3
+joblib==1.5.2
 rsa==4.9.1
 ruff==0.15.5
+scikit-learn==1.7.2
 setuptools==82.0.1
 six==1.17.0
 SQLAlchemy==2.0.48

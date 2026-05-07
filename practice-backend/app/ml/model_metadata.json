@@ -1,0 +1,21 @@
+{
+  "model_type": "RandomForestClassifier",
+  "features": [
+    "moisture",
+    "temperature",
+    "humidity",
+    "light",
+    "moisture_trend",
+    "temperature_trend",
+    "humidity_trend",
+    "light_trend"
+  ],
+  "labels": [
+    "normal",
+    "attention",
+    "critical"
+  ],
+  "accuracy": 1.0,
+  "training_date": "2026-05-07T13:25:20.818519+00:00",
+  "dataset_size": 420
+}

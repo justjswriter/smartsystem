@@ -47,6 +47,16 @@ export function Dashboard({
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
 
+  function formatConditionLabel(value: string | null | undefined) {
+    if (!value) {
+      return "Unavailable";
+    }
+    return value
+      .split("_")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     const filtered = plants.filter(
@@ -242,6 +252,16 @@ export function Dashboard({
                     <td>{r?.light != null ? `${r.light} lux` : "—"}</td>
                     <td>
                       <span className="badge-status">{c?.condition_status ?? statusLabel(health)}</span>
+                      {c?.ml_prediction ? (
+                        <div className="muted small">
+                          AI: {formatConditionLabel(c.ml_prediction)} ({Math.round((c.ml_confidence ?? 0) * 100)}%)
+                        </div>
+                      ) : null}
+                      <div className="muted small">
+                        {c?.analysis_method === "hybrid_rule_based_and_ml"
+                          ? "Hybrid rule-based + machine learning"
+                          : "Rule-based"}
+                      </div>
                     </td>
                     <td>
                       <Link to={`/plants/${plant.id}`} className="text-link">

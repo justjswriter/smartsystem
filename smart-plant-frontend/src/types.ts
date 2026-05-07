@@ -58,6 +58,10 @@ export type PlantCondition = {
   risk_factors: string[];
   confidence: number;
   explanation: string;
+  ml_prediction: "normal" | "attention" | "critical" | string | null;
+  ml_confidence: number | null;
+  class_probabilities: Record<string, number>;
+  analysis_method: "hybrid_rule_based_and_ml" | "rule_based" | string;
 };
 
 export type RecommendationSummary = {

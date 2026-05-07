@@ -3,11 +3,15 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from app.application.schemas.dashboard import DashboardPoint, PlantConditionResponse
+from app.application.services.ml_condition_service import MLConditionService
 from app.core.config import settings
 
 
 class PlantConditionService:
-    """Explainable lightweight condition scoring for diploma MVP."""
+    """Explainable hybrid condition scoring with rule-based safety baseline."""
+
+    def __init__(self, ml_service: MLConditionService | None = None) -> None:
+        self.ml_service = ml_service or MLConditionService()
 
     def evaluate(self, *, current: DashboardPoint | None, history: list[DashboardPoint]) -> PlantConditionResponse:
         if not current:
@@ -17,6 +21,7 @@ class PlantConditionService:
                 risk_factors=[],
                 confidence=0.0,
                 explanation="No sensor samples are available yet. Attach a sensor and send telemetry to evaluate the plant.",
+                analysis_method="hybrid_rule_based_and_ml" if self.ml_service.model_available else "rule_based",
             )
 
         penalties: list[tuple[str, int]] = []
@@ -40,12 +45,29 @@ class PlantConditionService:
 
         confidence = self._confidence(current.recorded_at, history)
         explanation = self._explain(status, score, risks, confidence)
+        ml_result = self._predict_ml(current=current, history=history)
+        analysis_method = (
+            "hybrid_rule_based_and_ml"
+            if ml_result["model_available"] and ml_result["ml_prediction"]
+            else "rule_based"
+        )
+        if ml_result["ml_prediction"]:
+            explanation = self._merge_explanations(
+                explanation=explanation,
+                rule_based_status=status,
+                ml_prediction=str(ml_result["ml_prediction"]),
+                ml_confidence=ml_result["ml_confidence"],
+            )
         return PlantConditionResponse(
             condition_status=status,
             health_score=score,
             risk_factors=risks,
             confidence=confidence,
             explanation=explanation,
+            ml_prediction=ml_result["ml_prediction"],
+            ml_confidence=ml_result["ml_confidence"],
+            class_probabilities=ml_result["class_probabilities"],
+            analysis_method=analysis_method,
         )
 
     @staticmethod
@@ -93,3 +115,62 @@ class PlantConditionService:
         if status == "critical":
             return f"Critical plant condition detected: {', '.join(risks)}. Health score is {score} with confidence {confidence}."
         return f"Plant requires attention because of {', '.join(risks)}. Health score is {score} with confidence {confidence}."
+
+    def _predict_ml(self, *, current: DashboardPoint, history: list[DashboardPoint]) -> dict[str, object]:
+        required_values = [current.moisture, current.temperature, current.humidity, current.light]
+        if any(value is None for value in required_values):
+            return {
+                "ml_prediction": None,
+                "ml_confidence": None,
+                "class_probabilities": {},
+                "model_available": self.ml_service.model_available,
+            }
+        return self.ml_service.predict_condition(self._build_ml_features(current=current, history=history))
+
+    def _build_ml_features(self, *, current: DashboardPoint, history: list[DashboardPoint]) -> dict[str, float]:
+        return {
+            "moisture": float(current.moisture or 0.0),
+            "temperature": float(current.temperature or 0.0),
+            "humidity": float(current.humidity or 0.0),
+            "light": float(current.light or 0.0),
+            "moisture_trend": self._trend_value(history, "moisture"),
+            "temperature_trend": self._trend_value(history, "temperature"),
+            "humidity_trend": self._trend_value(history, "humidity"),
+            "light_trend": self._trend_value(history, "light"),
+        }
+
+    @staticmethod
+    def _trend_value(history: list[DashboardPoint], field_name: str) -> float:
+        values = [
+            float(value)
+            for point in history
+            if (value := getattr(point, field_name)) is not None
+        ]
+        if len(values) < 2:
+            return 0.0
+        return round(values[-1] - values[0], 2)
+
+    @staticmethod
+    def _merge_explanations(
+        *,
+        explanation: str,
+        rule_based_status: str,
+        ml_prediction: str,
+        ml_confidence: float | None,
+    ) -> str:
+        if ml_confidence is None:
+            confidence_text = "unknown confidence"
+        else:
+            confidence_text = f"{round(ml_confidence * 100)}% confidence"
+
+        if ml_prediction == rule_based_status:
+            return (
+                f"{explanation} The supporting Random Forest model also predicts "
+                f"{ml_prediction} with {confidence_text}."
+            )
+
+        return (
+            f"{explanation} The supporting Random Forest model predicts {ml_prediction} "
+            f"with {confidence_text}, which differs from the rule-based result. "
+            "Rule-based status remains primary for safety."
+        )

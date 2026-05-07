@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PlantConditionResponse(BaseModel):
@@ -9,6 +9,10 @@ class PlantConditionResponse(BaseModel):
     risk_factors: list[str]
     confidence: float
     explanation: str
+    ml_prediction: str | None = None
+    ml_confidence: float | None = None
+    class_probabilities: dict[str, float] = Field(default_factory=dict)
+    analysis_method: str = "rule_based"
 
 
 class RecommendationSummary(BaseModel):

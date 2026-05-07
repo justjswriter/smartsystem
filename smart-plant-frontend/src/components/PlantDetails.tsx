@@ -46,6 +46,17 @@ export function PlantDetails({ plant, dashboard, isLoading, error, plantId, sens
   const current = dashboard?.current;
   const condition = dashboard?.condition;
   const recommendation = dashboard?.active_recommendation;
+  const formatPredictionLabel = (value: string) =>
+    value
+      .split("_")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  const mlConfidenceText =
+    condition?.ml_confidence != null ? `${Math.round(condition.ml_confidence * 100)}% confidence` : "unavailable";
+  const analysisMethodText =
+    condition?.analysis_method === "hybrid_rule_based_and_ml"
+      ? "Hybrid rule-based + machine learning"
+      : "Rule-based";
 
   if (isLoading) {
     return <p className="muted page-lead">Loading plant...</p>;
@@ -247,6 +258,13 @@ export function PlantDetails({ plant, dashboard, isLoading, error, plantId, sens
               <p className="muted">Risk factors: {condition.risk_factors.join(", ")}</p>
             ) : null}
             <p className="muted small">Confidence: {condition ? condition.confidence : "—"}</p>
+            <p className="muted small">
+              AI model prediction:{" "}
+              {condition?.ml_prediction
+                ? `${formatPredictionLabel(condition.ml_prediction)} (${mlConfidenceText})`
+                : "unavailable"}
+            </p>
+            <p className="muted small">Analysis method: {analysisMethodText}</p>
           </div>
 
           <div className="card ai-hint">
