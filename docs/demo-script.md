@@ -24,6 +24,36 @@ This script is intended for diploma defense of the **final diploma prototype**.
   - Body: `moisture`, `temperature`, `humidity`, `light`, optional `recorded_at`
 - Send one valid ingest sample and one invalid request without token (should fail with `401`).
 
+### Demo sensor simulator
+
+Use the simulator when no real ESP32/Arduino sensor is connected:
+
+```bash
+cd /Users/zhalgassovasaniya/Downloads/macpworkcopy2/practice-backend
+
+PYTHONPATH=. ../.venv/bin/python scripts/simulate_sensor_data.py \
+  --device-id YOUR_DEVICE_ID \
+  --device-token 'YOUR_DEVICE_TOKEN' \
+  --mode cycle \
+  --interval 3 \
+  --count 12
+```
+
+The simulator sends realistic demo telemetry to the same ingest endpoint used by the real device, so the dashboard, charts, AI/ML condition output, recommendations, and alerts behave as in a live demo.
+
+### Automatic full demo flow
+
+Use the full demo automation when you want one command to register/login, create a plant, create and attach a sensor, capture the one-time device token, send simulated readings, and verify dashboard plus alerts:
+
+```bash
+cd /Users/zhalgassovasaniya/Downloads/macpworkcopy2/practice-backend
+
+PYTHONPATH=. ../.venv/bin/python scripts/run_full_demo_flow.py \
+  --mode cycle \
+  --interval 2 \
+  --count 9
+```
+
 ## 4:00-5:30 — Dashboard and Condition Evaluation
 
 - Open dashboard for the same plant.
