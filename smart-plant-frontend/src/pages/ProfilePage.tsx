@@ -40,7 +40,7 @@ export function ProfilePage() {
             </span>
             <span>
               <strong>IoT &amp; sensors</strong>
-              <span className="muted small block">Configure devices</span>
+              <span className="quick-action-subtitle">Configure devices</span>
             </span>
           </Link>
         </div>

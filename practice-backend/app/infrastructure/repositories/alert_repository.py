@@ -72,13 +72,14 @@ class AlertRepository:
 
     async def find_open_by_metric(self, *, plant_id: int, metric: str) -> Alert | None:
         result = await self.db.execute(
-            select(Alert).where(
+            select(Alert)
+            .where(
                 Alert.plant_id == plant_id,
                 Alert.metric == metric,
-                Alert.status.in_(
-                    [AlertStatus.CREATED, AlertStatus.VIEWED, AlertStatus.ACKNOWLEDGED]
-                ),
+                Alert.status.in_([AlertStatus.CREATED, AlertStatus.VIEWED, AlertStatus.ACKNOWLEDGED]),
             )
+            .order_by(Alert.created_at.desc())
+            .limit(1)
         )
         return result.scalar_one_or_none()
 

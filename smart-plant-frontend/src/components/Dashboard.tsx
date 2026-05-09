@@ -200,6 +200,7 @@ export function Dashboard({
           Refresh
         </button>
       </div>
+      <p className="muted small">Light score is normalized from the Arduino LDR reading; it is not lux.</p>
 
       {error ? <div className="error">{error}</div> : null}
       {isLoading ? <p className="muted">Loading plants...</p> : null}
@@ -214,7 +215,7 @@ export function Dashboard({
                 <th>Health</th>
                 <th>Temp</th>
                 <th>Moisture</th>
-                <th>Light</th>
+                <th>Light score</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -249,7 +250,7 @@ export function Dashboard({
                     </td>
                     <td>{r?.temperature != null ? `${r.temperature}°C` : "—"}</td>
                     <td>{r?.moisture != null ? `${r.moisture}%` : "—"}</td>
-                    <td>{r?.light != null ? `${r.light} lux` : "—"}</td>
+                    <td>{r?.light != null ? `${r.light} score` : "—"}</td>
                     <td>
                       <span className="badge-status">{c?.condition_status ?? statusLabel(health)}</span>
                       {c?.ml_prediction ? (

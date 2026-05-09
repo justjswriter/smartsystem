@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getPlantDashboard } from "../api";
 import { Dashboard } from "../components/Dashboard";
 import { useAppState } from "../context/AppStateContext";
@@ -22,27 +22,26 @@ export function DashboardPage() {
     Record<number, PlantCondition | null | undefined>
   >({});
 
-  useEffect(() => {
-    if (!token || plants.length === 0) {
-      setReadingsByPlant({});
-      setConditionByPlant({});
-      return;
-    }
-    let cancelled = false;
-    const slice = plants.slice(0, 20);
-    void Promise.all(
-      slice.map(async (p) => {
-        try {
-          const dash = await getPlantDashboard(token, p.id, 24);
-          return { id: p.id, current: dash.current, condition: dash.condition };
-        } catch {
-          return { id: p.id, current: null, condition: null };
-        }
-      })
-    ).then((rows) => {
-      if (cancelled) {
+  const loadDashboardSnapshots = useCallback(
+    async (plantList = plants) => {
+      if (!token || plantList.length === 0) {
+        setReadingsByPlant({});
+        setConditionByPlant({});
         return;
       }
+
+      const slice = plantList.slice(0, 20);
+      const rows = await Promise.all(
+        slice.map(async (p) => {
+          try {
+            const dash = await getPlantDashboard(token, p.id, 24);
+            return { id: p.id, current: dash.current, condition: dash.condition };
+          } catch {
+            return { id: p.id, current: null, condition: null };
+          }
+        })
+      );
+
       const next: Record<number, DashboardResponse["current"] | null | undefined> = {};
       const nextCondition: Record<number, PlantCondition | null | undefined> = {};
       for (const row of rows) {
@@ -51,11 +50,21 @@ export function DashboardPage() {
       }
       setReadingsByPlant(next);
       setConditionByPlant(nextCondition);
+    },
+    [token, plants]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadDashboardSnapshots().then(() => {
+      if (cancelled) {
+        return;
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, [token, plants]);
+  }, [loadDashboardSnapshots]);
 
   const stats = useMemo(() => {
     const total = plants.length;
@@ -89,7 +98,10 @@ export function DashboardPage() {
       stats={stats}
       isLoading={isPlantsLoading}
       error={plantsError}
-      onRefresh={() => loadPlants()}
+      onRefresh={() => {
+        void loadPlants();
+        void loadDashboardSnapshots();
+      }}
       onCreatePlant={createPlantEntry}
     />
   );

@@ -1,3 +1,4 @@
+import { useRef, type ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -30,9 +31,25 @@ type PlantDetailsProps = {
   error: string;
   plantId: number;
   sensors: Sensor[];
+  onRefresh: () => Promise<void>;
+  isRefreshing: boolean;
+  onPhotoUpload: (file: File) => Promise<void>;
+  isPhotoUploading: boolean;
 };
 
-export function PlantDetails({ plant, dashboard, isLoading, error, plantId, sensors }: PlantDetailsProps) {
+export function PlantDetails({
+  plant,
+  dashboard,
+  isLoading,
+  error,
+  plantId,
+  sensors,
+  onRefresh,
+  isRefreshing,
+  onPhotoUpload,
+  isPhotoUploading,
+}: PlantDetailsProps) {
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
   const chartData =
     dashboard?.history.map((h, i) => ({
       label: i === dashboard.history.length - 1 ? "now" : `${i}`,
@@ -75,6 +92,15 @@ export function PlantDetails({ plant, dashboard, isLoading, error, plantId, sens
 
   const health = condition?.health_score ?? plant.health ?? 0;
 
+  async function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    await onPhotoUpload(file);
+    event.target.value = "";
+  }
+
   return (
     <div className="plant-detail-page">
       <Link to="/" className="back-link">
@@ -87,10 +113,30 @@ export function PlantDetails({ plant, dashboard, isLoading, error, plantId, sens
           <h1 className="page-title">{plant.name}</h1>
           <p className="muted page-lead">{plant.species ?? "Species not set"}</p>
         </div>
-        <button type="button" className="btn-primary" disabled title="Photo upload is disabled in this prototype">
-          <Camera size={18} />
-          Update Photo
-        </button>
+        <div className="button-row">
+          <button type="button" className="btn-secondary" onClick={onRefresh} disabled={isRefreshing}>
+            <Activity size={18} />
+            {isRefreshing ? "Refreshing..." : "Refresh readings"}
+          </button>
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="visually-hidden"
+            onChange={(event) => {
+              void handlePhotoChange(event);
+            }}
+          />
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => photoInputRef.current?.click()}
+            disabled={isPhotoUploading}
+          >
+            <Camera size={18} />
+            {isPhotoUploading ? "Uploading..." : "Update Photo"}
+          </button>
+        </div>
       </div>
 
       <div className="detail-two-col">
@@ -211,8 +257,8 @@ export function PlantDetails({ plant, dashboard, isLoading, error, plantId, sens
             </div>
             <div className="card metric">
               <Sun className="metric-ico yellow" size={22} />
-              <p className="muted small">Light</p>
-              <p className="metric-val">{current?.light != null ? `${current.light} lux` : "—"}</p>
+              <p className="muted small">Light score</p>
+              <p className="metric-val">{current?.light != null ? `${current.light}` : "—"}</p>
             </div>
             <div className="card metric">
               <Wind className="metric-ico teal" size={22} />
@@ -220,6 +266,7 @@ export function PlantDetails({ plant, dashboard, isLoading, error, plantId, sens
               <p className="metric-val">{current?.humidity != null ? `${current.humidity}%` : "—"}</p>
             </div>
           </div>
+          <p className="muted small">Light score is normalized from the Arduino LDR reading; it is not lux.</p>
 
           <div className="card chart-card">
             <h3 className="section-title">Sensor history</h3>
@@ -244,7 +291,7 @@ export function PlantDetails({ plant, dashboard, isLoading, error, plantId, sens
                       dot={false}
                     />
                     <Line type="monotone" dataKey="humidity" name="Humidity (%)" stroke="#14b8a6" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="light" name="Light (lux)" stroke="#eab308" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="light" name="Light score" stroke="#eab308" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -274,7 +321,7 @@ export function PlantDetails({ plant, dashboard, isLoading, error, plantId, sens
           </div>
 
           <div className="card">
-            <h3 className="section-title">Attached sensors</h3>
+            <h3 className="section-title">Attached Arduino sensors</h3>
             {sensors.length === 0 ? (
               <p className="muted">No sensors attached yet.</p>
             ) : (
@@ -286,7 +333,10 @@ export function PlantDetails({ plant, dashboard, isLoading, error, plantId, sens
                     </span>
                     <div>
                       <strong>{sensor.device_id}</strong>
-                      <p className="muted small">{sensor.type} | {sensor.status} | {sensor.last_seen_at ?? "never seen"}</p>
+                      <p className="muted small">
+                        {sensor.type === "multi" ? "Arduino Uno multi sensor" : sensor.type} | {sensor.status} |{" "}
+                        {sensor.last_seen_at ?? "never seen"} | {sensor.last_ingest_source ?? "no source yet"}
+                      </p>
                     </div>
                   </div>
                 ))}

@@ -18,10 +18,13 @@ class PlantConditionResponse(BaseModel):
 class RecommendationSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    id: int | None = None
     text: str
     reason: str | None
-    created_at: datetime
+    created_at: datetime | None = None
+    metric: str | None = None
+    severity: str | None = None
+    source: str = "historical_alert"
 
 
 class DashboardPoint(BaseModel):

@@ -53,23 +53,24 @@ practice-backend/
 
 ### 1) Create and activate virtual environment
 
-```bash
-cd /Users/zhalgassovasaniya/Downloads/Practice-main
-python3 -m venv .venv
-source .venv/bin/activate
+```powershell
+cd C:\Users\darig\CursorProjects\smartsystem\practice-backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 ```
 
 ### 2) Install dependencies
 
-```bash
-pip install -r requirements.txt
+Dependencies are stored in the repository root `requirements.txt`.
+
+```powershell
+.\.venv\Scripts\python -m pip install -r ..\requirements.txt
 ```
 
 ### 3) Configure environment
 
-```bash
-cd practice-backend
-cp .env.example .env
+```powershell
+Copy-Item .env.example .env
 ```
 
 Optional: set bootstrap admin in `.env`:
@@ -81,38 +82,38 @@ ADMIN_PASSWORD=AdminPass123!
 
 ### 4) Run database
 
-```bash
-cd /Users/zhalgassovasaniya/Downloads/Practice-main/practice-backend
+```powershell
 docker compose up -d
 ```
 
 ### 5) Apply migrations
 
-```bash
+```powershell
 alembic upgrade head
 ```
 
 ### 6) (Optional) Seed demo data
 
-```bash
+```powershell
 python -m scripts.bootstrap_demo
 ```
 
 ### 7) Run application
 
-```bash
+```powershell
 uvicorn app.main:app --reload
 ```
 
 Healthcheck:
 
-```bash
-curl http://127.0.0.1:8000/health
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/health
 ```
 
 ### 8) Run tests
 
-```bash
+```powershell
+$env:PYTHONPATH='.'
 pytest -q
 ```
 
@@ -186,6 +187,35 @@ Allowed transitions:
 - HTTP scenario file: `http/smoke-test.http`
 - Acceptance mapping: `docs/acceptance-checklist.md`
 - Demo seed script: `scripts/bootstrap_demo.py`
+
+## Arduino Uno USB Serial Gateway
+
+The real Arduino Uno integration path uses the existing ingest endpoint and does not require a new backend route:
+
+```text
+Arduino Uno -> USB Serial COM port -> Python Serial Gateway -> FastAPI -> PostgreSQL -> frontend dashboard
+```
+
+Register a sensor in the frontend, copy its one-time device token, attach the sensor to a plant, then run the gateway from `../iot/serial_gateway`.
+
+Endpoint used by the gateway:
+
+```http
+POST /api/v1/ingest/sensors/{device_id}/data
+X-Device-Token: <device_token>
+X-Ingest-Source: serial:COM3
+```
+
+Gateway setup and Arduino upload instructions are in `../iot/serial_gateway/README.md`.
+
+Quick verification checklist:
+
+- `GET /health` returns `{"status":"ok"}`.
+- Frontend Sensors page shows the Arduino sensor as `online`.
+- Sensor `last_seen_at` updates after gateway ingest.
+- Sensor `last_ingest_source` shows the gateway source label, for example `serial:COM3`.
+- Plant dashboard shows current moisture, temperature, humidity, and light score.
+- Critical readings still create alerts and recommendations.
 
 ## cURL Examples (Main Flows)
 

@@ -65,10 +65,13 @@ export type PlantCondition = {
 };
 
 export type RecommendationSummary = {
-  id: number;
+  id: number | null;
   text: string;
   reason: string | null;
-  created_at: string;
+  created_at: string | null;
+  metric?: string | null;
+  severity?: string | null;
+  source?: "current_condition" | "historical_alert" | string;
 };
 
 export type AlertStatus = "created" | "viewed" | "acknowledged" | "resolved" | "closed";

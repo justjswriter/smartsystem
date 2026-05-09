@@ -49,6 +49,33 @@ async function apiFetch<T>(path: string, options: RequestInit = {}, token?: stri
   return (await response.json()) as T;
 }
 
+async function uploadFetch<T>(path: string, formData: FormData, token: string): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let message = `Request failed: ${response.status}`;
+    try {
+      const payload = (await response.json()) as { detail?: string | Array<{ msg?: string }> };
+      if (typeof payload.detail === "string") {
+        message = payload.detail;
+      } else if (Array.isArray(payload.detail) && payload.detail[0]?.msg) {
+        message = payload.detail[0].msg;
+      }
+    } catch {
+      // Ignore non-JSON error payloads.
+    }
+    throw new Error(message);
+  }
+
+  return (await response.json()) as T;
+}
+
 export async function register(payload: RegisterPayload): Promise<void> {
   await apiFetch("/auth/register", {
     method: "POST",
@@ -76,16 +103,31 @@ function mapPlant(raw: Record<string, unknown>): Plant {
       ? Number(healthCandidate)
       : undefined;
 
+  const rawImageUrl = typeof raw.image_url === "string" ? raw.image_url : undefined;
+
   return {
     id: Number(raw.id),
     name: String(raw.name ?? "Unnamed plant"),
     species: typeof raw.species === "string" ? raw.species : undefined,
     location: typeof raw.location === "string" ? raw.location : undefined,
     description: typeof raw.description === "string" ? raw.description : undefined,
-    image_url: typeof raw.image_url === "string" ? raw.image_url : undefined,
+    image_url: resolveImageUrl(rawImageUrl),
     health: Number.isFinite(numericHealth) ? numericHealth : undefined,
     notes: typeof raw.notes === "string" ? raw.notes : undefined,
   };
+}
+
+function resolveImageUrl(value: string | undefined) {
+  if (!value) {
+    return undefined;
+  }
+  if (/^(https?:|data:|blob:)/.test(value)) {
+    return value;
+  }
+  if (value.startsWith("/")) {
+    return `${new URL(API_BASE_URL).origin}${value}`;
+  }
+  return value;
 }
 
 export async function getPlant(token: string, plantId: number): Promise<Plant> {
@@ -115,6 +157,13 @@ export async function createPlant(
     token
   );
   return mapPlant(created);
+}
+
+export async function uploadPlantPhoto(token: string, plantId: number, file: File): Promise<Plant> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const updated = await uploadFetch<Record<string, unknown>>(`/plants/${plantId}/photo`, formData, token);
+  return mapPlant(updated);
 }
 
 export async function getPlantDashboard(
