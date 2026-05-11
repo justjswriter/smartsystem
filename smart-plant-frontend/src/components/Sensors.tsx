@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useI18n } from "../i18n";
 import type { Plant, Sensor } from "../types";
 
 type SensorsProps = {
@@ -20,20 +21,6 @@ function gatewayCommand(deviceId: string, token: string) {
   return `python serial_gateway.py --port COM3 --backend-url http://127.0.0.1:8000 --device-id ${deviceId} --device-token ${token}`;
 }
 
-function formatDateTime(value: string | null) {
-  if (!value) {
-    return "never seen";
-  }
-  return new Date(value).toLocaleString();
-}
-
-function sensorTypeLabel(value: string) {
-  if (value === "multi") {
-    return "Arduino Uno multi sensor";
-  }
-  return value.replace(/_/g, " ");
-}
-
 export function Sensors({
   plants,
   sensors,
@@ -45,6 +32,7 @@ export function Sensors({
   onDetach,
   onRotateToken,
 }: SensorsProps) {
+  const { t, label, formatDateTime } = useI18n();
   const [newDeviceId, setNewDeviceId] = useState(DEFAULT_DEVICE_ID);
   const [newType, setNewType] = useState("multi");
   const [provisioned, setProvisioned] = useState<{ deviceId: string; token: string } | null>(null);
@@ -82,30 +70,29 @@ export function Sensors({
   return (
     <section className="screen">
       <div className="row">
-        <h2>Sensors</h2>
+        <h2>{t("sensors.title")}</h2>
         <button type="button" onClick={onRefresh} disabled={isLoading}>
-          Refresh sensors
+          {t("sensors.refresh")}
         </button>
       </div>
 
       <div className="card onboarding-card">
-        <h3>Arduino Uno USB Serial Gateway setup</h3>
+        <h3>{t("sensors.gatewaySetup")}</h3>
         <p className="muted">
-          This page creates the backend sensor identity. Real readings come from Arduino Uno through
-          the Python Serial Gateway, not from this form.
+          {t("sensors.gatewayText")}
         </p>
         <div className="onboarding-steps">
-          <span>1. Create sensor</span>
-          <span>2. Copy one-time device token</span>
-          <span>3. Attach sensor to plant</span>
-          <span>4. Run Python gateway with COM port and token</span>
+          <span>{t("sensors.step1")}</span>
+          <span>{t("sensors.step2")}</span>
+          <span>{t("sensors.step3")}</span>
+          <span>{t("sensors.step4")}</span>
         </div>
       </div>
 
       <form className="card sensor-form" onSubmit={handleCreate}>
-        <h3>Create backend sensor identity</h3>
+        <h3>{t("sensors.createIdentity")}</h3>
         <label>
-          Device ID
+          {t("sensors.deviceId")}
           <input
             type="text"
             value={newDeviceId}
@@ -116,23 +103,23 @@ export function Sensors({
           />
         </label>
         <label>
-          Sensor type
+          {t("sensors.sensorType")}
           <select value={newType} onChange={(e) => setNewType(e.target.value)}>
-            <option value="multi">Arduino Uno multi sensor (soil, temp, humidity, light)</option>
-            <option value="soil_moisture">Soil moisture</option>
-            <option value="temperature">Temperature</option>
-            <option value="air_humidity">Air humidity</option>
-            <option value="light">Light</option>
+            <option value="multi">{t("sensors.multi")}</option>
+            <option value="soil_moisture">{t("sensors.soil")}</option>
+            <option value="temperature">{t("sensors.temperature")}</option>
+            <option value="air_humidity">{t("sensors.airHumidity")}</option>
+            <option value="light">{t("sensors.light")}</option>
           </select>
         </label>
-        <button type="submit">Create sensor identity</button>
+        <button type="submit">{t("sensors.create")}</button>
       </form>
 
       {provisioned ? (
         <div className="card token-card">
-          <h3>One-time device token</h3>
+          <h3>{t("sensors.oneTimeToken")}</h3>
           <p className="muted">
-            Save this token now. It is required by the Python Serial Gateway and will not be shown again.
+            {t("sensors.saveToken")}
           </p>
           <pre className="token-box">{provisioned.deviceId} | {provisioned.token}</pre>
           <pre className="token-box">{gatewayCommand(provisioned.deviceId, provisioned.token)}</pre>
@@ -151,37 +138,37 @@ export function Sensors({
               <div className="sensor-card-head">
                 <div>
                   <h3>{sensor.device_id}</h3>
-                  <p className="muted small">{sensorTypeLabel(sensor.type)}</p>
+                  <p className="muted small">{label("sensorType", sensor.type)}</p>
                 </div>
                 <span className={`sensor-status ${sensor.status === "online" ? "online" : "offline"}`}>
-                  {sensor.status}
+                  {label("sensorStatus", sensor.status)}
                 </span>
               </div>
 
               <div className="sensor-meta-grid">
                 <div>
-                  <p className="muted small">Attached plant</p>
-                  <strong>{attachedPlant ?? "Not attached"}</strong>
+                  <p className="muted small">{t("sensors.attachedPlant")}</p>
+                  <strong>{attachedPlant ?? t("sensors.notAttached")}</strong>
                 </div>
                 <div>
-                  <p className="muted small">Last seen</p>
-                  <strong>{formatDateTime(sensor.last_seen_at)}</strong>
+                  <p className="muted small">{t("sensors.lastSeen")}</p>
+                  <strong>{sensor.last_seen_at ? formatDateTime(sensor.last_seen_at) : t("common.neverSeen")}</strong>
                 </div>
                 <div>
-                  <p className="muted small">Source</p>
-                  <strong>{sensor.last_ingest_source ?? "No gateway data yet"}</strong>
+                  <p className="muted small">{t("sensors.source")}</p>
+                  <strong>{sensor.last_ingest_source ?? t("sensors.noGateway")}</strong>
                 </div>
               </div>
 
               {sensor.last_error_message ? <p className="error">{sensor.last_error_message}</p> : null}
 
               <div className="gateway-command">
-                <p className="muted small">Gateway command template</p>
+                <p className="muted small">{t("sensors.commandTemplate")}</p>
                 <pre className="token-box">{gatewayCommand(sensor.device_id, TOKEN_PLACEHOLDER)}</pre>
               </div>
 
               <div className="attach-panel">
-                <h4>Attach to plant</h4>
+                <h4>{t("sensors.attachToPlant")}</h4>
                 <div className="attach-row">
                   <select
                     value={selectedPlantId}
@@ -193,7 +180,7 @@ export function Sensors({
                     }
                     disabled={plants.length === 0}
                   >
-                    {plants.length === 0 ? <option value="">Create a plant first</option> : null}
+                    {plants.length === 0 ? <option value="">{t("sensors.createPlantFirst")}</option> : null}
                     {plants.map((plant) => (
                       <option key={plant.id} value={plant.id}>
                         {plant.name}
@@ -201,17 +188,17 @@ export function Sensors({
                     ))}
                   </select>
                   <button type="button" onClick={() => attach(sensor)} disabled={plants.length === 0}>
-                    Attach
+                    {t("sensors.attach")}
                   </button>
                 </div>
               </div>
 
               <div className="button-row">
                 <button type="button" onClick={() => onDetach(sensor.id)} disabled={!sensor.plant_id}>
-                  Detach
+                  {t("sensors.detach")}
                 </button>
                 <button type="button" onClick={() => rotate(sensor)}>
-                  Rotate token
+                  {t("sensors.rotate")}
                 </button>
               </div>
             </article>

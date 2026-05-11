@@ -22,6 +22,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useI18n } from "../i18n";
 import type { DashboardResponse, Plant, Sensor } from "../types";
 
 type PlantDetailsProps = {
@@ -49,42 +50,45 @@ export function PlantDetails({
   onPhotoUpload,
   isPhotoUploading,
 }: PlantDetailsProps) {
+  const { t, label, formatDateTime } = useI18n();
+  const emptyValue = "--";
+  const temperatureUnit = t("units.temperature");
+  const lightUnit = t("units.light");
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const chartData =
     dashboard?.history.map((h, i) => ({
       label: i === dashboard.history.length - 1 ? "now" : `${i}`,
+      recordedAt: h.recorded_at,
       moisture: h.moisture ?? 0,
       temp: h.temperature ?? 0,
       humidity: h.humidity ?? 0,
       light: h.light ?? 0,
-      time: new Date(h.recorded_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit" }),
+      time: formatDateTime(h.recorded_at),
     })) ?? [];
 
   const current = dashboard?.current;
   const condition = dashboard?.condition;
   const recommendation = dashboard?.active_recommendation;
-  const formatPredictionLabel = (value: string) =>
-    value
-      .split("_")
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ");
   const mlConfidenceText =
-    condition?.ml_confidence != null ? `${Math.round(condition.ml_confidence * 100)}% confidence` : "unavailable";
-  const analysisMethodText =
-    condition?.analysis_method === "hybrid_rule_based_and_ml"
-      ? "Hybrid rule-based + machine learning"
-      : "Rule-based";
+    condition?.ml_confidence != null
+      ? t("plant.confidenceValue", { value: Math.round(condition.ml_confidence * 100) })
+      : t("common.unavailable");
+  const analysisMethodText = label("analysis", condition?.analysis_method ?? "rule_based");
+  const conditionExplanation =
+    condition?.condition_status === "insufficient_data"
+      ? t("plant.insufficientDataExplanation")
+      : condition?.explanation ?? t("plant.noCondition");
 
   if (isLoading) {
-    return <p className="muted page-lead">Loading plant...</p>;
+    return <p className="muted page-lead">{t("common.loading")}</p>;
   }
 
   if (error || !plant) {
     return (
       <div className="page-stack">
-        <p className="error">{error || "Plant not found."}</p>
+        <p className="error">{error || t("plant.notFound")}</p>
         <Link to="/" className="text-link">
-          Back to Dashboard
+          {t("plant.back")}
         </Link>
       </div>
     );
@@ -105,18 +109,18 @@ export function PlantDetails({
     <div className="plant-detail-page">
       <Link to="/" className="back-link">
         <ArrowLeft size={18} />
-        Back to Dashboard
+        {t("plant.back")}
       </Link>
 
       <div className="page-head plant-detail-head">
         <div>
           <h1 className="page-title">{plant.name}</h1>
-          <p className="muted page-lead">{plant.species ?? "Species not set"}</p>
+          <p className="muted page-lead">{plant.species ?? t("plant.speciesNotSet")}</p>
         </div>
         <div className="button-row">
           <button type="button" className="btn-secondary" onClick={onRefresh} disabled={isRefreshing}>
             <Activity size={18} />
-            {isRefreshing ? "Refreshing..." : "Refresh readings"}
+            {isRefreshing ? t("plant.refreshing") : t("plant.refreshReadings")}
           </button>
           <input
             ref={photoInputRef}
@@ -134,7 +138,7 @@ export function PlantDetails({
             disabled={isPhotoUploading}
           >
             <Camera size={18} />
-            {isPhotoUploading ? "Uploading..." : "Update Photo"}
+            {isPhotoUploading ? t("plant.uploading") : t("plant.updatePhoto")}
           </button>
         </div>
       </div>
@@ -150,15 +154,15 @@ export function PlantDetails({
           </div>
 
           <div className="card">
-            <h3 className="section-title">Plant information</h3>
+            <h3 className="section-title">{t("plant.info")}</h3>
             <div className="info-grid">
               <div className="info-item">
                 <span className="info-ico blue">
                   <MapPin size={18} />
                 </span>
                 <div>
-                  <p className="muted small">Location</p>
-                  <p>{plant.location ?? "—"}</p>
+                  <p className="muted small">{t("dashboard.location")}</p>
+                  <p>{plant.location ?? emptyValue}</p>
                 </div>
               </div>
               <div className="info-item">
@@ -166,7 +170,7 @@ export function PlantDetails({
                   <Calendar size={18} />
                 </span>
                 <div>
-                  <p className="muted small">Plant ID</p>
+                  <p className="muted small">{t("plant.plantId")}</p>
                   <p>{plantId}</p>
                 </div>
               </div>
@@ -175,8 +179,8 @@ export function PlantDetails({
                   <Activity size={18} />
                 </span>
                 <div>
-                  <p className="muted small">Condition</p>
-                  <p>{condition?.condition_status ?? "—"}</p>
+                  <p className="muted small">{t("plant.condition")}</p>
+                  <p>{condition?.condition_status ? label("condition", condition.condition_status) : emptyValue}</p>
                 </div>
               </div>
               <div className="info-item">
@@ -184,8 +188,8 @@ export function PlantDetails({
                   <Activity size={18} />
                 </span>
                 <div>
-                  <p className="muted small">Description</p>
-                  <p>{plant.description ?? "—"}</p>
+                  <p className="muted small">{t("dashboard.description")}</p>
+                  <p>{plant.description ?? emptyValue}</p>
                 </div>
               </div>
               <div className="info-item">
@@ -193,32 +197,30 @@ export function PlantDetails({
                   <Activity size={18} />
                 </span>
                 <div>
-                  <p className="muted small">Health score</p>
+                  <p className="muted small">{t("plant.healthScore")}</p>
                   <p className={health >= 80 ? "text-ok" : "text-warn"}>
-                    {condition?.health_score != null ? `${condition.health_score}%` : "—"}
+                    {condition?.health_score != null ? `${condition.health_score}%` : emptyValue}
                   </p>
                 </div>
               </div>
             </div>
             <div className="border-top">
-              <p className="muted small">Notes</p>
-              <p>{plant.description ?? "No notes yet."}</p>
+              <p className="muted small">{t("plant.notes")}</p>
+              <p>{plant.description ?? t("plant.noNotes")}</p>
             </div>
           </div>
 
           <div className="card">
-            <h3 className="section-title">Care schedule</h3>
-            <p className="muted small">
-              Care guidance is currently based on live sensor alerts and recommendation output.
-            </p>
+            <h3 className="section-title">{t("plant.careSchedule")}</h3>
+            <p className="muted small">{t("plant.careGuidance")}</p>
             <div className="care-rows">
               <div className="care-row">
                 <span className="care-ico blue">
                   <Droplet size={20} />
                 </span>
                 <div>
-                  <strong>Watering</strong>
-                  <p className="muted small">Track via dashboard alerts</p>
+                  <strong>{t("plant.watering")}</strong>
+                  <p className="muted small">{t("plant.trackAlerts")}</p>
                 </div>
               </div>
               <div className="care-row">
@@ -226,8 +228,8 @@ export function PlantDetails({
                   <Activity size={20} />
                 </span>
                 <div>
-                  <strong>Health</strong>
-                  <p className="muted small">Based on sensor thresholds</p>
+                  <strong>{t("plant.healthScore")}</strong>
+                  <p className="muted small">{t("plant.sensorThresholds")}</p>
                 </div>
               </div>
               <div className="care-row">
@@ -235,8 +237,8 @@ export function PlantDetails({
                   <Clock size={20} />
                 </span>
                 <div>
-                  <strong>History</strong>
-                  <p className="muted small">{dashboard?.history.length ?? 0} data points</p>
+                  <strong>{t("plant.history")}</strong>
+                  <p className="muted small">{t("plant.dataPoints", { count: dashboard?.history.length ?? 0 })}</p>
                 </div>
               </div>
             </div>
@@ -247,51 +249,55 @@ export function PlantDetails({
           <div className="metric-grid">
             <div className="card metric">
               <Thermometer className="metric-ico orange" size={22} />
-              <p className="muted small">Temperature</p>
-              <p className="metric-val">{current?.temperature != null ? `${current.temperature}°C` : "—"}</p>
+              <p className="muted small">{t("plant.temperature")}</p>
+              <p className="metric-val">{current?.temperature != null ? `${current.temperature}${temperatureUnit}` : emptyValue}</p>
             </div>
             <div className="card metric">
               <Droplet className="metric-ico blue" size={22} />
-              <p className="muted small">Soil moisture</p>
-              <p className="metric-val">{current?.moisture != null ? `${current.moisture}%` : "—"}</p>
+              <p className="muted small">{t("plant.soilMoisture")}</p>
+              <p className="metric-val">{current?.moisture != null ? `${current.moisture}%` : emptyValue}</p>
             </div>
             <div className="card metric">
               <Sun className="metric-ico yellow" size={22} />
-              <p className="muted small">Light score</p>
-              <p className="metric-val">{current?.light != null ? `${current.light}` : "—"}</p>
+              <p className="muted small">{t("dashboard.lightScore")}</p>
+              <p className="metric-val">{current?.light != null ? `${current.light} ${lightUnit}` : emptyValue}</p>
             </div>
             <div className="card metric">
               <Wind className="metric-ico teal" size={22} />
-              <p className="muted small">Humidity</p>
-              <p className="metric-val">{current?.humidity != null ? `${current.humidity}%` : "—"}</p>
+              <p className="muted small">{t("plant.humidity")}</p>
+              <p className="metric-val">{current?.humidity != null ? `${current.humidity}%` : emptyValue}</p>
             </div>
           </div>
-          <p className="muted small">Light score is normalized from the Arduino LDR reading; it is not lux.</p>
+          <p className="muted small">{t("dashboard.lightHint")}</p>
 
           <div className="card chart-card">
-            <h3 className="section-title">Sensor history</h3>
+            <h3 className="section-title">{t("plant.sensorHistory")}</h3>
             {chartData.length === 0 ? (
-              <p className="muted">No sensor samples yet. Ingest data to see history.</p>
+              <p className="muted">{t("plant.noSamples")}</p>
             ) : (
               <div className="chart-wrap">
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="time" tick={{ fontSize: 11 }} />
+                    <XAxis
+                      dataKey="recordedAt"
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(value) => formatDateTime(String(value))}
+                    />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="temp" name="Temp (°C)" stroke="#f97316" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="temp" name={t("plant.temperatureLegend")} stroke="#f97316" strokeWidth={2} dot={false} />
                     <Line
                       type="monotone"
                       dataKey="moisture"
-                      name="Moisture (%)"
+                      name={t("plant.moistureLegend")}
                       stroke="#3b82f6"
                       strokeWidth={2}
                       dot={false}
                     />
-                    <Line type="monotone" dataKey="humidity" name="Humidity (%)" stroke="#14b8a6" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="light" name="Light score" stroke="#eab308" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="humidity" name={t("plant.humidityLegend")} stroke="#14b8a6" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="light" name={t("plant.lightLegend")} stroke="#eab308" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -299,31 +305,31 @@ export function PlantDetails({
           </div>
 
           <div className="card ai-hint">
-            <h3 className="section-title">Current condition</h3>
-            <p>{condition?.explanation ?? "No plant condition has been calculated yet."}</p>
+            <h3 className="section-title">{t("plant.currentCondition")}</h3>
+            <p>{conditionExplanation}</p>
             {condition?.risk_factors.length ? (
-              <p className="muted">Risk factors: {condition.risk_factors.join(", ")}</p>
+              <p className="muted">{t("plant.riskFactors")}: {condition.risk_factors.map((risk) => label("issue", risk)).join(", ")}</p>
             ) : null}
-            <p className="muted small">Confidence: {condition ? condition.confidence : "—"}</p>
+            <p className="muted small">{t("plant.confidence")}: {condition ? condition.confidence : emptyValue}</p>
             <p className="muted small">
-              AI model prediction:{" "}
+              {t("plant.aiPrediction")}:{" "}
               {condition?.ml_prediction
-                ? `${formatPredictionLabel(condition.ml_prediction)} (${mlConfidenceText})`
-                : "unavailable"}
+                ? `${label("condition", condition.ml_prediction)} (${mlConfidenceText})`
+                : t("common.unavailable")}
             </p>
-            <p className="muted small">Analysis method: {analysisMethodText}</p>
+            <p className="muted small">{t("plant.analysisMethod")}: {analysisMethodText}</p>
           </div>
 
           <div className="card ai-hint">
-            <h3 className="section-title">Recommendation</h3>
-            <p>{recommendation?.text ?? "No active recommendation. The system will generate one when a risk is detected."}</p>
+            <h3 className="section-title">{t("plant.recommendation")}</h3>
+            <p>{recommendation?.text ?? t("plant.noRecommendation")}</p>
             {recommendation?.reason ? <p className="muted">{recommendation.reason}</p> : null}
           </div>
 
           <div className="card">
-            <h3 className="section-title">Attached Arduino sensors</h3>
+            <h3 className="section-title">{t("plant.attachedSensors")}</h3>
             {sensors.length === 0 ? (
-              <p className="muted">No sensors attached yet.</p>
+              <p className="muted">{t("plant.noSensors")}</p>
             ) : (
               <div className="care-rows">
                 {sensors.map((sensor) => (
@@ -334,8 +340,9 @@ export function PlantDetails({
                     <div>
                       <strong>{sensor.device_id}</strong>
                       <p className="muted small">
-                        {sensor.type === "multi" ? "Arduino Uno multi sensor" : sensor.type} | {sensor.status} |{" "}
-                        {sensor.last_seen_at ?? "never seen"} | {sensor.last_ingest_source ?? "no source yet"}
+                        {label("sensorType", sensor.type)} | {label("sensorStatus", sensor.status)} |{" "}
+                        {sensor.last_seen_at ? formatDateTime(sensor.last_seen_at) : t("common.neverSeen")} |{" "}
+                        {sensor.last_ingest_source ?? t("sensors.noGateway")}
                       </p>
                     </div>
                   </div>

@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { Activity, Download } from "lucide-react";
+import { useI18n } from "../i18n";
 import type { DashboardResponse, Plant } from "../types";
 
 type AnalyticsProps = {
@@ -25,6 +26,7 @@ type AnalyticsProps = {
 type ChartPoint = {
   i: number;
   t: string;
+  recordedAt: string;
   temp: number;
   moisture: number;
   humidity: number;
@@ -43,6 +45,7 @@ function csvValue(value: string | number | null | undefined) {
 }
 
 export function Analytics({ plants, dashboard, isLoading, error, onLoad }: AnalyticsProps) {
+  const { t, formatDate, formatDateTime } = useI18n();
   const [selectedPlantId, setSelectedPlantId] = useState<number | null>(plants[0]?.id ?? null);
   const [hours, setHours] = useState(168);
 
@@ -61,25 +64,26 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
     }
     return dashboard.history.map((h, i) => ({
       i,
-      t: new Date(h.recorded_at).toLocaleString(undefined, { month: "short", day: "numeric" }),
+      t: formatDate(h.recorded_at),
+      recordedAt: h.recorded_at,
       temp: h.temperature ?? 0,
       moisture: h.moisture ?? 0,
       humidity: h.humidity ?? 0,
       light: h.light ?? 0,
     }));
-  }, [dashboard]);
+  }, [dashboard, formatDate]);
 
   const currentMetrics = useMemo(() => {
     if (!dashboard?.current) {
       return [];
     }
     return [
-      { label: "Moisture", value: dashboard.current.moisture, unit: "%" },
-      { label: "Temperature", value: dashboard.current.temperature, unit: "C" },
-      { label: "Humidity", value: dashboard.current.humidity, unit: "%" },
-      { label: "Light score", value: dashboard.current.light, unit: "score" },
+      { label: t("dashboard.moisture"), value: dashboard.current.moisture, unit: "%" },
+      { label: t("plant.temperature"), value: dashboard.current.temperature, unit: t("units.temperature") },
+      { label: t("plant.humidity"), value: dashboard.current.humidity, unit: "%" },
+      { label: t("dashboard.lightScore"), value: dashboard.current.light, unit: t("units.light") },
     ];
-  }, [dashboard]);
+  }, [dashboard, t]);
 
   const selectedPlant = plants.find((plant) => plant.id === selectedPlantId);
   const hasHistory = Boolean(dashboard?.history.length);
@@ -116,8 +120,8 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
     <div className="analytics-page">
       <div className="page-head dashboard-head">
         <div>
-          <h1 className="page-title">Analytics</h1>
-          <p className="muted page-lead">Historical sensor data for the selected plant.</p>
+          <h1 className="page-title">{t("analytics.title")}</h1>
+          <p className="muted page-lead">{t("analytics.subtitle")}</p>
         </div>
         <div className="analytics-actions">
           <button
@@ -125,10 +129,10 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
             className="btn-primary"
             onClick={exportCsv}
             disabled={!hasHistory || selectedPlantId == null}
-            title={hasHistory ? "Export loaded history as CSV" : "Load history before exporting"}
+            title={hasHistory ? t("analytics.exportTitle") : t("analytics.exportDisabled")}
           >
             <Download size={18} />
-            Export
+            {t("common.export")}
           </button>
         </div>
       </div>
@@ -139,7 +143,7 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
           onChange={(e) => setSelectedPlantId(Number(e.target.value))}
           disabled={plants.length === 0}
         >
-          {plants.length === 0 ? <option value="">No plants</option> : null}
+          {plants.length === 0 ? <option value="">{t("plants.title")}</option> : null}
           {plants.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
@@ -147,10 +151,10 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
           ))}
         </select>
         <select value={hours} onChange={(e) => setHours(Number(e.target.value))}>
-          <option value={24}>Last 24h</option>
-          <option value={72}>Last 3 days</option>
-          <option value={168}>Last 7 days</option>
-          <option value={720}>Last 30 days</option>
+          <option value={24}>{t("analytics.last24h")}</option>
+          <option value={72}>{t("analytics.last3d")}</option>
+          <option value={168}>{t("analytics.last7d")}</option>
+          <option value={720}>{t("analytics.last30d")}</option>
         </select>
         <button
           type="button"
@@ -158,19 +162,18 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
           onClick={() => selectedPlantId && onLoad(selectedPlantId, hours)}
           disabled={!selectedPlantId || isLoading}
         >
-          {isLoading ? "Loading..." : "Load"}
+          {isLoading ? t("common.loading") : t("common.load")}
         </button>
       </div>
       <p className="muted small">
-        Showing {selectedPlant?.name ?? "the selected plant"} for the selected range. Light score is normalized from the
-        Arduino LDR reading; it is not lux.
+        {t("analytics.showing", { plant: selectedPlant?.name ?? t("dashboard.plant") })} {t("dashboard.lightHint")}
       </p>
 
       {error ? <div className="error">{error}</div> : null}
 
       {plants.length === 0 ? (
         <div className="card">
-          <p className="muted">Create a plant and attach a sensor to see analytics.</p>
+          <p className="muted">{t("analytics.noPlants")}</p>
         </div>
       ) : null}
 
@@ -186,7 +189,7 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
         </div>
       ) : (
         <div className="card">
-          <p className="muted">No latest sensor values for this plant yet.</p>
+          <p className="muted">{t("analytics.noLatest")}</p>
         </div>
       )}
 
@@ -195,36 +198,36 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
           color="#f97316"
           data={lineData}
           dataKey="temp"
-          name="C"
-          title="Temperature"
+          name={t("units.temperature")}
+          title={t("plant.temperature")}
         />
         <MetricAreaChart
           color="#3b82f6"
           data={lineData}
           dataKey="moisture"
           name="%"
-          title="Soil moisture"
+          title={t("plant.soilMoisture")}
         />
         <MetricAreaChart
           color="#14b8a6"
           data={lineData}
           dataKey="humidity"
           name="%"
-          title="Humidity"
+          title={t("plant.humidity")}
         />
         <MetricLineChart
           color="#eab308"
           data={lineData}
           dataKey="light"
-          name="score"
-          title="Light score"
+          name={t("units.light")}
+          title={t("dashboard.lightScore")}
         />
       </div>
 
       <div className="card">
-        <h3 className="section-title">History points</h3>
-        <p className="muted">Samples in range: {dashboard?.history.length ?? 0}</p>
-        <p className="muted">Last update: {dashboard?.last_updated_at ?? "--"}</p>
+        <h3 className="section-title">{t("analytics.historyPoints")}</h3>
+        <p className="muted">{t("analytics.samplesInRange", { count: dashboard?.history.length ?? 0 })}</p>
+        <p className="muted">{t("analytics.lastUpdate")}: {dashboard?.last_updated_at ? formatDateTime(dashboard.last_updated_at) : "--"}</p>
       </div>
     </div>
   );
@@ -239,6 +242,7 @@ type MetricChartProps = {
 };
 
 function MetricLineChart({ color, data, dataKey, name, title }: MetricChartProps) {
+  const { t, formatDate } = useI18n();
   return (
     <div className="card chart-card">
       <div className="chart-head">
@@ -246,12 +250,12 @@ function MetricLineChart({ color, data, dataKey, name, title }: MetricChartProps
         <h3>{title}</h3>
       </div>
       {data.length === 0 ? (
-        <p className="muted">No history for this range.</p>
+        <p className="muted">{t("analytics.noHistory")}</p>
       ) : (
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="t" tick={{ fontSize: 10 }} />
+            <XAxis dataKey="recordedAt" tick={{ fontSize: 10 }} tickFormatter={(value) => formatDate(String(value))} />
             <YAxis tick={{ fontSize: 10 }} />
             <Tooltip />
             <Legend />
@@ -264,6 +268,7 @@ function MetricLineChart({ color, data, dataKey, name, title }: MetricChartProps
 }
 
 function MetricAreaChart({ color, data, dataKey, name, title }: MetricChartProps) {
+  const { t, formatDate } = useI18n();
   return (
     <div className="card chart-card">
       <div className="chart-head">
@@ -271,12 +276,12 @@ function MetricAreaChart({ color, data, dataKey, name, title }: MetricChartProps
         <h3>{title}</h3>
       </div>
       {data.length === 0 ? (
-        <p className="muted">No history for this range.</p>
+        <p className="muted">{t("analytics.noHistory")}</p>
       ) : (
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="t" tick={{ fontSize: 10 }} />
+            <XAxis dataKey="recordedAt" tick={{ fontSize: 10 }} tickFormatter={(value) => formatDate(String(value))} />
             <YAxis tick={{ fontSize: 10 }} />
             <Tooltip />
             <Area type="monotone" dataKey={dataKey} name={name} stroke={color} fill={color} fillOpacity={0.25} />

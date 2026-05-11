@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Activity, ChevronDown, Droplet, Plus, Search, Sun, Thermometer } from "lucide-react";
+import { useI18n } from "../i18n";
 import type { DashboardPoint, Plant, PlantCondition } from "../types";
 
 type DashboardStats = {
@@ -38,6 +39,7 @@ export function Dashboard({
   onRefresh,
   onCreatePlant,
 }: DashboardProps) {
+  const { t, label } = useI18n();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("health");
   const [modalOpen, setModalOpen] = useState(false);
@@ -46,15 +48,14 @@ export function Dashboard({
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
+  const temperatureUnit = t("units.temperature");
+  const lightUnit = t("units.light");
 
   function formatConditionLabel(value: string | null | undefined) {
     if (!value) {
-      return "Unavailable";
+      return t("common.unavailable");
     }
-    return value
-      .split("_")
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ");
+    return label("condition", value);
   }
 
   const visible = useMemo(() => {
@@ -88,15 +89,25 @@ export function Dashboard({
 
   function statusLabel(health: number | undefined) {
     if (health == null) {
-      return "—";
+      return "--";
     }
     if (health >= 70) {
-      return "Healthy";
+      return t("dashboard.healthy");
     }
     if (health >= 50) {
-      return "Needs attention";
+      return t("dashboard.needsAttention");
     }
-    return "At risk";
+    return t("dashboard.atRisk");
+  }
+
+  function analysisLabel(value: string | null | undefined) {
+    if (value === "hybrid_rule_based_and_ml") {
+      return t("dashboard.hybridShort");
+    }
+    if (value === "rule_based") {
+      return t("dashboard.ruleBasedShort");
+    }
+    return label("analysis", value ?? "rule_based");
   }
 
   async function submitPlant(e: React.FormEvent) {
@@ -123,60 +134,20 @@ export function Dashboard({
     <div className="dashboard-page">
       <div className="page-head dashboard-head">
         <div>
-          <h1 className="page-title">Plant Dashboard</h1>
-          <p className="muted page-lead">Monitor and manage all your plants in one place.</p>
+          <h1 className="page-title">{t("dashboard.title")}</h1>
+          <p className="muted page-lead">{t("dashboard.subtitle")}</p>
         </div>
         <button type="button" className="btn-primary" onClick={() => setModalOpen(true)}>
           <Plus size={18} />
-          Add New Plant
+          {t("dashboard.addPlant")}
         </button>
       </div>
 
       <div className="stats-row four">
-        <div className="card stat-tile">
-          <div className="stat-tile-inner">
-            <div className="stat-icon-wrap green">
-              <Activity size={20} />
-            </div>
-            <div>
-              <p className="muted small">Total Plants</p>
-              <p className="stat-big">{stats.totalPlants}</p>
-            </div>
-          </div>
-        </div>
-        <div className="card stat-tile">
-          <div className="stat-tile-inner">
-            <div className="stat-icon-wrap blue">
-              <Droplet size={20} />
-            </div>
-            <div>
-              <p className="muted small">Avg Health</p>
-              <p className="stat-big">{stats.avgHealth != null ? `${stats.avgHealth}%` : "—"}</p>
-            </div>
-          </div>
-        </div>
-        <div className="card stat-tile">
-          <div className="stat-tile-inner">
-            <div className="stat-icon-wrap orange">
-              <Thermometer size={20} />
-            </div>
-            <div>
-              <p className="muted small">Avg Temp</p>
-              <p className="stat-big">{stats.avgTemp != null ? `${stats.avgTemp}°C` : "—"}</p>
-            </div>
-          </div>
-        </div>
-        <div className="card stat-tile">
-          <div className="stat-tile-inner">
-            <div className="stat-icon-wrap yellow">
-              <Sun size={20} />
-            </div>
-            <div>
-              <p className="muted small">Active Sensors</p>
-              <p className="stat-big">{stats.activeSensors}</p>
-            </div>
-          </div>
-        </div>
+        <StatTile icon={<Activity size={20} />} color="green" label={t("dashboard.totalPlants")} value={stats.totalPlants} />
+        <StatTile icon={<Droplet size={20} />} color="blue" label={t("dashboard.avgHealth")} value={stats.avgHealth != null ? `${stats.avgHealth}%` : "--"} />
+        <StatTile icon={<Thermometer size={20} />} color="orange" label={t("dashboard.avgTemp")} value={stats.avgTemp != null ? `${stats.avgTemp}${temperatureUnit}` : "--"} />
+        <StatTile icon={<Sun size={20} />} color="yellow" label={t("dashboard.activeSensors")} value={stats.activeSensors} />
       </div>
 
       <div className="toolbar dashboard-toolbar">
@@ -184,40 +155,40 @@ export function Dashboard({
           <Search className="search-ico" size={18} />
           <input
             type="search"
-            placeholder="Search plants by name, species, or location..."
+            placeholder={t("dashboard.search")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="sort-wrap">
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)}>
-            <option value="health">Sort by: Health Status</option>
-            <option value="name">Name (A–Z)</option>
+            <option value="health">{t("dashboard.sortHealth")}</option>
+            <option value="name">{t("dashboard.sortName")}</option>
           </select>
           <ChevronDown className="select-chevron" size={18} />
         </div>
         <button type="button" className="btn-secondary" onClick={onRefresh} disabled={isLoading}>
-          Refresh
+          {t("common.refresh")}
         </button>
       </div>
-      <p className="muted small">Light score is normalized from the Arduino LDR reading; it is not lux.</p>
+      <p className="muted small">{t("dashboard.lightHint")}</p>
 
       {error ? <div className="error">{error}</div> : null}
-      {isLoading ? <p className="muted">Loading plants...</p> : null}
+      {isLoading ? <p className="muted">{t("dashboard.loadingPlants")}</p> : null}
 
       <div className="table-card">
         <div className="table-scroll">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Plant</th>
-                <th>Location</th>
-                <th>Health</th>
-                <th>Temp</th>
-                <th>Moisture</th>
-                <th>Light score</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>{t("dashboard.plant")}</th>
+                <th>{t("dashboard.location")}</th>
+                <th>{t("dashboard.health")}</th>
+                <th>{t("dashboard.temp")}</th>
+                <th>{t("dashboard.moisture")}</th>
+                <th>{t("dashboard.lightScore")}</th>
+                <th>{t("dashboard.status")}</th>
+                <th>{t("dashboard.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -230,44 +201,34 @@ export function Dashboard({
                     <td>
                       <div className="plant-cell">
                         <div className="plant-thumb">
-                          {plant.image_url ? (
-                            <img src={plant.image_url} alt="" />
-                          ) : (
-                            <span className="thumb-ph">{plant.name.charAt(0)}</span>
-                          )}
+                          {plant.image_url ? <img src={plant.image_url} alt="" /> : <span className="thumb-ph">{plant.name.charAt(0)}</span>}
                         </div>
                         <div>
                           <div className="plant-name">{plant.name}</div>
-                          <div className="muted small">{plant.species ?? "—"}</div>
+                          <div className="muted small">{plant.species ?? "--"}</div>
                         </div>
                       </div>
                     </td>
-                    <td>{plant.location ?? "—"}</td>
+                    <td>{plant.location ?? "--"}</td>
+                    <td><span className={healthClass(health)}>{health != null ? `${health}%` : "--"}</span></td>
+                    <td>{r?.temperature != null ? `${r.temperature}${temperatureUnit}` : "--"}</td>
+                    <td>{r?.moisture != null ? `${r.moisture}%` : "--"}</td>
+                    <td>{r?.light != null ? `${r.light} ${lightUnit}` : "--"}</td>
                     <td>
-                      <span className={healthClass(health)}>
-                        {health != null ? `${health}%` : "—"}
+                      <span className="badge-status">
+                        {c?.condition_status ? label("condition", c.condition_status) : statusLabel(health)}
                       </span>
-                    </td>
-                    <td>{r?.temperature != null ? `${r.temperature}°C` : "—"}</td>
-                    <td>{r?.moisture != null ? `${r.moisture}%` : "—"}</td>
-                    <td>{r?.light != null ? `${r.light} score` : "—"}</td>
-                    <td>
-                      <span className="badge-status">{c?.condition_status ?? statusLabel(health)}</span>
                       {c?.ml_prediction ? (
                         <div className="muted small">
-                          AI: {formatConditionLabel(c.ml_prediction)} ({Math.round((c.ml_confidence ?? 0) * 100)}%)
+                          {t("dashboard.ai")}: {formatConditionLabel(c.ml_prediction)} ({Math.round((c.ml_confidence ?? 0) * 100)}%)
                         </div>
                       ) : null}
                       <div className="muted small">
-                        {c?.analysis_method === "hybrid_rule_based_and_ml"
-                          ? "Hybrid rule-based + machine learning"
-                          : "Rule-based"}
+                        {analysisLabel(c?.analysis_method)}
                       </div>
                     </td>
                     <td>
-                      <Link to={`/plants/${plant.id}`} className="text-link">
-                        View details →
-                      </Link>
+                      <Link to={`/plants/${plant.id}`} className="text-link">{t("dashboard.viewDetails")}</Link>
                     </td>
                   </tr>
                 );
@@ -279,59 +240,50 @@ export function Dashboard({
 
       <div className="weather-banner">
         <div className="weather-inner">
-          <div className="weather-icon">
-            <Sun size={36} />
-          </div>
+          <div className="weather-icon"><Sun size={36} /></div>
           <div className="weather-copy">
-            <h3>Perfect growing conditions today</h3>
-            <p className="muted-light">Check sensor data per plant for precise indoor readings.</p>
+            <h3>{t("dashboard.weatherTitle")}</h3>
+            <p className="muted-light">{t("dashboard.weatherText")}</p>
           </div>
           <div className="weather-temp">
-            <span className="temp-big">{stats.avgTemp != null ? `${stats.avgTemp}°C` : "—"}</span>
-            <span className="muted-light small">Avg. from sensors</span>
+            <span className="temp-big">{stats.avgTemp != null ? `${stats.avgTemp}${temperatureUnit}` : "--"}</span>
+            <span className="muted-light small">{t("dashboard.avgFromSensors")}</span>
           </div>
         </div>
       </div>
 
       {modalOpen ? (
         <div className="modal-root" role="dialog" aria-modal="true" aria-labelledby="add-plant-title">
-          <button
-            type="button"
-            className="modal-backdrop"
-            aria-label="Close"
-            onClick={() => setModalOpen(false)}
-          />
+          <button type="button" className="modal-backdrop" aria-label={t("common.close")} onClick={() => setModalOpen(false)} />
           <div className="modal-panel card">
-            <h2 id="add-plant-title">Add plant</h2>
+            <h2 id="add-plant-title">{t("dashboard.addPlantTitle")}</h2>
             <form className="modal-form" onSubmit={submitPlant}>
-              <label>
-                Name
-                <input value={name} onChange={(e) => setName(e.target.value)} required />
-              </label>
-              <label>
-                Species
-                <input value={species} onChange={(e) => setSpecies(e.target.value)} />
-              </label>
-              <label>
-                Location
-                <input value={location} onChange={(e) => setLocation(e.target.value)} />
-              </label>
-              <label>
-                Description
-                <input value={description} onChange={(e) => setDescription(e.target.value)} />
-              </label>
+              <label>{t("dashboard.name")}<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
+              <label>{t("dashboard.species")}<input value={species} onChange={(e) => setSpecies(e.target.value)} /></label>
+              <label>{t("dashboard.location")}<input value={location} onChange={(e) => setLocation(e.target.value)} /></label>
+              <label>{t("dashboard.description")}<input value={description} onChange={(e) => setDescription(e.target.value)} /></label>
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setModalOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary" disabled={saving}>
-                  {saving ? "Saving..." : "Create"}
-                </button>
+                <button type="button" className="btn-secondary" onClick={() => setModalOpen(false)}>{t("common.cancel")}</button>
+                <button type="submit" className="btn-primary" disabled={saving}>{saving ? t("common.saving") : t("common.create")}</button>
               </div>
             </form>
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function StatTile({ icon, color, label, value }: { icon: ReactNode; color: string; label: string; value: ReactNode }) {
+  return (
+    <div className="card stat-tile">
+      <div className="stat-tile-inner">
+        <div className={`stat-icon-wrap ${color}`}>{icon}</div>
+        <div>
+          <p className="muted small">{label}</p>
+          <p className="stat-big">{value}</p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,22 +1,22 @@
 import { Link } from "react-router-dom";
 import { useAppState } from "../context/AppStateContext";
+import { useI18n } from "../i18n";
 
 export function PlantsIndexPage() {
   const { plants, isPlantsLoading } = useAppState();
+  const { t } = useI18n();
 
   if (isPlantsLoading) {
-    return <p className="muted page-lead">Loading plants...</p>;
+    return <p className="muted page-lead">{t("plants.loading")}</p>;
   }
 
   if (plants.length === 0) {
     return (
       <div className="page-stack">
-        <h1 className="page-title">Plants</h1>
-        <p className="muted page-lead">
-          No plants yet. Add one from the Dashboard, then open a plant here for details.
-        </p>
+        <h1 className="page-title">{t("plants.title")}</h1>
+        <p className="muted page-lead">{t("plants.empty")}</p>
         <Link to="/" className="text-link">
-          Go to Dashboard
+          {t("plants.goDashboard")}
         </Link>
       </div>
     );
@@ -26,17 +26,17 @@ export function PlantsIndexPage() {
     <div className="page-stack">
       <div className="page-head">
         <div>
-          <h1 className="page-title">Plants</h1>
-          <p className="muted page-lead">Choose a plant to see metrics and care details.</p>
+          <h1 className="page-title">{t("plants.title")}</h1>
+          <p className="muted page-lead">{t("plants.subtitle")}</p>
         </div>
       </div>
       <div className="plants-grid">
         {plants.map((plant) => (
           <Link key={plant.id} to={`/plants/${plant.id}`} className="plant-tile card">
             <h3>{plant.name}</h3>
-            <p className="muted">{plant.species ?? "Species not set"}</p>
-            <p className="muted">{plant.location ?? "Location not set"}</p>
-            <span className="text-link">View details →</span>
+            <p className="muted">{plant.species ?? t("plants.speciesNotSet")}</p>
+            <p className="muted">{plant.location ?? t("plants.locationNotSet")}</p>
+            <span className="text-link">{t("dashboard.viewDetails")}</span>
           </Link>
         ))}
       </div>

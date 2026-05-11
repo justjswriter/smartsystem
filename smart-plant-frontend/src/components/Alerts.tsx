@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useI18n } from "../i18n";
 import type { Alert } from "../types";
 
 type AlertsProps = {
@@ -24,9 +25,31 @@ export function Alerts({
   onResolve,
   onClose,
 }: AlertsProps) {
+  const { t, label, formatDateTime } = useI18n();
   const [status, setStatus] = useState("");
   const [severity, setSeverity] = useState("");
   const [selected, setSelected] = useState<Alert | null>(null);
+
+  function localizeAlertText(text: string | null | undefined) {
+    if (!text) {
+      return text;
+    }
+    const exact: Record<string, string> = {
+      "Light threshold below": t("alertText.lightBelowTitle"),
+      "Light is below threshold": t("alertText.lightBelowMessage"),
+      "Move the plant to a brighter location or add supplemental light.": t("alertText.lightBelowRecommendation"),
+      "Moisture threshold below": t("alertText.moistureBelowTitle"),
+      "Moisture is below threshold": t("alertText.moistureBelowMessage"),
+      "Increase watering schedule and re-check soil in 2-4 hours.": t("alertText.moistureBelowRecommendation"),
+      "Temperature threshold above": t("alertText.temperatureAboveTitle"),
+      "Temperature is above threshold": t("alertText.temperatureAboveMessage"),
+      "Move the plant to a cooler location and avoid direct heat sources.": t("alertText.temperatureAboveRecommendation"),
+      "Humidity threshold below": t("alertText.humidityBelowTitle"),
+      "Humidity is below threshold": t("alertText.humidityBelowMessage"),
+      "Increase ambient humidity with a tray, humidifier, or grouped plants.": t("alertText.humidityBelowRecommendation"),
+    };
+    return exact[text] ?? text;
+  }
 
   const sortedAlerts = useMemo(() => {
     return [...alerts]
@@ -38,61 +61,52 @@ export function Alerts({
   return (
     <section className="screen">
       <div className="row">
-        <h2>Alerts</h2>
+        <h2>{t("alerts.title")}</h2>
         <button type="button" onClick={onRefresh} disabled={isLoading}>
-          Refresh
+          {t("common.refresh")}
         </button>
       </div>
 
       <div className="toolbar">
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">All statuses</option>
-          <option value="created">Created</option>
-          <option value="viewed">Viewed</option>
-          <option value="acknowledged">Acknowledged</option>
-          <option value="resolved">Resolved</option>
-          <option value="closed">Closed</option>
+          <option value="">{t("alerts.allStatuses")}</option>
+          <option value="created">{t("alerts.created")}</option>
+          <option value="viewed">{t("alerts.viewed")}</option>
+          <option value="acknowledged">{t("alerts.acknowledged")}</option>
+          <option value="resolved">{t("alerts.resolved")}</option>
+          <option value="closed">{t("alerts.closed")}</option>
         </select>
         <select value={severity} onChange={(e) => setSeverity(e.target.value)}>
-          <option value="">All severities</option>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-          <option value="critical">Critical</option>
+          <option value="">{t("alerts.allSeverities")}</option>
+          <option value="low">{t("alerts.low")}</option>
+          <option value="medium">{t("alerts.medium")}</option>
+          <option value="high">{t("alerts.high")}</option>
+          <option value="critical">{t("alerts.critical")}</option>
         </select>
       </div>
 
       {error ? <div className="error">{error}</div> : null}
-      {isLoading ? <p className="muted">Loading alerts...</p> : null}
+      {isLoading ? <p className="muted">{t("alerts.loading")}</p> : null}
 
       <div className="screen">
         {sortedAlerts.map((alert) => (
           <article key={alert.id} className="card">
             <div className="row">
-              <h3>{alert.title}</h3>
-              <span className="muted">{alert.severity}</span>
+              <h3>{localizeAlertText(alert.title)}</h3>
+              <span className="muted">{label("alertSeverity", alert.severity)}</span>
             </div>
-            <p>{alert.message}</p>
-            {alert.recommendation ? <p><strong>Recommendation:</strong> {alert.recommendation}</p> : null}
+            <p>{localizeAlertText(alert.message)}</p>
+            {alert.recommendation ? <p><strong>{t("alerts.recommendation")}:</strong> {localizeAlertText(alert.recommendation)}</p> : null}
             <p className="muted">
-              Plant #{alert.plant_id} | Status: {alert.status} | Metric: {alert.metric ?? "—"}
+              {t("alerts.plant")} #{alert.plant_id} | {t("dashboard.status")}: {label("alertStatus", alert.status)} |{" "}
+              {t("alerts.metric")}: {label("metric", alert.metric)}
             </p>
             <div className="button-row">
-              <button type="button" onClick={() => void onLoadDetail(alert.id).then(setSelected)}>
-                Details
-              </button>
-              <button type="button" onClick={() => onMarkViewed(alert.id)}>
-                Viewed
-              </button>
-              <button type="button" onClick={() => onAcknowledge(alert.id)}>
-                Ack
-              </button>
-              <button type="button" onClick={() => onResolve(alert.id)}>
-                Resolve
-              </button>
-              <button type="button" onClick={() => onClose(alert.id)}>
-                Close
-              </button>
+              <button type="button" onClick={() => void onLoadDetail(alert.id).then(setSelected)}>{t("alerts.details")}</button>
+              <button type="button" onClick={() => onMarkViewed(alert.id)}>{t("alerts.viewed")}</button>
+              <button type="button" onClick={() => onAcknowledge(alert.id)}>{t("alerts.ack")}</button>
+              <button type="button" onClick={() => onResolve(alert.id)}>{t("alerts.resolve")}</button>
+              <button type="button" onClick={() => onClose(alert.id)}>{t("common.close")}</button>
             </div>
           </article>
         ))}
@@ -100,24 +114,25 @@ export function Alerts({
 
       {selected ? (
         <div className="modal-root" role="dialog" aria-modal="true" aria-labelledby="alert-detail-title">
-          <button className="modal-backdrop" type="button" aria-label="Close" onClick={() => setSelected(null)} />
+          <button className="modal-backdrop" type="button" aria-label={t("common.close")} onClick={() => setSelected(null)} />
           <div className="modal-panel card">
-            <h2 id="alert-detail-title">{selected.title}</h2>
-            <p>{selected.message}</p>
-            <p className="muted">Value: {selected.value ?? "—"} | Threshold: {selected.threshold ?? "—"}</p>
-            <h3>Recommendation</h3>
-            <p>{selected.recommendation ?? "No recommendation returned yet."}</p>
-            <h3>Transition history</h3>
+            <h2 id="alert-detail-title">{localizeAlertText(selected.title)}</h2>
+            <p>{localizeAlertText(selected.message)}</p>
+            <p className="muted">{t("alerts.value")}: {selected.value ?? "--"} | {t("alerts.threshold")}: {selected.threshold ?? "--"}</p>
+            <h3>{t("alerts.recommendation")}</h3>
+            <p>{localizeAlertText(selected.recommendation) ?? t("alerts.noRecommendation")}</p>
+            <h3>{t("alerts.transitionHistory")}</h3>
             {selected.transitions?.length ? (
               <div className="screen">
-                {selected.transitions.map((t) => (
-                  <p className="muted" key={t.id}>
-                    {t.from_status} → {t.to_status} at {t.changed_at}
+                {selected.transitions.map((transition) => (
+                  <p className="muted" key={transition.id}>
+                    {label("alertStatus", transition.from_status)} -&gt; {label("alertStatus", transition.to_status)} |{" "}
+                    {formatDateTime(transition.changed_at)}
                   </p>
                 ))}
               </div>
             ) : (
-              <p className="muted">Open this alert from backend detail endpoint to load transition history.</p>
+              <p className="muted">{t("alerts.openDetail")}</p>
             )}
           </div>
         </div>

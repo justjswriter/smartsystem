@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useI18n } from "../i18n";
 
 type RegisterProps = {
   isLoading: boolean;
@@ -13,6 +14,7 @@ type RegisterProps = {
 };
 
 export function Register({ isLoading, error, onSubmit, onSwitchToLogin }: RegisterProps) {
+  const { t } = useI18n();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,11 +28,11 @@ export function Register({ isLoading, error, onSubmit, onSwitchToLogin }: Regist
   return (
     <div className="auth-layout">
       <form className="card auth-card" onSubmit={handleSubmit}>
-        <h1>Register</h1>
-        <p className="muted">Create an account for plant monitoring</p>
+        <h1>{t("auth.register.title")}</h1>
+        <p className="muted">{t("auth.register.subtitle")}</p>
 
         <label>
-          Full name
+          {t("auth.fullName")}
           <input
             type="text"
             value={fullName}
@@ -41,7 +43,7 @@ export function Register({ isLoading, error, onSubmit, onSwitchToLogin }: Regist
         </label>
 
         <label>
-          Email
+          {t("auth.email")}
           <input
             type="email"
             value={email}
@@ -52,7 +54,7 @@ export function Register({ isLoading, error, onSubmit, onSwitchToLogin }: Regist
         </label>
 
         <label>
-          Password
+          {t("auth.password")}
           <input
             type="password"
             value={password}
@@ -62,7 +64,7 @@ export function Register({ isLoading, error, onSubmit, onSwitchToLogin }: Regist
           />
         </label>
         <label>
-          Confirm password
+          {t("auth.confirmPassword")}
           <input
             type="password"
             value={passwordConfirm}
@@ -75,13 +77,13 @@ export function Register({ isLoading, error, onSubmit, onSwitchToLogin }: Regist
         {error ? <div className="error">{error}</div> : null}
 
         <button type="submit" disabled={isLoading}>
-          {isLoading ? "Creating..." : "Create account"}
+          {isLoading ? t("auth.creating") : t("auth.createAccount")}
         </button>
 
         <p className="switch-text">
-          Already have an account?{" "}
+          {t("auth.hasAccount")}{" "}
           <button type="button" className="link-btn" onClick={onSwitchToLogin}>
-            Login
+            {t("auth.login.title")}
           </button>
         </p>
       </form>

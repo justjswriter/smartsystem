@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useI18n } from "../i18n";
 
 type LoginProps = {
   isLoading: boolean;
@@ -8,6 +9,7 @@ type LoginProps = {
 };
 
 export function Login({ isLoading, error, onSubmit, onSwitchToRegister }: LoginProps) {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -19,11 +21,11 @@ export function Login({ isLoading, error, onSubmit, onSwitchToRegister }: LoginP
   return (
     <div className="auth-layout">
       <form className="card auth-card" onSubmit={handleSubmit}>
-        <h1>Login</h1>
-        <p className="muted">Smart Plant Monitor</p>
+        <h1>{t("auth.login.title")}</h1>
+        <p className="muted">{t("auth.login.subtitle")}</p>
 
         <label>
-          Email
+          {t("auth.email")}
           <input
             type="email"
             value={email}
@@ -34,7 +36,7 @@ export function Login({ isLoading, error, onSubmit, onSwitchToRegister }: LoginP
         </label>
 
         <label>
-          Password
+          {t("auth.password")}
           <input
             type="password"
             value={password}
@@ -47,13 +49,13 @@ export function Login({ isLoading, error, onSubmit, onSwitchToRegister }: LoginP
         {error ? <div className="error">{error}</div> : null}
 
         <button type="submit" disabled={isLoading}>
-          {isLoading ? "Signing in..." : "Sign in"}
+          {isLoading ? t("auth.signingIn") : t("auth.signIn")}
         </button>
 
         <p className="switch-text">
-          No account yet?{" "}
+          {t("auth.noAccount")}{" "}
           <button type="button" className="link-btn" onClick={onSwitchToRegister}>
-            Register
+            {t("auth.register")}
           </button>
         </p>
       </form>

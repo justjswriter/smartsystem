@@ -4,9 +4,11 @@ import { Link, useParams } from "react-router-dom";
 import { API_BASE_URL, getPlant, getPlantDashboard, uploadPlantPhoto } from "../api";
 import { PlantDetails } from "../components/PlantDetails";
 import { useAppState } from "../context/AppStateContext";
+import { useI18n } from "../i18n";
 import type { DashboardResponse, Plant } from "../types";
 
 export function PlantDetailsPage() {
+  const { t } = useI18n();
   const { plantId } = useParams();
   const { token, sensors, loadPlants } = useAppState();
   const [plant, setPlant] = useState<Plant | null>(null);
@@ -30,11 +32,11 @@ export function PlantDetailsPage() {
       setPlant(p);
       setDashboard(d);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load plant details");
+      setError(e instanceof Error ? e.message : t("common.failedLoadPlantDetails"));
     } finally {
       setLoading(false);
     }
-  }, [token, id]);
+  }, [token, id, t]);
 
   const refreshDashboard = useCallback(async () => {
     if (!token || !Number.isFinite(id)) {
@@ -46,11 +48,11 @@ export function PlantDetailsPage() {
       const d = await getPlantDashboard(token, id, 72);
       setDashboard(d);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to refresh sensor readings");
+      setError(e instanceof Error ? e.message : t("common.failedRefreshReadings"));
     } finally {
       setRefreshing(false);
     }
-  }, [token, id]);
+  }, [token, id, t]);
 
   const updatePhoto = useCallback(
     async (file: File) => {
@@ -64,12 +66,12 @@ export function PlantDetailsPage() {
         setPlant(updated);
         await loadPlants();
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to upload plant photo");
+        setError(e instanceof Error ? e.message : t("common.failedUploadPhoto"));
       } finally {
         setPhotoUploading(false);
       }
     },
-    [token, id, loadPlants]
+    [token, id, loadPlants, t]
   );
 
   useEffect(() => {
@@ -101,7 +103,7 @@ export function PlantDetailsPage() {
   if (!Number.isFinite(id)) {
     return (
       <p className="error">
-        Invalid plant id. <Link to="/plants">Back to plants</Link>
+        {t("common.invalidPlantId")} <Link to="/plants">{t("common.backToPlants")}</Link>
       </p>
     );
   }
