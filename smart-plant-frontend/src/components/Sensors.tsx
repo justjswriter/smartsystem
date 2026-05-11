@@ -12,6 +12,7 @@ type SensorsProps = {
   onAttach: (sensorId: number, plantId: number) => Promise<void>;
   onDetach: (sensorId: number) => Promise<void>;
   onRotateToken: (sensorId: number) => Promise<string | null>;
+  readOnly?: boolean;
 };
 
 const DEFAULT_DEVICE_ID = "arduino-uno-001";
@@ -31,6 +32,7 @@ export function Sensors({
   onAttach,
   onDetach,
   onRotateToken,
+  readOnly = false,
 }: SensorsProps) {
   const { t, label, formatDateTime } = useI18n();
   const [newDeviceId, setNewDeviceId] = useState(DEFAULT_DEVICE_ID);
@@ -79,43 +81,47 @@ export function Sensors({
       <div className="card onboarding-card">
         <h3>{t("sensors.gatewaySetup")}</h3>
         <p className="muted">
-          {t("sensors.gatewayText")}
+          {readOnly ? t("sensors.readOnlyText") : t("sensors.gatewayText")}
         </p>
-        <div className="onboarding-steps">
-          <span>{t("sensors.step1")}</span>
-          <span>{t("sensors.step2")}</span>
-          <span>{t("sensors.step3")}</span>
-          <span>{t("sensors.step4")}</span>
-        </div>
+        {!readOnly ? (
+          <div className="onboarding-steps">
+            <span>{t("sensors.step1")}</span>
+            <span>{t("sensors.step2")}</span>
+            <span>{t("sensors.step3")}</span>
+            <span>{t("sensors.step4")}</span>
+          </div>
+        ) : null}
       </div>
 
-      <form className="card sensor-form" onSubmit={handleCreate}>
-        <h3>{t("sensors.createIdentity")}</h3>
-        <label>
-          {t("sensors.deviceId")}
-          <input
-            type="text"
-            value={newDeviceId}
-            onChange={(e) => setNewDeviceId(e.target.value)}
-            placeholder={DEFAULT_DEVICE_ID}
-            minLength={3}
-            required
-          />
-        </label>
-        <label>
-          {t("sensors.sensorType")}
-          <select value={newType} onChange={(e) => setNewType(e.target.value)}>
-            <option value="multi">{t("sensors.multi")}</option>
-            <option value="soil_moisture">{t("sensors.soil")}</option>
-            <option value="temperature">{t("sensors.temperature")}</option>
-            <option value="air_humidity">{t("sensors.airHumidity")}</option>
-            <option value="light">{t("sensors.light")}</option>
-          </select>
-        </label>
-        <button type="submit">{t("sensors.create")}</button>
-      </form>
+      {!readOnly ? (
+        <form className="card sensor-form" onSubmit={handleCreate}>
+          <h3>{t("sensors.createIdentity")}</h3>
+          <label>
+            {t("sensors.deviceId")}
+            <input
+              type="text"
+              value={newDeviceId}
+              onChange={(e) => setNewDeviceId(e.target.value)}
+              placeholder={DEFAULT_DEVICE_ID}
+              minLength={3}
+              required
+            />
+          </label>
+          <label>
+            {t("sensors.sensorType")}
+            <select value={newType} onChange={(e) => setNewType(e.target.value)}>
+              <option value="multi">{t("sensors.multi")}</option>
+              <option value="soil_moisture">{t("sensors.soil")}</option>
+              <option value="temperature">{t("sensors.temperature")}</option>
+              <option value="air_humidity">{t("sensors.airHumidity")}</option>
+              <option value="light">{t("sensors.light")}</option>
+            </select>
+          </label>
+          <button type="submit">{t("sensors.create")}</button>
+        </form>
+      ) : null}
 
-      {provisioned ? (
+      {!readOnly && provisioned ? (
         <div className="card token-card">
           <h3>{t("sensors.oneTimeToken")}</h3>
           <p className="muted">
@@ -162,45 +168,49 @@ export function Sensors({
 
               {sensor.last_error_message ? <p className="error">{sensor.last_error_message}</p> : null}
 
-              <div className="gateway-command">
-                <p className="muted small">{t("sensors.commandTemplate")}</p>
-                <pre className="token-box">{gatewayCommand(sensor.device_id, TOKEN_PLACEHOLDER)}</pre>
-              </div>
+              {!readOnly ? (
+                <>
+                  <div className="gateway-command">
+                    <p className="muted small">{t("sensors.commandTemplate")}</p>
+                    <pre className="token-box">{gatewayCommand(sensor.device_id, TOKEN_PLACEHOLDER)}</pre>
+                  </div>
 
-              <div className="attach-panel">
-                <h4>{t("sensors.attachToPlant")}</h4>
-                <div className="attach-row">
-                  <select
-                    value={selectedPlantId}
-                    onChange={(e) =>
-                      setAttachPlantBySensor((current) => ({
-                        ...current,
-                        [sensor.id]: e.target.value,
-                      }))
-                    }
-                    disabled={plants.length === 0}
-                  >
-                    {plants.length === 0 ? <option value="">{t("sensors.createPlantFirst")}</option> : null}
-                    {plants.map((plant) => (
-                      <option key={plant.id} value={plant.id}>
-                        {plant.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button type="button" onClick={() => attach(sensor)} disabled={plants.length === 0}>
-                    {t("sensors.attach")}
-                  </button>
-                </div>
-              </div>
+                  <div className="attach-panel">
+                    <h4>{t("sensors.attachToPlant")}</h4>
+                    <div className="attach-row">
+                      <select
+                        value={selectedPlantId}
+                        onChange={(e) =>
+                          setAttachPlantBySensor((current) => ({
+                            ...current,
+                            [sensor.id]: e.target.value,
+                          }))
+                        }
+                        disabled={plants.length === 0}
+                      >
+                        {plants.length === 0 ? <option value="">{t("sensors.createPlantFirst")}</option> : null}
+                        {plants.map((plant) => (
+                          <option key={plant.id} value={plant.id}>
+                            {plant.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="button" onClick={() => attach(sensor)} disabled={plants.length === 0}>
+                        {t("sensors.attach")}
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="button-row">
-                <button type="button" onClick={() => onDetach(sensor.id)} disabled={!sensor.plant_id}>
-                  {t("sensors.detach")}
-                </button>
-                <button type="button" onClick={() => rotate(sensor)}>
-                  {t("sensors.rotate")}
-                </button>
-              </div>
+                  <div className="button-row">
+                    <button type="button" onClick={() => onDetach(sensor.id)} disabled={!sensor.plant_id}>
+                      {t("sensors.detach")}
+                    </button>
+                    <button type="button" onClick={() => rotate(sensor)}>
+                      {t("sensors.rotate")}
+                    </button>
+                  </div>
+                </>
+              ) : null}
             </article>
           );
         })}

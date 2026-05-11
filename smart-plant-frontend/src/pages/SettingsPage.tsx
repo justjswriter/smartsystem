@@ -34,6 +34,7 @@ export function SettingsPage() {
         onAttach={attachSensorToPlant}
         onDetach={detachSensorFromPlant}
         onRotateToken={rotateSensorDeviceToken}
+        readOnly
       />
     </div>
   );

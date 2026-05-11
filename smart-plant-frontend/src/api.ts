@@ -224,6 +224,17 @@ export async function attachSensor(token: string, sensorId: number, plantId: num
   );
 }
 
+export async function assignSensor(token: string, sensorId: number, userId: number): Promise<Sensor> {
+  return apiFetch<Sensor>(
+    `/sensors/${sensorId}/assign`,
+    {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId }),
+    },
+    token
+  );
+}
+
 export async function detachSensor(token: string, sensorId: number): Promise<Sensor> {
   return apiFetch<Sensor>(`/sensors/${sensorId}/detach`, { method: "POST" }, token);
 }

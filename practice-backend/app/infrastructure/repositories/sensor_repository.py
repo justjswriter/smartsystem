@@ -50,6 +50,12 @@ class SensorRepository:
         await self.db.refresh(sensor)
         return sensor
 
+    async def assign_to_user(self, sensor: Sensor, user_id: int) -> Sensor:
+        sensor.user_id = user_id
+        await self.db.commit()
+        await self.db.refresh(sensor)
+        return sensor
+
     async def detach_from_plant(self, sensor: Sensor) -> Sensor:
         sensor.plant_id = None
         sensor.status = SensorStatus.OFFLINE

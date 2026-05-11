@@ -806,6 +806,13 @@ Object.assign(dictionaries.kk, {
   "admin.column.event_type": "Оқиға түрі",
   "admin.column.user_id": "Пайдаланушы ID",
   "admin.column.message": "Хабарлама",
+  "admin.provisionSensor": "Сенсорды беру",
+  "admin.sensorActionFailed": "Сенсор әрекетін орындау мүмкін болмады",
+  "admin.assignUser": "Пайдаланушыға тағайындау",
+  "admin.assign": "Тағайындау",
+  "admin.noUsers": "Пайдаланушы жоқ",
+  "admin.plantIdPlaceholder": "Өсімдік ID",
+  "sensors.readOnlyText": "Әкімші тағайындаған сенсорларды, олардың күйін және соңғы сигналын көріңіз.",
 });
 
 Object.assign(dictionaries.ru, {
@@ -877,6 +884,14 @@ Object.assign(dictionaries.ru, {
   "admin.column.event_type": "Тип события",
   "admin.column.user_id": "ID пользователя",
   "admin.column.message": "Сообщение",
+  "admin.provisionSensor": "Выдача сенсора",
+  "admin.sensorActionFailed": "Не удалось выполнить действие с сенсором",
+  "admin.assignUser": "Назначить пользователю",
+  "admin.assign": "Назначить",
+  "admin.noUsers": "Нет пользователей",
+  "admin.plantIdPlaceholder": "ID растения",
+  "common.none": "Нет",
+  "sensors.readOnlyText": "Просматривайте назначенные администратором сенсоры, их статус и последний сигнал.",
 });
 
 Object.assign(dictionaries.en, {
@@ -941,6 +956,14 @@ Object.assign(dictionaries.en, {
   "admin.column.event_type": "Event type",
   "admin.column.user_id": "User ID",
   "admin.column.message": "Message",
+  "admin.provisionSensor": "Provision sensor",
+  "admin.sensorActionFailed": "Sensor action failed",
+  "admin.assignUser": "Assign to user",
+  "admin.assign": "Assign",
+  "admin.noUsers": "No users",
+  "admin.plantIdPlaceholder": "Plant ID",
+  "common.none": "None",
+  "sensors.readOnlyText": "View sensors assigned by an admin, their status, and their last signal.",
 });
 
 Object.assign(dictionaries.kk, {
