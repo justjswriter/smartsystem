@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from app.application.schemas.dashboard import DashboardPoint, PlantConditionResponse
 from app.application.services.ml_condition_service import MLConditionService
-from app.core.config import settings
+from app.domain.plant_knowledge import PlantProfile, resolve_plant_profile
 
 
 class PlantConditionService:
@@ -13,7 +13,14 @@ class PlantConditionService:
     def __init__(self, ml_service: MLConditionService | None = None) -> None:
         self.ml_service = ml_service or MLConditionService()
 
-    def evaluate(self, *, current: DashboardPoint | None, history: list[DashboardPoint]) -> PlantConditionResponse:
+    def evaluate(
+        self,
+        *,
+        current: DashboardPoint | None,
+        history: list[DashboardPoint],
+        plant_profile: PlantProfile | None = None,
+    ) -> PlantConditionResponse:
+        profile = plant_profile or resolve_plant_profile()
         if not current:
             return PlantConditionResponse(
                 condition_status="insufficient_data",
@@ -25,14 +32,7 @@ class PlantConditionService:
             )
 
         penalties: list[tuple[str, int]] = []
-        if current.moisture is not None and current.moisture < settings.MOISTURE_MIN:
-            penalties.append(("low_soil_moisture", self._below_penalty(current.moisture, settings.MOISTURE_MIN)))
-        if current.temperature is not None and current.temperature > settings.TEMPERATURE_MAX:
-            penalties.append(("high_temperature", self._above_penalty(current.temperature, settings.TEMPERATURE_MAX)))
-        if current.humidity is not None and current.humidity < settings.HUMIDITY_MIN:
-            penalties.append(("low_air_humidity", self._below_penalty(current.humidity, settings.HUMIDITY_MIN)))
-        if current.light is not None and current.light < settings.LIGHT_MIN:
-            penalties.append(("low_light", self._below_penalty(current.light, settings.LIGHT_MIN)))
+        self._add_profile_penalties(penalties=penalties, current=current, profile=profile)
 
         trend_penalty, trend_factors = self._trend_penalty(history)
         score = max(0, min(100, 100 - sum(p for _, p in penalties) - trend_penalty))
@@ -69,6 +69,22 @@ class PlantConditionService:
             class_probabilities=ml_result["class_probabilities"],
             analysis_method=analysis_method,
         )
+
+    @staticmethod
+    def _add_profile_penalties(
+        *,
+        penalties: list[tuple[str, int]],
+        current: DashboardPoint,
+        profile: PlantProfile,
+    ) -> None:
+        for issue in profile.issues.values():
+            value = getattr(current, issue.metric, None)
+            if value is None:
+                continue
+            if issue.direction == "below" and value < issue.threshold:
+                penalties.append((issue.code, PlantConditionService._below_penalty(value, issue.threshold)))
+            elif issue.direction == "above" and value > issue.threshold:
+                penalties.append((issue.code, PlantConditionService._above_penalty(value, issue.threshold)))
 
     @staticmethod
     def _below_penalty(value: float, threshold: float) -> int:

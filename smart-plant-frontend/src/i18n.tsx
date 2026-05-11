@@ -660,6 +660,7 @@ Object.assign(dictionaries.en, {
 });
 
 Object.assign(dictionaries.kk, {
+  "plantType.epipremnum_aureum": "Алтын потос / Эпипремнум",
   "nav.dashboard": "Бақылау",
   "nav.plants": "Өсімдіктер",
   "nav.analytics": "Аналитика",
@@ -693,6 +694,7 @@ Object.assign(dictionaries.kk, {
 });
 
 Object.assign(dictionaries.ru, {
+  "plantType.epipremnum_aureum": "Золотой потос / Эпипремнум",
   "common.load": "Загрузить",
   "common.export": "Экспорт",
   "dashboard.temp": "Температура",
@@ -723,6 +725,7 @@ Object.assign(dictionaries.ru, {
 });
 
 Object.assign(dictionaries.en, {
+  "plantType.epipremnum_aureum": "Golden pothos / Epipremnum aureum",
   "plant.lightLegend": "Light score",
   "plant.temperatureLegend": "Temperature (°C)",
   "plant.moistureLegend": "Soil moisture (%)",
@@ -1048,6 +1051,33 @@ Object.assign(dictionaries.en, {
   "alertText.humidityBelowTitle": "Humidity threshold below",
   "alertText.humidityBelowMessage": "Humidity is below threshold",
   "alertText.humidityBelowRecommendation": "Increase ambient humidity with a tray, humidifier, or grouped plants.",
+});
+
+Object.assign(dictionaries.kk, {
+  "alertText.moistureAboveTitle": "Топырақ ылғалы шектен жоғары",
+  "alertText.moistureAboveMessage": "Топырақ ылғалы Алтын потос үшін ұсынылған жоғарғы шектен жоғары.",
+  "alertText.moistureAboveRecommendation": "Суаруды уақытша тоқтатып, келесі суаруға дейін топырақтың кебуін күтіңіз.",
+  "alertText.temperatureBelowTitle": "Температура шектен төмен",
+  "alertText.temperatureBelowMessage": "Температура Алтын потос үшін ұсынылған шектен төмен.",
+  "alertText.temperatureBelowRecommendation": "Өсімдікті жылырақ жерге қойып, суық ауа ағынынан қорғаңыз.",
+});
+
+Object.assign(dictionaries.ru, {
+  "alertText.moistureAboveTitle": "Влажность почвы выше порога",
+  "alertText.moistureAboveMessage": "Влажность почвы выше верхнего порога для золотого потоса.",
+  "alertText.moistureAboveRecommendation": "Временно остановите полив и дайте почве подсохнуть перед следующим поливом.",
+  "alertText.temperatureBelowTitle": "Температура ниже порога",
+  "alertText.temperatureBelowMessage": "Температура ниже рекомендуемого порога для золотого потоса.",
+  "alertText.temperatureBelowRecommendation": "Переставьте растение в более тёплое место и защитите от холодных сквозняков.",
+});
+
+Object.assign(dictionaries.en, {
+  "alertText.moistureAboveTitle": "Moisture threshold above",
+  "alertText.moistureAboveMessage": "Moisture is above the Golden pothos profile threshold.",
+  "alertText.moistureAboveRecommendation": "Pause watering and let the soil dry down before the next watering.",
+  "alertText.temperatureBelowTitle": "Temperature threshold below",
+  "alertText.temperatureBelowMessage": "Temperature is below the Golden pothos profile threshold.",
+  "alertText.temperatureBelowRecommendation": "Move the plant to a warmer area and keep it away from cold drafts.",
 });
 
 type I18nContextValue = {

@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Activity, ChevronDown, Droplet, Plus, Search, Sun, Thermometer } from "lucide-react";
 import { useI18n } from "../i18n";
+import { displayPlantSpecies, SUPPORTED_PLANT_SPECIES, supportedPlantTypeName } from "../plantKnowledge";
 import type { DashboardPoint, Plant, PlantCondition } from "../types";
 
 type DashboardStats = {
@@ -44,7 +45,6 @@ export function Dashboard({
   const [sortBy, setSortBy] = useState<SortKey>("health");
   const [modalOpen, setModalOpen] = useState(false);
   const [name, setName] = useState("");
-  const [species, setSpecies] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
@@ -116,13 +116,12 @@ export function Dashboard({
     try {
       await onCreatePlant({
         name: name.trim(),
-        species: species.trim() || undefined,
+        species: SUPPORTED_PLANT_SPECIES,
         location: location.trim() || undefined,
         description: description.trim() || undefined,
       });
       setModalOpen(false);
       setName("");
-      setSpecies("");
       setLocation("");
       setDescription("");
     } finally {
@@ -205,7 +204,7 @@ export function Dashboard({
                         </div>
                         <div>
                           <div className="plant-name">{plant.name}</div>
-                          <div className="muted small">{plant.species ?? "--"}</div>
+                          <div className="muted small">{displayPlantSpecies(plant.species, t)}</div>
                         </div>
                       </div>
                     </td>
@@ -259,7 +258,7 @@ export function Dashboard({
             <h2 id="add-plant-title">{t("dashboard.addPlantTitle")}</h2>
             <form className="modal-form" onSubmit={submitPlant}>
               <label>{t("dashboard.name")}<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
-              <label>{t("dashboard.species")}<input value={species} onChange={(e) => setSpecies(e.target.value)} /></label>
+              <label>{t("dashboard.species")}<input value={supportedPlantTypeName(t)} readOnly /></label>
               <label>{t("dashboard.location")}<input value={location} onChange={(e) => setLocation(e.target.value)} /></label>
               <label>{t("dashboard.description")}<input value={description} onChange={(e) => setDescription(e.target.value)} /></label>
               <div className="modal-actions">

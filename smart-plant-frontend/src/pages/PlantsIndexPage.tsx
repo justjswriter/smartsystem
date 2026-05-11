@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAppState } from "../context/AppStateContext";
 import { useI18n } from "../i18n";
+import { displayPlantSpecies } from "../plantKnowledge";
 
 export function PlantsIndexPage() {
   const { plants, isPlantsLoading } = useAppState();
@@ -34,7 +35,7 @@ export function PlantsIndexPage() {
         {plants.map((plant) => (
           <Link key={plant.id} to={`/plants/${plant.id}`} className="plant-tile card">
             <h3>{plant.name}</h3>
-            <p className="muted">{plant.species ?? t("plants.speciesNotSet")}</p>
+            <p className="muted">{displayPlantSpecies(plant.species, t)}</p>
             <p className="muted">{plant.location ?? t("plants.locationNotSet")}</p>
             <span className="text-link">{t("dashboard.viewDetails")}</span>
           </Link>

@@ -34,7 +34,7 @@ def test_condition_critical_for_bad_sensor_values():
     current = point(moisture=5.0, temperature=42.0, humidity=15.0, light=50.0)
     condition = PlantConditionService().evaluate(current=current, history=[current])
     assert condition.condition_status == "critical"
-    assert "low_soil_moisture" in condition.risk_factors
+    assert "low_moisture" in condition.risk_factors
 
 
 def test_dashboard_condition_works_without_model(tmp_path):

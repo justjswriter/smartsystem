@@ -3,9 +3,10 @@ from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.services.recommendation_service import RecommendationService
-from app.core.config import settings
 from app.core.security import verify_device_token
 from app.domain.enums import AlertSeverity, AlertStatus, SensorStatus
+from app.domain.plant_knowledge import resolve_plant_profile
+from app.domain.plant_knowledge.types import IssueDefinition
 from app.infrastructure.repositories import (
     AlertRepository,
     PlantRepository,
@@ -80,30 +81,17 @@ class AlertService:
         return data
 
     async def _evaluate_thresholds(self, *, sensor_id: int, plant_id: int, payload: dict) -> None:
-        checks: list[tuple[str, float, float, str]] = []
-        moisture = payload.get("moisture")
-        temperature = payload.get("temperature")
-        humidity = payload.get("humidity")
-        light = payload.get("light")
-
-        if moisture is not None and moisture < settings.MOISTURE_MIN:
-            checks.append(("moisture", moisture, settings.MOISTURE_MIN, "below"))
-        if temperature is not None and temperature > settings.TEMPERATURE_MAX:
-            checks.append(("temperature", temperature, settings.TEMPERATURE_MAX, "above"))
-        if humidity is not None and humidity < settings.HUMIDITY_MIN:
-            checks.append(("humidity", humidity, settings.HUMIDITY_MIN, "below"))
-        if light is not None and light < settings.LIGHT_MIN:
-            checks.append(("light", light, settings.LIGHT_MIN, "below"))
-
         plant = await self.plant_repo.get_by_id(plant_id)
         if not plant:
             return
+        profile = resolve_plant_profile(getattr(plant, "species", None))
+        checks = self._profile_checks(profile=profile, payload=payload)
 
-        for metric, value, threshold, direction in checks:
-            existing = await self.alert_repo.find_open_by_metric(plant_id=plant_id, metric=metric)
+        for issue, value in checks:
+            existing = await self.alert_repo.find_open_by_metric(plant_id=plant_id, metric=issue.metric)
             if existing:
                 continue
-            ratio = (threshold / value) if direction == "below" and value > 0 else (value / threshold)
+            ratio = (issue.threshold / value) if issue.direction == "below" and value > 0 else (value / issue.threshold)
             severity = self._severity_from_ratio(ratio)
             alert = await self.alert_repo.create(
                 {
@@ -112,11 +100,11 @@ class AlertService:
                     "sensor_id": sensor_id,
                     "status": AlertStatus.CREATED,
                     "severity": severity,
-                    "title": f"{metric.capitalize()} threshold {direction}",
-                    "message": f"{metric.capitalize()} is {direction} threshold",
-                    "metric": metric,
+                    "title": issue.title.text("en"),
+                    "message": issue.message.text("en"),
+                    "metric": issue.metric,
                     "value": value,
-                    "threshold": threshold,
+                    "threshold": issue.threshold,
                 }
             )
             await self.alert_repo.add_transition(
@@ -127,15 +115,33 @@ class AlertService:
                 note="Alert created from ingest evaluation",
             )
             await self.recommendation_service.create_for_alert(
-                plant_id=plant_id, alert_id=alert.id, metric=metric, severity=severity.value
+                plant_id=plant_id,
+                alert_id=alert.id,
+                metric=issue.metric,
+                severity=severity.value,
+                issue_code=issue.code,
+                plant_profile=profile,
             )
             await self.log_repo.create(
                 event_type="alert_created",
                 message=f"Alert {alert.id} created for plant {plant_id}",
                 user_id=plant.user_id,
-                payload={"alert_id": alert.id, "metric": metric, "value": value},
+                payload={"alert_id": alert.id, "metric": issue.metric, "issue": issue.code, "value": value},
             )
             await event_bus.publish(
                 f"alerts:{plant.user_id}",
-                {"event": "new_alert", "alert_id": alert.id, "metric": metric, "severity": severity.value},
+                {"event": "new_alert", "alert_id": alert.id, "metric": issue.metric, "severity": severity.value},
             )
+
+    @staticmethod
+    def _profile_checks(*, profile, payload: dict) -> list[tuple[IssueDefinition, float]]:
+        checks: list[tuple[IssueDefinition, float]] = []
+        for issue in profile.issues.values():
+            value = payload.get(issue.metric)
+            if value is None:
+                continue
+            if issue.direction == "below" and value < issue.threshold:
+                checks.append((issue, value))
+            elif issue.direction == "above" and value > issue.threshold:
+                checks.append((issue, value))
+        return checks

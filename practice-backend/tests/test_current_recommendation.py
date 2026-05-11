@@ -65,6 +65,15 @@ def test_normalized_readings_do_not_keep_historical_alert_advice():
     assert "watering" not in recommendation.text.lower()
 
 
+def test_high_moisture_returns_profile_advice():
+    recommendation = current_recommendation_for(point(moisture=90.0))
+
+    assert recommendation is not None
+    assert recommendation.metric == "moisture"
+    assert "watering" in recommendation.text.lower()
+    assert "pause" in recommendation.text.lower()
+
+
 class FakePlantRepository:
     async def get_for_user(self, plant_id: int, user_id: int):
         return SimpleNamespace(id=plant_id, user_id=user_id)

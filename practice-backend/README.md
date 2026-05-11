@@ -246,7 +246,7 @@ curl -X POST http://127.0.0.1:8000/api/v1/auth/login \
 curl -X POST http://127.0.0.1:8000/api/v1/plants \
   -H "Authorization: Bearer <USER_TOKEN>" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Monstera Demo","species":"Monstera Deliciosa","location":"Living room"}'
+  -d '{"name":"Golden Pothos Demo","species":"Epipremnum aureum","location":"Living room"}'
 ```
 
 ### Attach sensor

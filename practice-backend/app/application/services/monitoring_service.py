@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.application.schemas.dashboard import DashboardPoint, DashboardResponse
 from app.application.services.plant_condition_service import PlantConditionService
 from app.application.services.recommendation_service import RecommendationService
+from app.domain.plant_knowledge import resolve_plant_profile
 from app.infrastructure.repositories import PlantRepository, SensorDataRepository
 
 
@@ -43,10 +44,12 @@ class MonitoringService:
             )
             for item in history_data
         ]
-        condition = self.condition_service.evaluate(current=current, history=history)
+        plant_profile = resolve_plant_profile(getattr(plant, "species", None))
+        condition = self.condition_service.evaluate(current=current, history=history, plant_profile=plant_profile)
         active_recommendation = self.recommendation_service.build_current_recommendation(
             current=current,
             condition=condition,
+            plant_profile=plant_profile,
         )
         return DashboardResponse(
             plant_id=plant_id,

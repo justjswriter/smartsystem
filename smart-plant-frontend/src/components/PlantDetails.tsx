@@ -23,6 +23,7 @@ import {
   YAxis,
 } from "recharts";
 import { useI18n } from "../i18n";
+import { displayPlantSpecies } from "../plantKnowledge";
 import type { DashboardResponse, Plant, Sensor } from "../types";
 
 type PlantDetailsProps = {
@@ -115,7 +116,7 @@ export function PlantDetails({
       <div className="page-head plant-detail-head">
         <div>
           <h1 className="page-title">{plant.name}</h1>
-          <p className="muted page-lead">{plant.species ?? t("plant.speciesNotSet")}</p>
+          <p className="muted page-lead">{displayPlantSpecies(plant.species, t)}</p>
         </div>
         <div className="button-row">
           <button type="button" className="btn-secondary" onClick={onRefresh} disabled={isRefreshing}>

@@ -74,7 +74,7 @@ Create plant:
 curl -X POST http://127.0.0.1:8000/api/v1/plants \
   -H "Authorization: Bearer USER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Demo Plant 2","species":"Ficus","location":"Kitchen"}'
+  -d '{"name":"Demo Golden Pothos 2","species":"Epipremnum aureum","location":"Kitchen"}'
 ```
 
 Expected result: plant created with `id`.
@@ -86,7 +86,7 @@ curl -X GET http://127.0.0.1:8000/api/v1/plants \
   -H "Authorization: Bearer USER_TOKEN"
 ```
 
-Expected result: list contains seeded `Demo Monstera` and new plant.
+Expected result: list contains seeded `Demo Golden Pothos` and new plant.
 
 ## 3) US3 Sensor attach (30-40 sec)
 
