@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application.services.notification_service import NotificationService
 from app.application.services.recommendation_service import RecommendationService
 from app.core.security import verify_device_token
 from app.domain.enums import AlertSeverity, AlertStatus, SensorStatus
@@ -24,6 +25,7 @@ class AlertService:
         self.plant_repo = PlantRepository(db)
         self.sensor_data_repo = SensorDataRepository(db)
         self.recommendation_service = RecommendationService(db)
+        self.notification_service = NotificationService(db)
         self.log_repo = SystemLogRepository(db)
 
     @staticmethod
@@ -122,6 +124,7 @@ class AlertService:
                 issue_code=issue.code,
                 plant_profile=profile,
             )
+            await self.notification_service.create_for_alert(alert=alert, issue_code=issue.code)
             await self.log_repo.create(
                 event_type="alert_created",
                 message=f"Alert {alert.id} created for plant {plant_id}",

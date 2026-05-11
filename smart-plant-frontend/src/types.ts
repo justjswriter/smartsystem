@@ -124,6 +124,24 @@ export type SensorProvisionResponse = {
   device_token: string;
 };
 
+export type Notification = {
+  id: number;
+  user_id: number;
+  type: string;
+  severity: "info" | "warning" | "critical" | string;
+  title_key: string;
+  message_key: string;
+  params: Record<string, string | number | null | undefined> | null;
+  title: string | null;
+  message: string | null;
+  related_plant_id: number | null;
+  related_alert_id: number | null;
+  related_sensor_id: number | null;
+  dedupe_key: string | null;
+  read_at: string | null;
+  created_at: string;
+};
+
 export type AdminLog = {
   id: number;
   user_id: number | null;

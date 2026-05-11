@@ -16,14 +16,17 @@ import {
   detachSensor,
   getAlerts,
   getMe,
+  getNotifications,
   getPlants,
   getSensors,
   login,
+  markAllNotificationsRead,
+  markNotificationRead,
   register,
   rotateSensorToken,
   transitionAlert,
 } from "../api";
-import type { Alert, Plant, Sensor, User } from "../types";
+import type { Alert, Notification, Plant, Sensor, User } from "../types";
 
 const TOKEN_KEY = "smart-plant-token";
 
@@ -32,18 +35,22 @@ type AppStateContextValue = {
   user: User | null;
   plants: Plant[];
   alerts: Alert[];
+  notifications: Notification[];
   sensors: Sensor[];
   isAuthLoading: boolean;
   isPlantsLoading: boolean;
   isAlertsLoading: boolean;
+  isNotificationsLoading: boolean;
   isSensorsLoading: boolean;
   authError: string;
   plantsError: string;
   alertsError: string;
+  notificationsError: string;
   sensorsError: string;
   setAuthError: (message: string) => void;
   loadPlants: () => Promise<void>;
   loadAlerts: () => Promise<void>;
+  loadNotifications: () => Promise<void>;
   loadSensors: () => Promise<void>;
   loginWithCredentials: (email: string, password: string) => Promise<void>;
   registerAccount: (
@@ -67,6 +74,8 @@ type AppStateContextValue = {
   acknowledgeAlert: (alertId: number) => Promise<void>;
   resolveAlert: (alertId: number) => Promise<void>;
   closeAlert: (alertId: number) => Promise<void>;
+  markNotificationAsRead: (notificationId: number) => Promise<void>;
+  markAllNotificationsAsRead: () => Promise<void>;
 };
 
 const AppStateContext = createContext<AppStateContextValue | null>(null);
@@ -76,14 +85,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [plants, setPlants] = useState<Plant[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [sensors, setSensors] = useState<Sensor[]>([]);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isPlantsLoading, setIsPlantsLoading] = useState(false);
   const [isAlertsLoading, setIsAlertsLoading] = useState(false);
+  const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
   const [isSensorsLoading, setIsSensorsLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [plantsError, setPlantsError] = useState("");
   const [alertsError, setAlertsError] = useState("");
+  const [notificationsError, setNotificationsError] = useState("");
   const [sensorsError, setSensorsError] = useState("");
 
   useEffect(() => {
@@ -151,14 +163,31 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
   }, [token]);
 
+  const loadNotifications = useCallback(async () => {
+    if (!token) {
+      return;
+    }
+    setIsNotificationsLoading(true);
+    setNotificationsError("");
+    try {
+      const data = await getNotifications(token);
+      setNotifications(data);
+    } catch (error) {
+      setNotificationsError(error instanceof Error ? error.message : "Failed to load notifications");
+    } finally {
+      setIsNotificationsLoading(false);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (!token) {
       return;
     }
     void loadPlants();
     void loadAlerts();
+    void loadNotifications();
     void loadSensors();
-  }, [token, loadPlants, loadAlerts, loadSensors]);
+  }, [token, loadPlants, loadAlerts, loadNotifications, loadSensors]);
 
   useEffect(() => {
     if (!token) {
@@ -181,6 +210,28 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     });
     return () => abortController.abort();
   }, [token, loadAlerts]);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+    const abortController = new AbortController();
+    void fetchEventSource(`${API_BASE_URL}/stream/notifications`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+      signal: abortController.signal,
+      onmessage(event) {
+        if (event.event === "heartbeat") {
+          return;
+        }
+        void loadNotifications();
+      },
+      onerror() {
+        // fetch-event-source retries
+      },
+    });
+    return () => abortController.abort();
+  }, [token, loadNotifications]);
 
   const loginWithCredentials = useCallback(async (email: string, password: string) => {
     setIsAuthLoading(true);
@@ -237,6 +288,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setPlants([]);
     setAlerts([]);
+    setNotifications([]);
     setSensors([]);
   }, []);
 
@@ -376,24 +428,47 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     [token, loadAlerts]
   );
 
+  const markNotificationAsRead = useCallback(
+    async (notificationId: number) => {
+      if (!token) {
+        return;
+      }
+      await markNotificationRead(token, notificationId);
+      await loadNotifications();
+    },
+    [token, loadNotifications]
+  );
+
+  const markAllNotificationsAsRead = useCallback(async () => {
+    if (!token) {
+      return;
+    }
+    await markAllNotificationsRead(token);
+    await loadNotifications();
+  }, [token, loadNotifications]);
+
   const value = useMemo<AppStateContextValue>(
     () => ({
       token,
       user,
       plants,
       alerts,
+      notifications,
       sensors,
       isAuthLoading,
       isPlantsLoading,
       isAlertsLoading,
+      isNotificationsLoading,
       isSensorsLoading,
       authError,
       plantsError,
       alertsError,
+      notificationsError,
       sensorsError,
       setAuthError,
       loadPlants,
       loadAlerts,
+      loadNotifications,
       loadSensors,
       loginWithCredentials,
       registerAccount,
@@ -407,23 +482,29 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       acknowledgeAlert,
       resolveAlert,
       closeAlert,
+      markNotificationAsRead,
+      markAllNotificationsAsRead,
     }),
     [
       token,
       user,
       plants,
       alerts,
+      notifications,
       sensors,
       isAuthLoading,
       isPlantsLoading,
       isAlertsLoading,
+      isNotificationsLoading,
       isSensorsLoading,
       authError,
       plantsError,
       alertsError,
+      notificationsError,
       sensorsError,
       loadPlants,
       loadAlerts,
+      loadNotifications,
       loadSensors,
       loginWithCredentials,
       registerAccount,
@@ -437,6 +518,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       acknowledgeAlert,
       resolveAlert,
       closeAlert,
+      markNotificationAsRead,
+      markAllNotificationsAsRead,
     ]
   );
 

@@ -16,6 +16,7 @@ from app.application.schemas.auth import (
     UserResponse,
 )
 from app.application.schemas.dashboard import DashboardPoint, DashboardResponse
+from app.application.schemas.notification import NotificationResponse
 from app.application.schemas.plant import PlantCreate, PlantResponse, PlantUpdate
 from app.application.schemas.sensor import (
     SensorAttachRequest,
@@ -34,6 +35,7 @@ __all__ = [
     "DashboardPoint",
     "DashboardResponse",
     "LoginRequest",
+    "NotificationResponse",
     "PlantCreate",
     "PlantResponse",
     "PlantUpdate",

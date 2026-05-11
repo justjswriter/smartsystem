@@ -1103,6 +1103,54 @@ Object.assign(dictionaries.en, {
   "alertText.temperatureBelowRecommendation": "Move the plant to a warmer area and keep it away from cold drafts.",
 });
 
+Object.assign(dictionaries.kk, {
+  "notifications.title": "Хабарламалар",
+  "notifications.empty": "Әзірге хабарлама жоқ.",
+  "notifications.markRead": "Оқылды",
+  "notifications.markAllRead": "Барлығын оқылды деп белгілеу",
+  "notification.alert.condition.title": "Өсімдікке назар керек",
+  "notification.alert.condition.message": (p?: Record<string, string | number | null | undefined>) =>
+    `Өсімдік #${p?.plant_id ?? ""} үшін ${p?.metric ?? "көрсеткіш"} бойынша жаңа ескерту бар.`,
+  "notification.alert.critical.title": "Критикалық ескерту",
+  "notification.alert.critical.message": (p?: Record<string, string | number | null | undefined>) =>
+    `Өсімдік #${p?.plant_id ?? ""} үшін критикалық ${p?.metric ?? "көрсеткіш"} ескертуі жасалды.`,
+  "notificationSeverity.info": "Ақпарат",
+  "notificationSeverity.warning": "Ескерту",
+  "notificationSeverity.critical": "Критикалық",
+});
+
+Object.assign(dictionaries.ru, {
+  "notifications.title": "Уведомления",
+  "notifications.empty": "Уведомлений пока нет.",
+  "notifications.markRead": "Прочитано",
+  "notifications.markAllRead": "Прочитать все",
+  "notification.alert.condition.title": "Растению нужно внимание",
+  "notification.alert.condition.message": (p?: Record<string, string | number | null | undefined>) =>
+    `Для растения #${p?.plant_id ?? ""} появилось новое предупреждение по метрике ${p?.metric ?? "показатель"}.`,
+  "notification.alert.critical.title": "Критическое предупреждение",
+  "notification.alert.critical.message": (p?: Record<string, string | number | null | undefined>) =>
+    `Для растения #${p?.plant_id ?? ""} создано критическое предупреждение по метрике ${p?.metric ?? "показатель"}.`,
+  "notificationSeverity.info": "Информация",
+  "notificationSeverity.warning": "Предупреждение",
+  "notificationSeverity.critical": "Критично",
+});
+
+Object.assign(dictionaries.en, {
+  "notifications.title": "Notifications",
+  "notifications.empty": "No notifications yet.",
+  "notifications.markRead": "Mark read",
+  "notifications.markAllRead": "Mark all read",
+  "notification.alert.condition.title": "Plant needs attention",
+  "notification.alert.condition.message": (p?: Record<string, string | number | null | undefined>) =>
+    `Plant #${p?.plant_id ?? ""} has a new ${p?.metric ?? "metric"} alert.`,
+  "notification.alert.critical.title": "Critical alert",
+  "notification.alert.critical.message": (p?: Record<string, string | number | null | undefined>) =>
+    `Plant #${p?.plant_id ?? ""} has a critical ${p?.metric ?? "metric"} alert.`,
+  "notificationSeverity.info": "Info",
+  "notificationSeverity.warning": "Warning",
+  "notificationSeverity.critical": "Critical",
+});
+
 type I18nContextValue = {
   language: Language;
   setLanguage: (language: Language) => void;

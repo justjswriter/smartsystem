@@ -3,6 +3,7 @@ import type {
   AuthResponse,
   DashboardResponse,
   LoginPayload,
+  Notification,
   Plant,
   RegisterPayload,
   Sensor,
@@ -196,6 +197,22 @@ export async function transitionAlert(
     method: "POST",
     body: JSON.stringify({ to_status: toStatus, note: note ?? null }),
   }, token);
+}
+
+export async function getNotifications(token: string, unreadOnly = false): Promise<Notification[]> {
+  return apiFetch<Notification[]>(
+    `/notifications?unread_only=${String(unreadOnly)}`,
+    { method: "GET" },
+    token
+  );
+}
+
+export async function markNotificationRead(token: string, notificationId: number): Promise<Notification> {
+  return apiFetch<Notification>(`/notifications/${notificationId}/read`, { method: "POST" }, token);
+}
+
+export async function markAllNotificationsRead(token: string): Promise<Notification[]> {
+  return apiFetch<Notification[]>("/notifications/read-all", { method: "POST" }, token);
 }
 
 export async function getSensors(token: string): Promise<Sensor[]> {

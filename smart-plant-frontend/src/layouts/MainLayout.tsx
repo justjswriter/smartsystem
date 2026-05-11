@@ -1,7 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   BarChart3,
-  Bell,
   Home,
   Leaf,
   LogOut,
@@ -9,15 +8,14 @@ import {
   Shield,
   User,
 } from "lucide-react";
+import { NotificationsPanel } from "../components/NotificationsPanel";
 import { useAppState } from "../context/AppStateContext";
 import { useI18n, type Language } from "../i18n";
 
 export function MainLayout() {
-  const { user, logout, alerts } = useAppState();
+  const { user, logout, notifications, markNotificationAsRead, markAllNotificationsAsRead } = useAppState();
   const { language, setLanguage, t } = useI18n();
   const navigate = useNavigate();
-
-  const openAlerts = alerts.filter((a) => a.status === "created" || a.status === "viewed").length;
 
   function handleLogout() {
     logout();
@@ -72,10 +70,11 @@ export function MainLayout() {
                 <option value="en">EN</option>
               </select>
             </label>
-            <NavLink to="/alerts" className="icon-btn" title={t("nav.alerts")} aria-label={t("nav.alerts")}>
-              <Bell size={20} />
-              {openAlerts > 0 ? <span className="alert-dot" /> : null}
-            </NavLink>
+            <NotificationsPanel
+              notifications={notifications}
+              onMarkRead={markNotificationAsRead}
+              onMarkAllRead={markAllNotificationsAsRead}
+            />
             <span className="top-divider" aria-hidden />
             <NavLink
               to="/profile"
