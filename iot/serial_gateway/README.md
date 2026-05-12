@@ -51,17 +51,18 @@ Useful backend checks:
 - `http://127.0.0.1:8000/health`
 - `http://127.0.0.1:8000/docs`
 
-## 3. Register and attach a backend sensor
+## 3. Provision and attach a backend sensor
 
 1. Open `http://127.0.0.1:5173`.
-2. Register or log in.
-3. Create or choose a plant.
-4. Open the Sensors page.
-5. Register a new sensor:
+2. Log in as a regular user and create or choose a plant.
+3. Log in as admin and open the Admin page.
+4. Create a new sensor:
    - Device ID: `arduino-uno-001`
    - Type: `multi`
-6. Copy the shown device token. It is shown once.
-7. Attach the sensor to the plant.
+5. Copy the shown device token. It is shown once.
+6. Assign the sensor to the user who owns the plant.
+7. Attach the sensor to that plant.
+8. Return to the regular user account if you want to verify the read-only Sensors page.
 
 The gateway must use the same `device_id` and device token.
 
@@ -139,7 +140,7 @@ The light value is a normalized score for the project dashboard, not real lux.
 
 - `Could not open serial port`: close Arduino IDE Serial Monitor and check the COM port.
 - `401`: the device token does not match the backend sensor.
-- `Sensor device_id was not found`: register the sensor in the frontend with the same `device_id`.
-- `Sensor is not attached to a plant`: attach the sensor in the frontend Sensors page.
+- `Sensor device_id was not found`: ask/admin-provision the sensor with the same `device_id`.
+- `Sensor is not attached to a plant`: attach the sensor in the admin provisioning UI.
 - `Backend is unavailable`: check that FastAPI is running on `http://127.0.0.1:8000`.
 - `Skipping non-JSON serial line`: the gateway ignored a debug/startup line and will continue reading.

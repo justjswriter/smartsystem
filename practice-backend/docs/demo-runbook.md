@@ -4,7 +4,7 @@ This runbook is optimized for a short live demo of all 8 user stories without ch
 
 ## Demo Goal
 
-Show full flow: onboarding -> monitoring -> alert handling -> admin monitoring.
+Show full flow: onboarding -> admin sensor provisioning -> monitoring -> alerts -> in-app notifications -> admin monitoring.
 
 ## Demo Data
 
@@ -17,19 +17,18 @@ Use seeded credentials and entities from `scripts/bootstrap_demo.py`:
 
 ## 0) Pre-demo setup (1-2 minutes)
 
-Run these commands from project root:
+Run these commands from the current Windows project root:
 
-```bash
-cd /Users/zhalgassovasaniya/Downloads/Practice-main
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+```powershell
+cd C:\Users\darig\CursorProjects\smartsystem
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 cd practice-backend
-cp .env.example .env
+Copy-Item .env.example .env
 docker compose up -d
-alembic upgrade head
-python -m scripts.bootstrap_demo
-uvicorn app.main:app --reload
+..\.venv\Scripts\alembic.exe upgrade head
+..\.venv\Scripts\python.exe -m scripts.bootstrap_demo
+..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
 If `docker compose up -d` fails with `Cannot connect to the Docker daemon`, start Docker Desktop first and retry.
@@ -62,7 +61,7 @@ curl -X POST http://127.0.0.1:8000/api/v1/auth/login \
   -d '{"email":"demo@example.com","password":"DemoPass123!"}'
 ```
 
-Copy `access_token` as `USER_TOKEN`.
+Copy `access_token` as `USER_TOKEN` and `user.id` as `USER_ID`.
 
 Expected result: `access_token` + user payload.
 
@@ -88,29 +87,48 @@ curl -X GET http://127.0.0.1:8000/api/v1/plants \
 
 Expected result: list contains seeded `Demo Golden Pothos` and new plant.
 
-## 3) US3 Sensor attach (30-40 sec)
+## 3) US3 Admin sensor provisioning (45-60 sec)
 
-Register sensor (if needed):
+Login admin:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com","password":"AdminPass123!"}'
+```
+
+Copy token as `ADMIN_TOKEN`.
+
+Create a sensor:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/sensors \
-  -H "Authorization: Bearer USER_TOKEN" \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"device_id":"live-sensor-001","type":"soil_moisture"}'
+  -d '{"device_id":"live-sensor-001","type":"multi"}'
 ```
 
-Copy the returned `device_token`; it is shown only once and must be used by the IoT device as `X-Device-Token`.
+Copy the returned `device_token`; it is shown only once and must be used by the Python Serial Gateway or simulator as `X-Device-Token`.
 
-Attach sensor to chosen plant:
+Assign sensor to the demo user:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/sensors/SENSOR_ID/assign \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":USER_ID}'
+```
+
+Attach sensor to the user's plant:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/v1/sensors/SENSOR_ID/attach \
-  -H "Authorization: Bearer USER_TOKEN" \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"plant_id":PLANT_ID}'
 ```
 
-Expected result: sensor `plant_id` is set, status becomes `online`.
+Expected result: sensor `user_id` and `plant_id` are set. In the frontend, admin sees provisioning controls; the regular user sees the sensor read-only.
 
 ## 4) US4 + US5 + US6 Monitoring, alerts, recommendations (1-2 min)
 
@@ -143,6 +161,15 @@ curl -X GET http://127.0.0.1:8000/api/v1/alerts \
 
 Expected result: new alert(s) with severity/metric and a user-visible recommendation.
 
+Check notifications:
+
+```bash
+curl -X GET "http://127.0.0.1:8000/api/v1/notifications?unread_only=false&limit=20&offset=0" \
+  -H "Authorization: Bearer USER_TOKEN"
+```
+
+Expected result: a persisted in-app notification created from the new alert. Repeating readings for an already-open alert should not create notification spam.
+
 ## 5) US7 Alert FSM transitions (45-60 sec)
 
 Perform transitions on `ALERT_ID`:
@@ -161,7 +188,7 @@ Then repeat with:
 
 Expected result: each step returns transition object; invalid transitions are rejected.
 
-## 6) US8 Admin monitoring (40-60 sec)
+## 6) US8 Admin monitoring and provisioning UI (40-60 sec)
 
 Login admin:
 
@@ -180,7 +207,7 @@ curl -H "Authorization: Bearer ADMIN_TOKEN" http://127.0.0.1:8000/api/v1/admin/a
 curl -H "Authorization: Bearer ADMIN_TOKEN" http://127.0.0.1:8000/api/v1/admin/logs
 ```
 
-Expected result: admin can view users/devices/alerts/logs.
+Expected result: admin can view users/devices/alerts/logs and can provision sensors in the Admin page.
 
 ## 7) SSE real-time view (optional 30 sec)
 
@@ -197,3 +224,11 @@ curl -N -H "Authorization: Bearer USER_TOKEN" http://127.0.0.1:8000/api/v1/strea
 ```
 
 Expected result: heartbeat events and new events after ingest/transition actions.
+
+Notification stream:
+
+```bash
+curl -N -H "Authorization: Bearer USER_TOKEN" http://127.0.0.1:8000/api/v1/stream/notifications
+```
+
+Expected result: notification heartbeat/events while the persisted notification center remains available through `/api/v1/notifications`.

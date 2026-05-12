@@ -1,5 +1,7 @@
 # Smart plant monitoring (diploma project)
 
+> **Archived legacy prototype.** This folder is kept only for historical reference and does not describe the current pre-defense system. The current system lives in the main `practice-backend`, `smart-plant-frontend`, and `iot/serial_gateway` folders and uses Arduino Uno -> USB Serial -> Python Serial Gateway -> FastAPI -> PostgreSQL -> React frontend, Kazakh-first i18n, admin-only sensor provisioning, Golden pothos / Epipremnum aureum knowledge base, and persisted in-app notifications.
+
 **Topic:** *Developing a Smart System with IoT Integration and Artificial Intelligence Technologies for Plant Condition Monitoring*
 
 End-to-end stack: **ESP32 (Arduino)** → **FastAPI** → **PostgreSQL (Supabase)** → **React (Vite) dashboard**
