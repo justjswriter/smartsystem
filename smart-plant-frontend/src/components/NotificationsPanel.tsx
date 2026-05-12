@@ -21,7 +21,13 @@ export function NotificationsPanel({
   const latest = useMemo(() => notifications.slice(0, 8), [notifications]);
 
   function renderText(key: string, fallback: string | null, params: Notification["params"]) {
-    const translated = t(key, params ?? undefined);
+    const normalizedParams = params
+      ? {
+          ...params,
+          metric: typeof params.metric === "string" ? label("metric", params.metric) : params.metric,
+        }
+      : undefined;
+    const translated = t(key, normalizedParams);
     return translated === key ? fallback ?? translated : translated;
   }
 

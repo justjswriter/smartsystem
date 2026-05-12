@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { localizeCareText } from "../careText";
 import { useI18n } from "../i18n";
 import type { Alert } from "../types";
 
@@ -30,37 +31,7 @@ export function Alerts({
   const [severity, setSeverity] = useState("");
   const [selected, setSelected] = useState<Alert | null>(null);
 
-  function localizeAlertText(text: string | null | undefined) {
-    if (!text) {
-      return text;
-    }
-    const exact: Record<string, string> = {
-      "Light threshold below": t("alertText.lightBelowTitle"),
-      "Light is below threshold": t("alertText.lightBelowMessage"),
-      "Light is below the Golden pothos profile threshold.": t("alertText.lightBelowMessage"),
-      "Move the plant to a brighter location or add supplemental light.": t("alertText.lightBelowRecommendation"),
-      "Moisture threshold below": t("alertText.moistureBelowTitle"),
-      "Moisture is below threshold": t("alertText.moistureBelowMessage"),
-      "Moisture is below the Golden pothos profile threshold.": t("alertText.moistureBelowMessage"),
-      "Increase watering schedule and re-check soil in 2-4 hours.": t("alertText.moistureBelowRecommendation"),
-      "Moisture threshold above": t("alertText.moistureAboveTitle"),
-      "Moisture is above the Golden pothos profile threshold.": t("alertText.moistureAboveMessage"),
-      "Pause watering and let the soil dry down before the next watering.": t("alertText.moistureAboveRecommendation"),
-      "Temperature threshold below": t("alertText.temperatureBelowTitle"),
-      "Temperature is below the Golden pothos profile threshold.": t("alertText.temperatureBelowMessage"),
-      "Move the plant to a warmer area and keep it away from cold drafts.": t("alertText.temperatureBelowRecommendation"),
-      "Temperature threshold above": t("alertText.temperatureAboveTitle"),
-      "Temperature is above threshold": t("alertText.temperatureAboveMessage"),
-      "Temperature is above the Golden pothos profile threshold.": t("alertText.temperatureAboveMessage"),
-      "Move the plant to a cooler location and avoid direct heat sources.": t("alertText.temperatureAboveRecommendation"),
-      "Move the plant to a cooler area and reduce direct heat exposure.": t("alertText.temperatureAboveRecommendation"),
-      "Humidity threshold below": t("alertText.humidityBelowTitle"),
-      "Humidity is below threshold": t("alertText.humidityBelowMessage"),
-      "Humidity is below the Golden pothos profile threshold.": t("alertText.humidityBelowMessage"),
-      "Increase ambient humidity with a tray, humidifier, or grouped plants.": t("alertText.humidityBelowRecommendation"),
-    };
-    return exact[text] ?? text;
-  }
+  const localizeAlertText = (text: string | null | undefined) => localizeCareText(text, t);
 
   const sortedAlerts = useMemo(() => {
     return [...alerts]

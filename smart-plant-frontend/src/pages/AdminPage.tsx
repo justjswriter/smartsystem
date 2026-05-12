@@ -7,21 +7,23 @@ import {
   detachSensor,
   getAdminAlerts,
   getAdminLogs,
+  getAdminPlants,
   getAdminUsers,
   getSensors,
   rotateSensorToken,
 } from "../api";
 import { useAppState } from "../context/AppStateContext";
 import { useI18n } from "../i18n";
-import type { AdminLog, Alert, Sensor, User } from "../types";
+import type { AdminLog, AdminPlant, Alert, Sensor, User } from "../types";
 
 type Tab = "users" | "sensors" | "alerts" | "logs";
 
 export function AdminPage() {
   const { token, user } = useAppState();
   const { t, label, formatDateTime } = useI18n();
-  const [tab, setTab] = useState<Tab>("users");
+  const [tab, setTab] = useState<Tab>("sensors");
   const [users, setUsers] = useState<User[]>([]);
+  const [plants, setPlants] = useState<AdminPlant[]>([]);
   const [sensors, setSensors] = useState<Sensor[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [logs, setLogs] = useState<AdminLog[]>([]);
@@ -40,13 +42,15 @@ export function AdminPage() {
     setLoading(true);
     setError("");
     try {
-      const [u, s, a, l] = await Promise.all([
+      const [u, p, s, a, l] = await Promise.all([
         getAdminUsers(token),
+        getAdminPlants(token),
         getSensors(token),
         getAdminAlerts(token),
         getAdminLogs(token),
       ]);
       setUsers(u);
+      setPlants(p);
       setSensors(s);
       setAlerts(a);
       setLogs(l);
@@ -80,33 +84,22 @@ export function AdminPage() {
     }
   }
 
-  async function handleAssign(sensor: Sensor) {
+  async function handleAssignAndAttach(sensor: Sensor) {
     if (!token) {
       return;
     }
-    const userId = Number(assignedUserBySensor[sensor.id] || users.find((item) => item.role !== "admin")?.id || "");
-    if (!userId) {
+    const userId = Number(assignedUserBySensor[sensor.id] || sensor.user_id || users.find((item) => item.role !== "admin")?.id || "");
+    const ownedPlants = plants.filter((plant) => plant.user_id === userId);
+    const plantId = Number(attachPlantBySensor[sensor.id] || sensor.plant_id || ownedPlants[0]?.id || "");
+    if (!userId || !plantId) {
+      setError(t("admin.selectUserAndPlant"));
       return;
     }
     setError("");
     try {
-      await assignSensor(token, sensor.id, userId);
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("admin.sensorActionFailed"));
-    }
-  }
-
-  async function handleAttach(sensor: Sensor) {
-    if (!token) {
-      return;
-    }
-    const plantId = Number(attachPlantBySensor[sensor.id]);
-    if (!plantId) {
-      return;
-    }
-    setError("");
-    try {
+      if (sensor.user_id !== userId) {
+        await assignSensor(token, sensor.id, userId);
+      }
       await attachSensor(token, sensor.id, plantId);
       await load();
     } catch (e) {
@@ -166,6 +159,7 @@ export function AdminPage() {
         <AdminSensorProvisioning
           sensors={sensors}
           users={users}
+          plants={plants}
           loading={loading}
           newDeviceId={newDeviceId}
           newSensorType={newSensorType}
@@ -177,8 +171,7 @@ export function AdminPage() {
           setAssignedUserBySensor={setAssignedUserBySensor}
           setAttachPlantBySensor={setAttachPlantBySensor}
           onCreate={handleCreateSensor}
-          onAssign={handleAssign}
-          onAttach={handleAttach}
+          onAssignAndAttach={handleAssignAndAttach}
           onDetach={handleDetach}
           onRotate={handleRotate}
           t={t}
@@ -193,12 +186,13 @@ export function AdminPage() {
 }
 
 function adminGatewayCommand(deviceId: string, token: string) {
-  return `python serial_gateway.py --port COM3 --backend-url http://127.0.0.1:8000 --device-id ${deviceId} --device-token ${token}`;
+  return `python serial_gateway.py --port COM3 --backend-url http://127.0.0.1:8000 --device-id ${deviceId} --device-token ${token} --source-label serial:COM3`;
 }
 
 function AdminSensorProvisioning({
   sensors,
   users,
+  plants,
   loading,
   newDeviceId,
   newSensorType,
@@ -210,8 +204,7 @@ function AdminSensorProvisioning({
   setAssignedUserBySensor,
   setAttachPlantBySensor,
   onCreate,
-  onAssign,
-  onAttach,
+  onAssignAndAttach,
   onDetach,
   onRotate,
   t,
@@ -220,6 +213,7 @@ function AdminSensorProvisioning({
 }: {
   sensors: Sensor[];
   users: User[];
+  plants: AdminPlant[];
   loading: boolean;
   newDeviceId: string;
   newSensorType: string;
@@ -231,20 +225,55 @@ function AdminSensorProvisioning({
   setAssignedUserBySensor: Dispatch<SetStateAction<Record<number, string>>>;
   setAttachPlantBySensor: Dispatch<SetStateAction<Record<number, string>>>;
   onCreate: (event: FormEvent) => Promise<void>;
-  onAssign: (sensor: Sensor) => Promise<void>;
-  onAttach: (sensor: Sensor) => Promise<void>;
+  onAssignAndAttach: (sensor: Sensor) => Promise<void>;
   onDetach: (sensor: Sensor) => Promise<void>;
   onRotate: (sensor: Sensor) => Promise<void>;
   t: (key: string, params?: Record<string, string | number | null | undefined>) => string;
   formatDateTime: (value: string | Date | null | undefined) => string;
   label: (prefix: string, value: string | null | undefined) => string;
 }) {
+  const [selectedSensorId, setSelectedSensorId] = useState("");
   const assignableUsers = users.filter((item) => item.role !== "admin");
+  const userNameById = new Map(users.map((item) => [item.id, `${item.full_name} (${item.email})`]));
+  const plantNameById = new Map(plants.map((item) => [item.id, `${item.name}${item.location ? ` - ${item.location}` : ""}`]));
+  const selectedSensor = sensors.find((sensor) => String(sensor.id) === selectedSensorId) ?? null;
+
+  function formatUser(userId: number | null) {
+    return userId ? userNameById.get(userId) ?? `#${userId}` : t("admin.notAssigned");
+  }
+
+  function formatPlant(plantId: number | null) {
+    return plantId ? plantNameById.get(plantId) ?? `#${plantId}` : t("sensors.notAttached");
+  }
+
+  function sensorOptionLabel(sensor: Sensor) {
+    return `${sensor.device_id} | ${label("sensorStatus", sensor.status)} | ${formatUser(sensor.user_id)} | ${formatPlant(sensor.plant_id)}`;
+  }
+
+  function selectSensor(sensor: Sensor) {
+    setSelectedSensorId(String(sensor.id));
+    setAssignedUserBySensor((current) => ({ ...current, [sensor.id]: String(sensor.user_id ?? "") }));
+    setAttachPlantBySensor((current) => ({ ...current, [sensor.id]: String(sensor.plant_id ?? "") }));
+  }
 
   return (
     <div className="page-stack">
+      <div className="admin-help-grid">
+        <div className="card admin-help-card">
+          <h3>{t("admin.reconnectTitle")}</h3>
+          <p className="muted">{t("admin.reconnectText")}</p>
+        </div>
+        <div className="card admin-help-card">
+          <h3>{t("admin.newSensorTitle")}</h3>
+          <p className="muted">{t("admin.newSensorText")}</p>
+        </div>
+      </div>
+
       <form className="card sensor-form" onSubmit={onCreate}>
-        <h3>{t("admin.provisionSensor")}</h3>
+        <div>
+          <h3>{t("admin.registerNewArduinoSensor")}</h3>
+          <p className="muted">{t("admin.registerNewArduinoSensorHint")}</p>
+        </div>
         <label>
           {t("sensors.deviceId")}
           <input
@@ -265,7 +294,7 @@ function AdminSensorProvisioning({
             <option value="light">{t("sensors.light")}</option>
           </select>
         </label>
-        <button type="submit" disabled={loading}>{t("sensors.create")}</button>
+        <button type="submit" disabled={loading}>{t("admin.createNewSensor")}</button>
       </form>
 
       {provisioned ? (
@@ -277,94 +306,236 @@ function AdminSensorProvisioning({
         </div>
       ) : null}
 
-      <div className="screen">
-        {sensors.map((sensor) => {
-          const selectedUserId = assignedUserBySensor[sensor.id] ?? String(sensor.user_id ?? assignableUsers[0]?.id ?? "");
-          const selectedPlantId = attachPlantBySensor[sensor.id] ?? String(sensor.plant_id ?? "");
+      <section className="card provision-card">
+        <div>
+          <h3>{t("admin.provisionExistingSensor")}</h3>
+          <p className="muted">{t("admin.provisionExistingSensorHint")}</p>
+        </div>
+        <label>
+          {t("admin.selectSensor")}
+          <select
+            value={selectedSensorId}
+            onChange={(event) => {
+              const sensor = sensors.find((item) => String(item.id) === event.target.value);
+              if (sensor) {
+                selectSensor(sensor);
+              } else {
+                setSelectedSensorId("");
+              }
+            }}
+          >
+            <option value="">{t("admin.selectSensorPlaceholder")}</option>
+            {sensors.map((sensor) => (
+              <option key={sensor.id} value={sensor.id}>
+                {sensorOptionLabel(sensor)}
+              </option>
+            ))}
+          </select>
+        </label>
 
-          return (
-            <article key={sensor.id} className="card sensor-card">
-              <div className="sensor-card-head">
-                <div>
-                  <h3>{sensor.device_id}</h3>
+        {!selectedSensor ? <p className="empty-state">{t("admin.selectSensorEmptyHint")}</p> : null}
+
+        {selectedSensor ? (
+          <SelectedSensorCard
+            sensor={selectedSensor}
+            assignableUsers={assignableUsers}
+            plants={plants}
+            assignedUserBySensor={assignedUserBySensor}
+            attachPlantBySensor={attachPlantBySensor}
+            setAssignedUserBySensor={setAssignedUserBySensor}
+            setAttachPlantBySensor={setAttachPlantBySensor}
+            onAssignAndAttach={onAssignAndAttach}
+            onDetach={onDetach}
+            onRotate={onRotate}
+            t={t}
+            formatDateTime={formatDateTime}
+            label={label}
+            formatUser={formatUser}
+            formatPlant={formatPlant}
+          />
+        ) : null}
+      </section>
+
+      <section className="table-card">
+        <div className="table-card-head">
+          <div>
+            <h3>{t("admin.existingSensorsOverview")}</h3>
+            <p className="muted">{t("admin.existingSensorsOverviewHint")}</p>
+          </div>
+        </div>
+        <div className="table-scroll">
+          <table className="data-table compact-sensor-table">
+            <thead>
+              <tr>
+                <th>{t("admin.column.device_id")}</th>
+                <th>{t("admin.column.status")}</th>
+                <th>{t("admin.assignedUser")}</th>
+                <th>{t("sensors.attachedPlant")}</th>
+                <th>{t("sensors.lastSeen")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sensors.map((sensor) => (
+                <tr
+                  key={sensor.id}
+                  className={selectedSensor?.id === sensor.id ? "selected-row" : ""}
+                  onClick={() => selectSensor(sensor)}
+                >
+                  <td>{sensor.device_id}</td>
+                  <td>
+                    <span className={`sensor-status ${sensor.status === "online" ? "online" : "offline"}`}>
+                      {label("sensorStatus", sensor.status)}
+                    </span>
+                  </td>
+                  <td>{formatUser(sensor.user_id)}</td>
+                  <td>{formatPlant(sensor.plant_id)}</td>
+                  <td>{sensor.last_seen_at ? formatDateTime(sensor.last_seen_at) : t("common.neverSeen")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function SelectedSensorCard({
+  sensor,
+  assignableUsers,
+  plants,
+  assignedUserBySensor,
+  attachPlantBySensor,
+  setAssignedUserBySensor,
+  setAttachPlantBySensor,
+  onAssignAndAttach,
+  onDetach,
+  onRotate,
+  t,
+  formatDateTime,
+  label,
+  formatUser,
+  formatPlant,
+}: {
+  sensor: Sensor;
+  assignableUsers: User[];
+  plants: AdminPlant[];
+  assignedUserBySensor: Record<number, string>;
+  attachPlantBySensor: Record<number, string>;
+  setAssignedUserBySensor: Dispatch<SetStateAction<Record<number, string>>>;
+  setAttachPlantBySensor: Dispatch<SetStateAction<Record<number, string>>>;
+  onAssignAndAttach: (sensor: Sensor) => Promise<void>;
+  onDetach: (sensor: Sensor) => Promise<void>;
+  onRotate: (sensor: Sensor) => Promise<void>;
+  t: (key: string, params?: Record<string, string | number | null | undefined>) => string;
+  formatDateTime: (value: string | Date | null | undefined) => string;
+  label: (prefix: string, value: string | null | undefined) => string;
+  formatUser: (userId: number | null) => string;
+  formatPlant: (plantId: number | null) => string;
+}) {
+  const selectedUserId = assignedUserBySensor[sensor.id] ?? String(sensor.user_id ?? "");
+  const selectedUserNumber = Number(selectedUserId);
+  const userPlants = selectedUserNumber ? plants.filter((plant) => plant.user_id === selectedUserNumber) : [];
+  const selectedPlantId = attachPlantBySensor[sensor.id] ?? String(sensor.plant_id ?? "");
+
+  return (
+    <article className="selected-sensor-card">
+      <div className="sensor-card-head">
+        <div>
+          <h3>{sensor.device_id}</h3>
                   <p className="muted small">{label("sensorType", sensor.type)}</p>
                 </div>
                 <span className={`sensor-status ${sensor.status === "online" ? "online" : "offline"}`}>
                   {label("sensorStatus", sensor.status)}
-                </span>
-              </div>
-
-              <div className="sensor-meta-grid">
-                <div>
-                  <p className="muted small">{t("admin.column.user_id")}</p>
-                  <strong>{sensor.user_id ?? t("common.none")}</strong>
-                </div>
-                <div>
-                  <p className="muted small">{t("admin.column.plant_id")}</p>
-                  <strong>{sensor.plant_id ?? t("sensors.notAttached")}</strong>
-                </div>
-                <div>
-                  <p className="muted small">{t("sensors.lastSeen")}</p>
-                  <strong>{sensor.last_seen_at ? formatDateTime(sensor.last_seen_at) : t("common.neverSeen")}</strong>
-                </div>
-              </div>
-
-              {sensor.last_error_message ? <p className="error">{sensor.last_error_message}</p> : null}
-
-              <div className="attach-panel">
-                <h4>{t("admin.assignUser")}</h4>
-                <div className="attach-row">
-                  <select
-                    value={selectedUserId}
-                    onChange={(event) =>
-                      setAssignedUserBySensor((current) => ({ ...current, [sensor.id]: event.target.value }))
-                    }
-                    disabled={assignableUsers.length === 0}
-                  >
-                    {assignableUsers.length === 0 ? <option value="">{t("admin.noUsers")}</option> : null}
-                    {assignableUsers.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.full_name} ({item.email})
-                      </option>
-                    ))}
-                  </select>
-                  <button type="button" onClick={() => onAssign(sensor)} disabled={assignableUsers.length === 0}>
-                    {t("admin.assign")}
-                  </button>
-                </div>
-              </div>
-
-              <div className="attach-panel">
-                <h4>{t("sensors.attachToPlant")}</h4>
-                <div className="attach-row">
-                  <input
-                    type="number"
-                    min={1}
-                    value={selectedPlantId}
-                    placeholder={t("admin.plantIdPlaceholder")}
-                    onChange={(event) =>
-                      setAttachPlantBySensor((current) => ({ ...current, [sensor.id]: event.target.value }))
-                    }
-                  />
-                  <button type="button" onClick={() => onAttach(sensor)} disabled={!selectedPlantId}>
-                    {t("sensors.attach")}
-                  </button>
-                </div>
-              </div>
-
-              <div className="button-row">
-                <button type="button" onClick={() => onDetach(sensor)} disabled={!sensor.plant_id}>
-                  {t("sensors.detach")}
-                </button>
-                <button type="button" onClick={() => onRotate(sensor)}>
-                  {t("sensors.rotate")}
-                </button>
-              </div>
-            </article>
-          );
-        })}
+        </span>
       </div>
-    </div>
+
+      <div className="sensor-meta-grid">
+        <div>
+          <p className="muted small">{t("admin.assignedUser")}</p>
+          <strong>{formatUser(sensor.user_id)}</strong>
+        </div>
+        <div>
+          <p className="muted small">{t("sensors.attachedPlant")}</p>
+          <strong>{formatPlant(sensor.plant_id)}</strong>
+        </div>
+        <div>
+          <p className="muted small">{t("sensors.lastSeen")}</p>
+          <strong>{sensor.last_seen_at ? formatDateTime(sensor.last_seen_at) : t("common.neverSeen")}</strong>
+        </div>
+        <div>
+          <p className="muted small">{t("admin.source")}</p>
+          <strong>{sensor.last_ingest_source ?? t("common.none")}</strong>
+        </div>
+      </div>
+
+      {sensor.last_error_message ? <p className="error">{sensor.last_error_message}</p> : null}
+
+      <div className="attach-panel">
+        <h4>{t("admin.assignAndAttach")}</h4>
+        <div className="attach-row">
+          <label>
+            {t("admin.assignedUser")}
+            <select
+              value={selectedUserId}
+              onChange={(event) => {
+                const nextUserId = event.target.value;
+                const nextPlant = plants.find((plant) => plant.user_id === Number(nextUserId));
+                setAssignedUserBySensor((current) => ({ ...current, [sensor.id]: nextUserId }));
+                setAttachPlantBySensor((current) => ({ ...current, [sensor.id]: nextPlant ? String(nextPlant.id) : "" }));
+              }}
+              disabled={assignableUsers.length === 0}
+            >
+              <option value="">{assignableUsers.length === 0 ? t("admin.noUsers") : t("admin.selectUser")}</option>
+              {assignableUsers.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.full_name} ({item.email})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t("sensors.attachedPlant")}
+            <select
+              value={selectedPlantId}
+              onChange={(event) =>
+                setAttachPlantBySensor((current) => ({ ...current, [sensor.id]: event.target.value }))
+              }
+              disabled={!selectedUserId || userPlants.length === 0}
+            >
+              <option value="">{userPlants.length === 0 ? t("admin.noPlantsForUser") : t("admin.selectPlant")}</option>
+              {userPlants.map((plant) => (
+                <option key={plant.id} value={plant.id}>
+                  {plant.name}{plant.location ? ` - ${plant.location}` : ""} #{plant.id}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => onAssignAndAttach(sensor)}
+          disabled={!selectedUserId || !selectedPlantId || userPlants.length === 0}
+        >
+          {t("admin.assignAndAttachButton")}
+        </button>
+      </div>
+
+      <div className="gateway-command">
+        <p className="muted small">{t("admin.reconnectCommand")}</p>
+        <pre className="token-box">{adminGatewayCommand(sensor.device_id, "<SAVED_DEVICE_TOKEN>")}</pre>
+      </div>
+
+      <div className="button-row">
+        <button type="button" onClick={() => onDetach(sensor)} disabled={!sensor.plant_id}>
+          {t("sensors.detach")}
+        </button>
+        <button type="button" onClick={() => onRotate(sensor)}>
+          {t("admin.rotateLostToken")}
+        </button>
+      </div>
+    </article>
   );
 }
 

@@ -31,6 +31,17 @@ class AdminSensorResponse(BaseModel):
     created_at: datetime
 
 
+class AdminPlantResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    name: str
+    species: str | None
+    location: str | None
+    created_at: datetime
+
+
 class AdminAlertResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

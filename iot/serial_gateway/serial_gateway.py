@@ -17,6 +17,7 @@ SOIL_WET_RAW = 438.0
 SOIL_DRY_RAW = 1023.0
 LIGHT_RAW_MAX = 1023.0
 LIGHT_SCORE_MAX = 1000.0
+DEFAULT_HUMIDITY_OFFSET = 20.0
 
 
 logger = logging.getLogger("serial_gateway")
@@ -64,6 +65,16 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional source label stored by backend, for example serial:COM3. Default: serial:<port>.",
     )
+    parser.add_argument(
+        "--humidity-offset",
+        type=float,
+        default=DEFAULT_HUMIDITY_OFFSET,
+        help=(
+            "Calibration offset added to DHT humidity percentage before sending. "
+            "Default: 20 because inexpensive DHT modules often under-read in dry rooms. "
+            "Use 0 when the sensor is calibrated."
+        ),
+    )
     parser.add_argument("--log-level", default="INFO", choices=("DEBUG", "INFO", "WARNING", "ERROR"))
     return parser
 
@@ -93,6 +104,9 @@ def optional_number(value: Any, field_name: str) -> float | None:
 
 
 def parse_json_line(line: str) -> dict[str, Any] | None:
+    line = line.replace("\x00", "").strip()
+    if not line:
+        return None
     try:
         payload = json.loads(line)
     except json.JSONDecodeError as exc:
@@ -105,7 +119,7 @@ def parse_json_line(line: str) -> dict[str, Any] | None:
     return payload
 
 
-def normalize_reading(raw: dict[str, Any]) -> dict[str, float | None]:
+def normalize_reading(raw: dict[str, Any], *, humidity_offset: float = DEFAULT_HUMIDITY_OFFSET) -> dict[str, float | None]:
     if not is_finite_number(raw.get("soil_raw")):
         raise ValueError("soil_raw must be a finite number")
     if not is_finite_number(raw.get("light_raw")):
@@ -132,11 +146,12 @@ def normalize_reading(raw: dict[str, Any]) -> dict[str, float | None]:
 
     moisture = (SOIL_DRY_RAW - soil_raw) / (SOIL_DRY_RAW - SOIL_WET_RAW) * 100.0
     light = light_raw / LIGHT_RAW_MAX * LIGHT_SCORE_MAX
+    normalized_humidity = clamp(humidity + humidity_offset, 0.0, 100.0) if humidity is not None else None
 
     return {
         "moisture": round(clamp(moisture, 0.0, 100.0), 1),
         "temperature": round(temperature, 1) if temperature is not None else None,
-        "humidity": round(humidity, 1) if humidity is not None else None,
+        "humidity": round(normalized_humidity, 1) if normalized_humidity is not None else None,
         "light": round(clamp(light, 0.0, LIGHT_SCORE_MAX), 1),
     }
 
@@ -246,7 +261,7 @@ def run(args: argparse.Namespace) -> int:
                 continue
 
             try:
-                payload = normalize_reading(raw_payload)
+                payload = normalize_reading(raw_payload, humidity_offset=args.humidity_offset)
             except ValueError as exc:
                 logger.warning("Skipping invalid reading %s: %s", raw_payload, exc)
                 continue

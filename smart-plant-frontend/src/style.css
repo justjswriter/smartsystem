@@ -95,6 +95,14 @@ select {
   padding: 8px;
 }
 
+.success {
+  color: #166534;
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 8px;
+}
+
 .chip-row {
   display: flex;
   gap: 8px;
@@ -1215,12 +1223,62 @@ button:disabled {
   gap: 8px;
 }
 
+.provision-card,
+.selected-sensor-card {
+  display: grid;
+  gap: 16px;
+}
+
+.selected-sensor-card {
+  border: 1px solid #d1fae5;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fbfefc;
+}
+
+.table-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 0;
+}
+
+.table-card-head h3 {
+  margin: 0 0 4px;
+}
+
+.compact-sensor-table tbody tr {
+  cursor: pointer;
+}
+
+.compact-sensor-table tbody tr:hover,
+.compact-sensor-table tbody tr.selected-row {
+  background: #ecfdf5;
+}
+
+.admin-help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-help-card {
+  display: grid;
+  gap: 8px;
+}
+
 .attach-panel h4 {
   margin: 0;
   font-size: 0.95rem;
 }
 
 .attach-row select {
+  flex: 1;
+  min-width: 220px;
+}
+
+.attach-row label {
   flex: 1;
   min-width: 220px;
 }
@@ -1234,6 +1292,7 @@ button:disabled {
 
 @media (max-width: 760px) {
   .onboarding-steps,
+  .admin-help-grid,
   .sensor-meta-grid {
     grid-template-columns: 1fr;
   }
@@ -1322,6 +1381,22 @@ button:disabled {
   gap: 10px;
   margin-top: 12px;
   color: #4b5563;
+}
+
+.notification-settings-card {
+  display: grid;
+  gap: 12px;
+}
+
+.toggle-row {
+  display: flex;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.toggle-row input {
+  width: auto;
 }
 
 .plants-grid {

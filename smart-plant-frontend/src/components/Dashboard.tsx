@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Activity, ChevronDown, Droplet, Plus, Search, Sun, Thermometer } from "lucide-react";
 import { useI18n } from "../i18n";
-import { displayPlantSpecies, SUPPORTED_PLANT_SPECIES, supportedPlantTypeName } from "../plantKnowledge";
+import { displayPlantSpecies, SUPPORTED_PLANT_OPTIONS, SUPPORTED_PLANT_SPECIES, supportedPlantTypeName } from "../plantKnowledge";
 import type { DashboardPoint, Plant, PlantCondition } from "../types";
 
 type DashboardStats = {
@@ -45,6 +45,7 @@ export function Dashboard({
   const [sortBy, setSortBy] = useState<SortKey>("health");
   const [modalOpen, setModalOpen] = useState(false);
   const [name, setName] = useState("");
+  const [species, setSpecies] = useState(SUPPORTED_PLANT_SPECIES);
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
@@ -116,12 +117,13 @@ export function Dashboard({
     try {
       await onCreatePlant({
         name: name.trim(),
-        species: SUPPORTED_PLANT_SPECIES,
+        species,
         location: location.trim() || undefined,
         description: description.trim() || undefined,
       });
       setModalOpen(false);
       setName("");
+      setSpecies(SUPPORTED_PLANT_SPECIES);
       setLocation("");
       setDescription("");
     } finally {
@@ -258,7 +260,17 @@ export function Dashboard({
             <h2 id="add-plant-title">{t("dashboard.addPlantTitle")}</h2>
             <form className="modal-form" onSubmit={submitPlant}>
               <label>{t("dashboard.name")}<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
-              <label>{t("dashboard.species")}<input value={supportedPlantTypeName(t)} readOnly /></label>
+              <label>
+                {t("dashboard.species")}
+                <select value={species} onChange={(e) => setSpecies(e.target.value)}>
+                  {SUPPORTED_PLANT_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {displayPlantSpecies(option, t)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="muted small">{supportedPlantTypeName(t)}</p>
               <label>{t("dashboard.location")}<input value={location} onChange={(e) => setLocation(e.target.value)} /></label>
               <label>{t("dashboard.description")}<input value={description} onChange={(e) => setDescription(e.target.value)} /></label>
               <div className="modal-actions">

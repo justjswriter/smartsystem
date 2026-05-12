@@ -1,5 +1,6 @@
 from app.application.schemas.admin import (
     AdminAlertResponse,
+    AdminPlantResponse,
     AdminSensorResponse,
     AdminUserResponse,
     SystemLogResponse,
@@ -17,6 +18,11 @@ from app.application.schemas.auth import (
 )
 from app.application.schemas.dashboard import DashboardPoint, DashboardResponse
 from app.application.schemas.notification import NotificationResponse
+from app.application.schemas.notification_settings import (
+    NotificationSettingsResponse,
+    NotificationSettingsUpdate,
+    TestEmailResponse,
+)
 from app.application.schemas.plant import PlantCreate, PlantResponse, PlantUpdate
 from app.application.schemas.sensor import (
     SensorAttachRequest,
@@ -27,6 +33,7 @@ from app.application.schemas.sensor import (
 
 __all__ = [
     "AdminAlertResponse",
+    "AdminPlantResponse",
     "AdminSensorResponse",
     "AdminUserResponse",
     "AlertResponse",
@@ -36,6 +43,8 @@ __all__ = [
     "DashboardResponse",
     "LoginRequest",
     "NotificationResponse",
+    "NotificationSettingsResponse",
+    "NotificationSettingsUpdate",
     "PlantCreate",
     "PlantResponse",
     "PlantUpdate",
@@ -45,6 +54,7 @@ __all__ = [
     "SensorDataIngest",
     "SensorResponse",
     "SystemLogResponse",
+    "TestEmailResponse",
     "TokenResponse",
     "UserResponse",
 ]

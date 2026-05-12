@@ -8,8 +8,18 @@ from app.domain.plant_knowledge.types import (
     PlantProfile,
 )
 
-DEFAULT_PLANT_PROFILE_SLUG = "epipremnum_aureum"
+DEFAULT_PLANT_PROFILE_SLUG = "common_tropical_aroid_vines"
 CANONICAL_SPECIES = "Epipremnum aureum"
+SUPPORTED_SPECIES = {
+    "epipremnum aureum": "Epipremnum aureum",
+    "golden pothos": "Epipremnum aureum",
+    "philodendron hederaceum": "Philodendron hederaceum",
+    "heartleaf philodendron": "Philodendron hederaceum",
+    "scindapsus pictus": "Scindapsus pictus",
+    "satin pothos": "Scindapsus pictus",
+    "syngonium podophyllum": "Syngonium podophyllum",
+    "arrowhead vine": "Syngonium podophyllum",
+}
 
 
 def _text(*, kk: str, ru: str, en: str) -> LocalizedText:
@@ -26,7 +36,7 @@ BASE_GOLDEN_POTHOS_PROFILE = PlantProfile(
     names=_text(
         kk="Алтын потос / Эпипремнум",
         ru="Золотой потос / Эпипремнум",
-        en="Golden pothos / Epipremnum aureum",
+            en="Common tropical aroid vine profile",
     ),
     thresholds={
         "moisture": MetricRange(min=35.0, max=75.0, optimal_min=45.0, optimal_max=65.0),
@@ -39,12 +49,12 @@ BASE_GOLDEN_POTHOS_PROFILE = PlantProfile(
         text=_text(
             kk="Жағдай тұрақты. Қазіргі күтім режимін сақтап, сенсор трендтерін бақылауды жалғастырыңыз.",
             ru="Условия стабильны. Сохраните текущий режим ухода и продолжайте следить за трендами сенсоров.",
-            en="Conditions are stable. Keep the current Golden pothos care routine and continue monitoring sensor trends.",
+            en="Conditions are stable. Keep the current care routine and continue monitoring sensor trends.",
         ),
         reason=_text(
             kk="Соңғы сенсор мәндері Алтын потос үшін ұсынылған диапазонда.",
             ru="Последние сенсорные значения находятся в рекомендуемом диапазоне для золотого потоса.",
-            en="Latest sensor values are within the Golden pothos profile ranges.",
+            en="Latest sensor values are within the shared tropical aroid care ranges.",
         ),
     ),
 )
@@ -82,17 +92,17 @@ GOLDEN_POTHOS_ISSUES = {
         message=_text(
             kk="Топырақ ылғалы Алтын потос үшін ұсынылған шектен төмен.",
             ru="Влажность почвы ниже рекомендуемого порога для золотого потоса.",
-            en="Moisture is below the Golden pothos profile threshold.",
+            en="Soil moisture is below the shared care threshold.",
         ),
         advice_text=_text(
             kk="Суару жиілігін арттырып, топырақты 2-4 сағаттан кейін қайта тексеріңіз.",
             ru="Увеличьте частоту полива и проверьте почву через 2-4 часа.",
-            en="Increase watering schedule and re-check soil in 2-4 hours.",
+            en="Water gradually until the top soil is evenly moist, then re-check soil moisture in 2-4 hours.",
         ),
         advice_reason=_text(
             kk="Алтын потос топырағы сәл ылғалды болғанын қалайды.",
             ru="Золотой потос предпочитает слегка влажную почву.",
-            en="Golden pothos prefers slightly moist soil.",
+            en="These indoor aroid vines prefer lightly moist, well-drained soil.",
         ),
     ),
     "high_moisture": _issue(
@@ -104,17 +114,17 @@ GOLDEN_POTHOS_ISSUES = {
         message=_text(
             kk="Топырақ ылғалы Алтын потос үшін ұсынылған жоғарғы шектен жоғары.",
             ru="Влажность почвы выше верхнего порога для золотого потоса.",
-            en="Moisture is above the Golden pothos profile threshold.",
+            en="Soil moisture is above the shared care threshold.",
         ),
         advice_text=_text(
             kk="Суаруды уақытша тоқтатып, келесі суаруға дейін топырақтың кебуін күтіңіз.",
             ru="Временно остановите полив и дайте почве подсохнуть перед следующим поливом.",
-            en="Pause watering and let the soil dry down before the next watering.",
+            en="Pause watering and let the top layer of soil dry before the next watering.",
         ),
         advice_reason=_text(
             kk="Артық ылғал Алтын потос тамырына зиян келтіруі мүмкін.",
             ru="Избыточная влажность может навредить корням золотого потоса.",
-            en="Excess moisture can stress Golden pothos roots.",
+            en="Excess moisture can stress roots and increase the risk of rot.",
         ),
     ),
     "low_temperature": _issue(
@@ -126,7 +136,7 @@ GOLDEN_POTHOS_ISSUES = {
         message=_text(
             kk="Температура Алтын потос үшін ұсынылған шектен төмен.",
             ru="Температура ниже рекомендуемого порога для золотого потоса.",
-            en="Temperature is below the Golden pothos profile threshold.",
+            en="Temperature is below the shared care threshold.",
         ),
         advice_text=_text(
             kk="Өсімдікті жылырақ жерге қойып, суық ауа ағынынан қорғаңыз.",
@@ -136,7 +146,7 @@ GOLDEN_POTHOS_ISSUES = {
         advice_reason=_text(
             kk="Алтын потос тұрақты жылы ортада жақсы өседі.",
             ru="Золотой потос лучше растёт в стабильной тёплой среде.",
-            en="Golden pothos grows best in a stable warm environment.",
+            en="These indoor aroid vines grow best in a stable warm environment.",
         ),
     ),
     "high_temperature": _issue(
@@ -148,7 +158,7 @@ GOLDEN_POTHOS_ISSUES = {
         message=_text(
             kk="Температура Алтын потос үшін ұсынылған жоғарғы шектен жоғары.",
             ru="Температура выше верхнего порога для золотого потоса.",
-            en="Temperature is above the Golden pothos profile threshold.",
+            en="Temperature is above the shared care threshold.",
         ),
         advice_text=_text(
             kk="Өсімдікті салқындау жерге қойып, тікелей жылу көздерінен алыстатыңыз.",
@@ -170,17 +180,17 @@ GOLDEN_POTHOS_ISSUES = {
         message=_text(
             kk="Ауа ылғалдылығы Алтын потос үшін ұсынылған шектен төмен.",
             ru="Влажность воздуха ниже рекомендуемого порога для золотого потоса.",
-            en="Humidity is below the Golden pothos profile threshold.",
+            en="Air humidity is below the shared care threshold.",
         ),
         advice_text=_text(
             kk="Ауа ылғалдылығын су науасы, ылғалдатқыш немесе өсімдіктерді бірге қою арқылы арттырыңыз.",
             ru="Повысьте влажность с помощью поддона с водой, увлажнителя или группировки растений.",
-            en="Increase ambient humidity with a tray, humidifier, or grouped plants.",
+            en="Move the plant away from dry heat sources and increase ambient humidity with a humidifier, water tray, or grouped plants.",
         ),
         advice_reason=_text(
             kk="Алтын потос орташа ылғалды ауаны жақсы қабылдайды.",
             ru="Золотой потос хорошо переносит умеренно влажный воздух.",
-            en="Golden pothos benefits from moderate ambient humidity.",
+            en="These indoor aroid vines benefit from moderate ambient humidity.",
         ),
     ),
     "low_light": _issue(
@@ -192,17 +202,17 @@ GOLDEN_POTHOS_ISSUES = {
         message=_text(
             kk="Жарық көрсеткіші Алтын потос үшін ұсынылған шектен төмен.",
             ru="Показатель света ниже рекомендуемого порога для золотого потоса.",
-            en="Light is below the Golden pothos profile threshold.",
+            en="Light is below the shared care threshold.",
         ),
         advice_text=_text(
             kk="Өсімдікті жарығырақ жерге қойыңыз немесе қосымша жарық қолданыңыз.",
             ru="Переставьте растение в более светлое место или добавьте дополнительную подсветку.",
-            en="Move the plant to a brighter location or add supplemental light.",
+            en="Move the plant closer to bright indirect light or add supplemental light; avoid harsh direct sun.",
         ),
         advice_reason=_text(
             kk="Алтын потос төмен жарыққа шыдайды, бірақ тұрақты өсу үшін жанама жарық қажет.",
             ru="Золотой потос переносит слабый свет, но для стабильного роста нужен рассеянный свет.",
-            en="Golden pothos tolerates low light but grows better with indirect light.",
+            en="These indoor aroid vines tolerate lower light but grow better with bright indirect light.",
         ),
     ),
 }
@@ -216,12 +226,14 @@ GOLDEN_POTHOS_PROFILE = PlantProfile(
 
 PLANT_PROFILES = {
     DEFAULT_PLANT_PROFILE_SLUG: GOLDEN_POTHOS_PROFILE,
-    CANONICAL_SPECIES.lower(): GOLDEN_POTHOS_PROFILE,
+    **{species.lower(): GOLDEN_POTHOS_PROFILE for species in SUPPORTED_SPECIES.values()},
 }
 
 
-def normalize_species(_value: str | None = None) -> str:
-    return CANONICAL_SPECIES
+def normalize_species(value: str | None = None) -> str:
+    if not value:
+        return CANONICAL_SPECIES
+    return SUPPORTED_SPECIES.get(value.strip().lower(), CANONICAL_SPECIES)
 
 
 def resolve_plant_profile(species: str | None = None) -> PlantProfile:

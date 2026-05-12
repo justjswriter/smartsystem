@@ -50,6 +50,9 @@ class User(Base, TimestampMixin):
     plants: Mapped[list[Plant]] = relationship(back_populates="owner")
     alerts: Mapped[list[Alert]] = relationship(back_populates="user")
     notifications: Mapped[list[Notification]] = relationship(back_populates="user")
+    notification_settings: Mapped[UserNotificationSettings | None] = relationship(
+        back_populates="user", cascade="all, delete-orphan", uselist=False
+    )
 
 
 class Plant(Base, TimestampMixin):
@@ -239,6 +242,21 @@ class Notification(Base):
         Index("ix_notifications_user_read_created", "user_id", "read_at", "created_at"),
         Index("ix_notifications_user_dedupe_read", "user_id", "dedupe_key", "read_at"),
     )
+
+
+class UserNotificationSettings(Base, TimestampMixin):
+    __tablename__ = "user_notification_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True, nullable=False
+    )
+    notification_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    email_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    critical_only: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    user: Mapped[User] = relationship(back_populates="notification_settings")
 
 
 class SystemLog(Base):

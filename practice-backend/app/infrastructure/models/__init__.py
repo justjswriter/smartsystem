@@ -9,6 +9,7 @@ from app.infrastructure.models.models import (
     SensorData,
     SystemLog,
     User,
+    UserNotificationSettings,
 )
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "SensorData",
     "SystemLog",
     "User",
+    "UserNotificationSettings",
 ]

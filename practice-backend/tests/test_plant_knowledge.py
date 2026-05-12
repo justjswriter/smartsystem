@@ -10,9 +10,22 @@ from app.domain.plant_knowledge import CANONICAL_SPECIES, resolve_plant_profile
 def test_unknown_species_resolves_to_default_profile():
     profile = resolve_plant_profile("Mint")
 
-    assert profile.slug == "epipremnum_aureum"
+    assert profile.slug == "common_tropical_aroid_vines"
     assert profile.canonical_species == CANONICAL_SPECIES
     assert profile.thresholds["moisture"].min == 35.0
+
+
+def test_supported_aroid_species_resolve_to_shared_profile():
+    for species in (
+        "Epipremnum aureum",
+        "Philodendron hederaceum",
+        "Scindapsus pictus",
+        "Syngonium podophyllum",
+    ):
+        profile = resolve_plant_profile(species)
+
+        assert profile.slug == "common_tropical_aroid_vines"
+        assert profile.thresholds["temperature"].min == 18.0
 
 
 class FakePlantRepository:
@@ -41,18 +54,18 @@ class FakeLogRepository:
 
 
 @pytest.mark.asyncio
-async def test_plant_create_normalizes_species_to_supported_type():
+async def test_plant_create_keeps_supported_species_choice():
     service = PlantService.__new__(PlantService)
     service.plant_repo = FakePlantRepository()
     service.log_repo = FakeLogRepository()
 
     plant = await service.create(
         user_id=42,
-        payload=PlantCreate(name="Kitchen plant", species="Mint", location="Kitchen"),
+        payload=PlantCreate(name="Kitchen plant", species="Philodendron hederaceum", location="Kitchen"),
     )
 
-    assert plant.species == CANONICAL_SPECIES
-    assert service.plant_repo.created_payload["species"] == CANONICAL_SPECIES
+    assert plant.species == "Philodendron hederaceum"
+    assert service.plant_repo.created_payload["species"] == "Philodendron hederaceum"
 
 
 @pytest.mark.asyncio

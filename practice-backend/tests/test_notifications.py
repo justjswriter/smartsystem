@@ -94,6 +94,25 @@ class FakeNotificationRepository:
         return items
 
 
+class FakeNotificationSettingsRepository:
+    def __init__(self, settings=None):
+        self.settings = settings
+
+    async def get_by_user_id(self, user_id):
+        if self.settings and self.settings.user_id == user_id:
+            return self.settings
+        return None
+
+
+class FakeEmailService:
+    def __init__(self):
+        self.sent = []
+
+    def send_notification_email(self, *, to_email, notification):
+        self.sent.append((to_email, notification.id))
+        return SimpleNamespace(status="sent", detail="Email sent.")
+
+
 def make_alert_service(*, existing=None):
     service = AlertService.__new__(AlertService)
     service.alert_repo = FakeAlertRepository(existing=existing)
@@ -104,21 +123,23 @@ def make_alert_service(*, existing=None):
     return service
 
 
-def make_notification_service(notifications=None):
+def make_notification_service(notifications=None, settings=None, email_service=None):
     service = NotificationService.__new__(NotificationService)
     service.notification_repo = FakeNotificationRepository(notifications)
+    service.notification_settings_repo = FakeNotificationSettingsRepository(settings)
+    service.email_service = email_service or FakeEmailService()
     return service
 
 
-def notification(notification_id, *, user_id, read_at=None, dedupe_key=None):
+def notification(notification_id, *, user_id, read_at=None, dedupe_key=None, severity=NotificationSeverity.WARNING, params=None):
     return SimpleNamespace(
         id=notification_id,
         user_id=user_id,
         type=NotificationType.PLANT_CONDITION,
-        severity=NotificationSeverity.WARNING,
+        severity=severity,
         title_key="notification.alert.condition.title",
         message_key="notification.alert.condition.message",
-        params={},
+        params=params or {},
         title=None,
         message=None,
         related_plant_id=1,
@@ -127,6 +148,15 @@ def notification(notification_id, *, user_id, read_at=None, dedupe_key=None):
         dedupe_key=dedupe_key,
         read_at=read_at,
         created_at=datetime.now(timezone.utc),
+    )
+
+
+def email_settings(*, user_id=10, enabled=True, critical_only=False, email="demo@example.com"):
+    return SimpleNamespace(
+        user_id=user_id,
+        notification_email=email,
+        email_enabled=enabled,
+        critical_only=critical_only,
     )
 
 
@@ -255,3 +285,128 @@ async def test_mark_read_and_mark_all_set_read_at(monkeypatch):
     assert first.read_at is not None
     assert second.read_at is not None
     assert other.read_at is None
+
+
+@pytest.mark.asyncio
+async def test_email_sent_when_enabled_and_notification_created(monkeypatch):
+    async def no_publish(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.application.services.notification_service.event_bus.publish", no_publish)
+    email_service = FakeEmailService()
+    service = make_notification_service(settings=email_settings(enabled=True), email_service=email_service)
+
+    created, was_created = await service.create_once(
+        payload={
+            "user_id": 10,
+            "type": NotificationType.PLANT_CONDITION,
+            "severity": NotificationSeverity.WARNING,
+            "title_key": "notification.alert.condition.title",
+            "message_key": "notification.alert.condition.message",
+            "dedupe_key": "alert:3:light",
+        }
+    )
+
+    assert was_created is True
+    assert email_service.sent == [("demo@example.com", created.id)]
+
+
+@pytest.mark.asyncio
+async def test_no_email_when_disabled(monkeypatch):
+    async def no_publish(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.application.services.notification_service.event_bus.publish", no_publish)
+    email_service = FakeEmailService()
+    service = make_notification_service(settings=email_settings(enabled=False), email_service=email_service)
+
+    await service.create_once(
+        payload={
+            "user_id": 10,
+            "type": NotificationType.PLANT_CONDITION,
+            "severity": NotificationSeverity.CRITICAL,
+            "title_key": "notification.alert.critical.title",
+            "message_key": "notification.alert.critical.message",
+            "dedupe_key": "alert:3:moisture",
+        }
+    )
+
+    assert email_service.sent == []
+
+
+@pytest.mark.asyncio
+async def test_critical_only_sends_only_high_or_critical(monkeypatch):
+    async def no_publish(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.application.services.notification_service.event_bus.publish", no_publish)
+    email_service = FakeEmailService()
+    service = make_notification_service(
+        settings=email_settings(enabled=True, critical_only=True),
+        email_service=email_service,
+    )
+
+    await service.create_once(
+        payload={
+            "user_id": 10,
+            "type": NotificationType.PLANT_CONDITION,
+            "severity": NotificationSeverity.WARNING,
+            "title_key": "notification.alert.condition.title",
+            "message_key": "notification.alert.condition.message",
+            "params": {"severity": "medium"},
+            "dedupe_key": "alert:3:humidity",
+        }
+    )
+    high, _ = await service.create_once(
+        payload={
+            "user_id": 10,
+            "type": NotificationType.PLANT_CONDITION,
+            "severity": NotificationSeverity.WARNING,
+            "title_key": "notification.alert.condition.title",
+            "message_key": "notification.alert.condition.message",
+            "params": {"severity": "high"},
+            "dedupe_key": "alert:3:temperature",
+        }
+    )
+    critical, _ = await service.create_once(
+        payload={
+            "user_id": 10,
+            "type": NotificationType.CRITICAL_ALERT,
+            "severity": NotificationSeverity.CRITICAL,
+            "title_key": "notification.alert.critical.title",
+            "message_key": "notification.alert.critical.message",
+            "dedupe_key": "alert:3:moisture",
+        }
+    )
+
+    assert email_service.sent == [("demo@example.com", high.id), ("demo@example.com", critical.id)]
+
+
+@pytest.mark.asyncio
+async def test_deduped_notification_does_not_send_duplicate_email(monkeypatch):
+    async def no_publish(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.application.services.notification_service.event_bus.publish", no_publish)
+    email_service = FakeEmailService()
+    existing = notification(1, user_id=10, dedupe_key="alert:3:moisture")
+    service = make_notification_service(
+        notifications=[existing],
+        settings=email_settings(enabled=True),
+        email_service=email_service,
+    )
+
+    created, was_created = await service.create_once(
+        payload={
+            "user_id": 10,
+            "type": NotificationType.CRITICAL_ALERT,
+            "severity": NotificationSeverity.CRITICAL,
+            "title_key": "notification.alert.critical.title",
+            "message_key": "notification.alert.critical.message",
+            "dedupe_key": "alert:3:moisture",
+        }
+    )
+
+    assert created is existing
+    assert was_created is False
+    assert email_service.sent == []

@@ -23,6 +23,16 @@ class PlantRepository:
         )
         return list(result.scalars().all())
 
+    async def list_all(self, *, limit: int, offset: int) -> list[Plant]:
+        result = await self.db.execute(
+            select(Plant)
+            .where(Plant.is_active.is_(True))
+            .order_by(Plant.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
     async def get_by_id(self, plant_id: int) -> Plant | None:
         result = await self.db.execute(select(Plant).where(Plant.id == plant_id, Plant.is_active.is_(True)))
         return result.scalar_one_or_none()

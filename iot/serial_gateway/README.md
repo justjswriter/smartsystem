@@ -132,7 +132,8 @@ The Arduino sends raw values and the gateway normalizes them before sending to t
 
 - Soil moisture: `438 = wet = 100%`, `1023 = dry = 0%`
 - Light: `light = light_raw / 1023 * 1000`
-- Humidity and temperature pass through as numbers or `null`
+- Temperature passes through as a number or `null`
+- Humidity is clamped to `0..100` and gets a default `+20` percentage point calibration offset because inexpensive DHT modules often under-read in dry indoor rooms. Use `--humidity-offset 0` if the sensor is calibrated.
 
 The light value is a normalized score for the project dashboard, not real lux.
 

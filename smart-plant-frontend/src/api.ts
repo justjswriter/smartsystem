@@ -4,12 +4,16 @@ import type {
   DashboardResponse,
   LoginPayload,
   Notification,
+  NotificationSettings,
+  NotificationSettingsUpdate,
   Plant,
   RegisterPayload,
   Sensor,
   SensorProvisionResponse,
+  TestEmailResponse,
   User,
   AdminLog,
+  AdminPlant,
 } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
@@ -215,6 +219,28 @@ export async function markAllNotificationsRead(token: string): Promise<Notificat
   return apiFetch<Notification[]>("/notifications/read-all", { method: "POST" }, token);
 }
 
+export async function getNotificationSettings(token: string): Promise<NotificationSettings> {
+  return apiFetch<NotificationSettings>("/notification-settings", { method: "GET" }, token);
+}
+
+export async function updateNotificationSettings(
+  token: string,
+  payload: NotificationSettingsUpdate
+): Promise<NotificationSettings> {
+  return apiFetch<NotificationSettings>(
+    "/notification-settings",
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+    token
+  );
+}
+
+export async function sendTestNotificationEmail(token: string): Promise<TestEmailResponse> {
+  return apiFetch<TestEmailResponse>("/notification-settings/test-email", { method: "POST" }, token);
+}
+
 export async function getSensors(token: string): Promise<Sensor[]> {
   return apiFetch<Sensor[]>("/sensors", { method: "GET" }, token);
 }
@@ -266,6 +292,10 @@ export async function getAdminUsers(token: string): Promise<User[]> {
 
 export async function getAdminSensors(token: string): Promise<Sensor[]> {
   return apiFetch<Sensor[]>("/admin/sensors", { method: "GET" }, token);
+}
+
+export async function getAdminPlants(token: string): Promise<AdminPlant[]> {
+  return apiFetch<AdminPlant[]>("/admin/plants?limit=500", { method: "GET" }, token);
 }
 
 export async function getAdminAlerts(token: string): Promise<Alert[]> {

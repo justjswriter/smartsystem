@@ -33,7 +33,7 @@ def test_critical_low_moisture_beats_low_light():
     assert recommendation is not None
     assert recommendation.metric == "moisture"
     assert recommendation.severity == "critical"
-    assert "watering" in recommendation.text.lower()
+    assert "water gradually" in recommendation.text.lower()
     assert recommendation.source == "current_condition"
 
 
@@ -42,7 +42,7 @@ def test_light_only_issue_returns_light_advice():
 
     assert recommendation is not None
     assert recommendation.metric == "light"
-    assert "brighter" in recommendation.text.lower()
+    assert "bright indirect light" in recommendation.text.lower()
 
 
 def test_stable_readings_return_stable_care_advice():
@@ -61,8 +61,8 @@ def test_normalized_readings_do_not_keep_historical_alert_advice():
 
     assert recommendation is not None
     assert recommendation.metric == "stable"
-    assert "brighter" not in recommendation.text.lower()
-    assert "watering" not in recommendation.text.lower()
+    assert "bright indirect light" not in recommendation.text.lower()
+    assert "water gradually" not in recommendation.text.lower()
 
 
 def test_high_moisture_returns_profile_advice():

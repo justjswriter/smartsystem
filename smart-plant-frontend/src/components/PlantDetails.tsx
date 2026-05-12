@@ -22,6 +22,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { localizeCareText } from "../careText";
 import { useI18n } from "../i18n";
 import { displayPlantSpecies } from "../plantKnowledge";
 import type { DashboardResponse, Plant, Sensor } from "../types";
@@ -323,8 +324,8 @@ export function PlantDetails({
 
           <div className="card ai-hint">
             <h3 className="section-title">{t("plant.recommendation")}</h3>
-            <p>{recommendation?.text ?? t("plant.noRecommendation")}</p>
-            {recommendation?.reason ? <p className="muted">{recommendation.reason}</p> : null}
+            <p>{localizeCareText(recommendation?.text, t) ?? t("plant.noRecommendation")}</p>
+            {recommendation?.reason ? <p className="muted">{localizeCareText(recommendation.reason, t)}</p> : null}
           </div>
 
           <div className="card">

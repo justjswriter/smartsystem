@@ -1,15 +1,22 @@
+import logging
+
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.enums import AlertSeverity, NotificationSeverity, NotificationType
 from app.infrastructure.models import Alert
-from app.infrastructure.repositories import NotificationRepository
+from app.application.services.email_service import EmailService
+from app.infrastructure.repositories import NotificationRepository, NotificationSettingsRepository
 from app.infrastructure.services.event_bus import event_bus
+
+logger = logging.getLogger(__name__)
 
 
 class NotificationService:
     def __init__(self, db: AsyncSession):
         self.notification_repo = NotificationRepository(db)
+        self.notification_settings_repo = NotificationSettingsRepository(db)
+        self.email_service = EmailService()
 
     @staticmethod
     def _notification_severity(alert_severity: AlertSeverity) -> NotificationSeverity:
@@ -45,7 +52,29 @@ class NotificationService:
                 "severity": notification.severity.value,
             },
         )
+        await self._send_email_if_enabled(notification)
         return notification, True
+
+    async def _send_email_if_enabled(self, notification) -> None:
+        try:
+            settings = await self.notification_settings_repo.get_by_user_id(notification.user_id)
+            if not settings or not settings.email_enabled or not settings.notification_email:
+                return
+            if settings.critical_only and not self._passes_critical_only(notification):
+                return
+            self.email_service.send_notification_email(
+                to_email=settings.notification_email,
+                notification=notification,
+            )
+        except Exception:
+            logger.exception("Email notification channel failed for notification_id=%s", notification.id)
+
+    @staticmethod
+    def _passes_critical_only(notification) -> bool:
+        if notification.severity == NotificationSeverity.CRITICAL:
+            return True
+        params = notification.params if isinstance(notification.params, dict) else {}
+        return str(params.get("severity", "")).lower() in {"high", "critical"}
 
     async def create_for_alert(self, *, alert: Alert, issue_code: str | None = None):
         notification_type = self._notification_type(alert.severity)
@@ -75,8 +104,12 @@ class NotificationService:
                     "severity": alert.severity.value,
                     "issue": issue_code,
                 },
-                "title": alert.title,
-                "message": alert.message,
+                "title": "Critical plant alert" if notification_type == NotificationType.CRITICAL_ALERT else "Plant needs attention",
+                "message": (
+                    f"A critical {metric} issue was detected. Check the plant in the web app."
+                    if notification_type == NotificationType.CRITICAL_ALERT
+                    else f"A {metric} issue was detected. Open the plant in the web app for details."
+                ),
                 "related_plant_id": alert.plant_id,
                 "related_alert_id": alert.id,
                 "related_sensor_id": alert.sensor_id,

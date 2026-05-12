@@ -142,11 +142,42 @@ export type Notification = {
   created_at: string;
 };
 
+export type NotificationSettings = {
+  id: number;
+  user_id: number;
+  notification_email: string | null;
+  email_enabled: boolean;
+  critical_only: boolean;
+  verified_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NotificationSettingsUpdate = {
+  notification_email?: string | null;
+  email_enabled?: boolean;
+  critical_only?: boolean;
+};
+
+export type TestEmailResponse = {
+  status: string;
+  detail: string;
+};
+
 export type AdminLog = {
   id: number;
   user_id: number | null;
   event_type: string;
   message: string;
   payload: Record<string, unknown> | null;
+  created_at: string;
+};
+
+export type AdminPlant = {
+  id: number;
+  user_id: number;
+  name: string;
+  species: string | null;
+  location: string | null;
   created_at: string;
 };
