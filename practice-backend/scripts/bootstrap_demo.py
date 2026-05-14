@@ -36,15 +36,15 @@ async def get_or_create_user(session, *, full_name: str, email: str, password: s
 
 async def get_or_create_plant(session, *, user_id: int) -> Plant:
     result = await session.execute(
-        select(Plant).where(Plant.user_id == user_id, Plant.name == "Demo Monstera", Plant.is_active.is_(True))
+        select(Plant).where(Plant.user_id == user_id, Plant.name == "Demo Golden Pothos", Plant.is_active.is_(True))
     )
     plant = result.scalar_one_or_none()
     if plant:
         return plant
     plant = Plant(
         user_id=user_id,
-        name="Demo Monstera",
-        species="Monstera Deliciosa",
+        name="Demo Golden Pothos",
+        species="Epipremnum aureum",
         location="Living room",
         description="Seeded demo plant",
         is_active=True,

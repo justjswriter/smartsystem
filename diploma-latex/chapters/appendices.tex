@@ -1,19 +1,146 @@
 \chapter{Appendices}
+\label{ch:appendices}
 
-This appendix chapter should contain supplementary materials that are useful for the diploma defense but would interrupt the flow of the main text if placed in the core chapters.
+\section{Main API Endpoints}
+\label{app:api-endpoints}
 
-\section{Recommended Appendix Content}
+Table~\ref{tab:appendix-api-endpoints} summarizes the main API endpoints used in the implemented system.
 
-You can place the following items here:
+\begin{table}[H]
+    \centering
+    \caption{Main API endpoints of the implemented system}
+    \label{tab:appendix-api-endpoints}
+    \small
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabularx}{\textwidth}{
+        >{\raggedright\arraybackslash}p{0.15\textwidth}
+        >{\raggedright\arraybackslash}p{0.36\textwidth}
+        >{\raggedright\arraybackslash}X
+    }
+        \toprule
+        \textbf{Method} & \textbf{Endpoint} & \textbf{Purpose} \\
+        \midrule
+        POST & \path{/api/v1/auth/register} & Register a user account. \\
+        POST & \path{/api/v1/auth/login} & Authenticate and obtain a JWT access token. \\
+        GET & \path{/api/v1/auth/me} & Return the current authenticated user profile. \\
+        POST & \path{/api/v1/plants} & Create a plant profile for the logged-in user. \\
+        GET & \path{/api/v1/sensors} & List sensors visible to the current user. \\
+        POST & \path{/api/v1/sensors} & Register a sensor and obtain a one-time device token; admin-only. \\
+        POST & \path{/api/v1/sensors/{sensor_id}/assign} & Assign a provisioned sensor to a user; admin-only. \\
+        POST & \path{/api/v1/sensors/{sensor_id}/attach} & Attach a sensor to a plant; admin-only. \\
+        POST & \path{/api/v1/sensors/{sensor_id}/detach} & Detach a sensor from a plant; admin-only. \\
+        POST & \path{/api/v1/sensors/{sensor_id}/rotate-token} & Rotate the device token and return a new one-time token; admin-only. \\
+        POST & \path{/api/v1/ingest/sensors/{device_id}/data} & Submit sensor telemetry using \texttt{X-Device-Token}. \\
+        GET & \path{/api/v1/dashboard/plants/{plant_id}} & Retrieve current values, history, condition, and recommendation. \\
+        GET & \path{/api/v1/alerts} & Retrieve alerts available to the current user. \\
+        GET & \path{/api/v1/notifications} & Retrieve persisted notifications for the current user. \\
+        POST & \path{/api/v1/notifications/{notification_id}/read} & Mark one notification as read. \\
+        POST & \path{/api/v1/notifications/read-all} & Mark all notifications of the current user as read. \\
+        GET & \path{/api/v1/stream/alerts} & Access the alert SSE stream with ownership protection. \\
+        GET & \path{/api/v1/stream/notifications} & Access the notification SSE stream with ownership protection. \\
+        GET & \path{/api/v1/stream/dashboard/{plant_id}} & Access the plant dashboard SSE stream with ownership protection. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\section{Sample Dashboard JSON}
+\label{app:dashboard-json}
+
+The following block shows a representative example of the dashboard condition structure returned by the backend. Exact numeric values depend on the current plant state and ingest history.
+
+\needspace{12\baselineskip}
+\begin{lstlisting}[
+language={},
+caption={Sample dashboard JSON fragment},
+label={lst:dashboard-json},
+basicstyle=\ttfamily\scriptsize,
+breaklines=true,
+breakatwhitespace=true
+]
+{
+  "current": {
+    "moisture": 28.0,
+    "temperature": 31.2,
+    "humidity": 33.0,
+    "light": 180.0
+  },
+  "history": [
+    {
+      "moisture": 44.0,
+      "temperature": 24.5,
+      "humidity": 52.0,
+      "light": 420.0
+    }
+  ],
+  "condition": {
+    "condition_status": "attention",
+    "health_score": 77,
+    "risk_factors": ["low_soil_moisture"],
+    "confidence": 0.48,
+    "explanation": "Plant requires attention because of low_soil_moisture.",
+    "ml_prediction": "attention",
+    "ml_confidence": 0.91,
+    "class_probabilities": {
+      "normal": 0.07,
+      "attention": 0.91,
+      "critical": 0.02
+    },
+    "analysis_method": "hybrid_rule_based_and_ml"
+  },
+  "active_recommendation": {
+    "text": "Increase watering schedule and re-check soil soon."
+  }
+}
+\end{lstlisting}
+
+\section{Simulator Output}
+\label{app:simulator-output}
+
+The project includes two simulator-oriented scripts:
 \begin{itemize}
-    \item API endpoint examples;
-    \item screenshots of the dashboard and alerts page;
-    \item additional database diagrams;
-    \item machine learning metadata output;
-    \item demo scenario script;
-    \item test logs and build verification output.
+    \item \texttt{scripts/simulate\_sensor\_data.py};
+    \item \texttt{scripts/run\_full\_demo\_flow.py}.
 \end{itemize}
 
-\section{Placeholder for Supplementary Tables or Code Listings}
+The following listing shows a representative console output fragment from the simulator-based demonstration flow.
 
-This subsection can be used for extended tables, command examples, or figure collections that support the practical chapter. If you later add code listings, make sure they are short, relevant, and clearly captioned.
+\clearpage
+\begin{lstlisting}[language={},caption={Simulator-based demo flow output},label={lst:simulator-output}]
+Reading #1
+Mode/state: normal
+Payload: {"moisture": 62.4, "temperature": 24.0, "humidity": 48.1, "light": 316.6}
+HTTP status code: 200
+Response body: {"status":"accepted","sensor_data_id":13}
+
+Reading #2
+Mode/state: attention
+Payload: {"moisture": 28.6, "temperature": 31.3, "humidity": 33.2, "light": 182.6}
+HTTP status code: 200
+Response body: {"status":"accepted","sensor_data_id":14}
+
+Reading #3
+Mode/state: critical
+Payload: {"moisture": 12.3, "temperature": 38.5, "humidity": 24.5, "light": 188.3}
+HTTP status code: 200
+Response body: {"status":"accepted","sensor_data_id":15}
+Finished sending 3 reading(s).
+\end{lstlisting}
+
+\section{Administrative Monitoring Screenshot}
+\label{app:admin-screenshot}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/admin-page-screenshot.png}
+    \caption{Administrative monitoring page screenshot}
+    \label{fig:appendix-admin-screenshot}
+\end{figure}
+
+\section{Repository Link}
+\label{app:repository}
+
+Repository URL provided for the project:
+
+\begin{center}
+\url{https://github.com/justjswriter/smartsystem.git}
+\end{center}

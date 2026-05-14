@@ -14,6 +14,7 @@ async def ingest_sensor_data(
     payload: SensorDataIngest,
     request: Request,
     x_device_token: str | None = Header(default=None, alias="X-Device-Token"),
+    x_ingest_source: str | None = Header(default=None, alias="X-Ingest-Source"),
     db: AsyncSession = Depends(get_db),
 ):
     service = AlertService(db)
@@ -21,7 +22,7 @@ async def ingest_sensor_data(
         data = await service.ingest_sensor_data(
             device_id=device_id,
             device_token=x_device_token,
-            source=request.client.host if request.client else None,
+            source=x_ingest_source or (request.client.host if request.client else None),
             payload=payload.model_dump(),
         )
     except PermissionError as exc:

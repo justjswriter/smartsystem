@@ -1,19 +1,30 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from app.application.schemas.dashboard import DashboardPoint, PlantConditionResponse
 from app.application.services.ml_condition_service import MLConditionService
-from app.core.config import settings
+from app.domain.plant_knowledge import PlantProfile, resolve_plant_profile
 
 
 class PlantConditionService:
     """Explainable hybrid condition scoring with rule-based safety baseline."""
 
+    LOCAL_TIME_OFFSET = timedelta(hours=5)
+    NIGHT_START_HOUR = 20
+    NIGHT_END_HOUR = 7
+
     def __init__(self, ml_service: MLConditionService | None = None) -> None:
         self.ml_service = ml_service or MLConditionService()
 
-    def evaluate(self, *, current: DashboardPoint | None, history: list[DashboardPoint]) -> PlantConditionResponse:
+    def evaluate(
+        self,
+        *,
+        current: DashboardPoint | None,
+        history: list[DashboardPoint],
+        plant_profile: PlantProfile | None = None,
+    ) -> PlantConditionResponse:
+        profile = plant_profile or resolve_plant_profile()
         if not current:
             return PlantConditionResponse(
                 condition_status="insufficient_data",
@@ -25,14 +36,7 @@ class PlantConditionService:
             )
 
         penalties: list[tuple[str, int]] = []
-        if current.moisture is not None and current.moisture < settings.MOISTURE_MIN:
-            penalties.append(("low_soil_moisture", self._below_penalty(current.moisture, settings.MOISTURE_MIN)))
-        if current.temperature is not None and current.temperature > settings.TEMPERATURE_MAX:
-            penalties.append(("high_temperature", self._above_penalty(current.temperature, settings.TEMPERATURE_MAX)))
-        if current.humidity is not None and current.humidity < settings.HUMIDITY_MIN:
-            penalties.append(("low_air_humidity", self._below_penalty(current.humidity, settings.HUMIDITY_MIN)))
-        if current.light is not None and current.light < settings.LIGHT_MIN:
-            penalties.append(("low_light", self._below_penalty(current.light, settings.LIGHT_MIN)))
+        self._add_profile_penalties(penalties=penalties, current=current, profile=profile)
 
         trend_penalty, trend_factors = self._trend_penalty(history)
         score = max(0, min(100, 100 - sum(p for _, p in penalties) - trend_penalty))
@@ -71,6 +75,24 @@ class PlantConditionService:
         )
 
     @staticmethod
+    def _add_profile_penalties(
+        *,
+        penalties: list[tuple[str, int]],
+        current: DashboardPoint,
+        profile: PlantProfile,
+    ) -> None:
+        for issue in profile.issues.values():
+            value = getattr(current, issue.metric, None)
+            if value is None:
+                continue
+            if issue.metric == "light" and issue.direction == "below" and PlantConditionService._is_night(current.recorded_at):
+                continue
+            if issue.direction == "below" and value < issue.threshold:
+                penalties.append((issue.code, PlantConditionService._below_penalty(value, issue.threshold)))
+            elif issue.direction == "above" and value > issue.threshold:
+                penalties.append((issue.code, PlantConditionService._above_penalty(value, issue.threshold)))
+
+    @staticmethod
     def _below_penalty(value: float, threshold: float) -> int:
         if value <= 0:
             return 50
@@ -97,6 +119,14 @@ class PlantConditionService:
             factors.append("rising_temperature_trend")
             penalty += 8
         return penalty, factors
+
+    @staticmethod
+    def _is_night(recorded_at: datetime) -> bool:
+        recorded = recorded_at
+        if recorded.tzinfo is None:
+            recorded = recorded.replace(tzinfo=timezone.utc)
+        local_hour = (recorded.astimezone(timezone.utc) + PlantConditionService.LOCAL_TIME_OFFSET).hour
+        return local_hour >= PlantConditionService.NIGHT_START_HOUR or local_hour < PlantConditionService.NIGHT_END_HOUR
 
     @staticmethod
     def _confidence(recorded_at: datetime, history: list[DashboardPoint]) -> float:

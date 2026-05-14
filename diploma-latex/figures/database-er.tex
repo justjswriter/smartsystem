@@ -1,0 +1,130 @@
+\begin{figure}[H]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        >=Latex,
+        font=\scriptsize,
+        entity/.style={
+            draw,
+            rounded corners=4pt,
+            thick,
+            align=left,
+            fill=blue!4,
+            text width=2.9cm,
+            inner sep=5pt
+        },
+        rel/.style={-Latex, thick},
+        lookup/.style={-Latex, thick, dashed},
+        cardinality/.style={
+            draw,
+            rounded corners=3pt,
+            fill=white,
+            font=\scriptsize,
+            inner sep=2pt
+        }
+    ]
+
+    \node[entity] (users) {\textbf{users}\\
+        id\\
+        email\\
+        role\\
+        created\_at};
+
+    \node[entity, below=1.8cm of users] (settings) {\textbf{user\_notification\_settings}\\
+        id\\
+        user\_id\\
+        email\_enabled\\
+        critical\_only\\
+        verified\_at};
+
+    \node[entity, below=1.8cm of settings] (systemlogs) {\textbf{system\_logs}\\
+        id\\
+        user\_id\\
+        event\_type\\
+        message\\
+        created\_at};
+
+    \node[entity, right=1.9cm of users] (plants) {\textbf{plants}\\
+        id\\
+        user\_id\\
+        name\\
+        species\\
+        location\\
+        created\_at};
+
+    \node[entity, above=1.8cm of plants] (profiles) {\textbf{plant\_care\_profiles}\\
+        id\\
+        slug\\
+        canonical\_species\\
+        thresholds\\
+        is\_active};
+
+    \node[entity, right=1.9cm of plants] (sensors) {\textbf{sensors}\\
+        id\\
+        user\_id\\
+        device\_id\\
+        plant\_id\\
+        status\\
+        last\_seen\_at};
+
+    \node[entity, right=1.9cm of sensors] (sensordata) {\textbf{sensor\_data}\\
+        id\\
+        sensor\_id\\
+        plant\_id\\
+        moisture\\
+        temperature\\
+        humidity\\
+        light\\
+        recorded\_at};
+
+    \node[entity, below=2.0cm of plants] (alerts) {\textbf{alerts}\\
+        id\\
+        user\_id\\
+        plant\_id\\
+        sensor\_id\\
+        status\\
+        severity\\
+        metric\\
+        created\_at};
+
+    \node[entity, below=2.0cm of alerts] (transitions) {\textbf{alert\_transitions}\\
+        id\\
+        alert\_id\\
+        from\_status\\
+        to\_status\\
+        changed\_at};
+
+    \node[entity, right=1.9cm of alerts] (notifications) {\textbf{notifications}\\
+        id\\
+        user\_id\\
+        related\_alert\_id\\
+        related\_plant\_id\\
+        read\_at\\
+        created\_at};
+
+    \node[entity, below=2.0cm of notifications] (recommendations) {\textbf{recommendations}\\
+        id\\
+        plant\_id\\
+        alert\_id\\
+        is\_active\\
+        created\_at};
+
+    \draw[rel] (users) -- node[midway, above, cardinality] {1} node[pos=0.85, above, cardinality] {many} (plants);
+    \draw[rel] (users) -- node[midway, right, cardinality] {1} node[pos=0.85, right, cardinality] {1} (settings);
+    \draw[rel] (users.south) |- node[pos=0.18, left, cardinality] {1} node[pos=0.88, above, cardinality] {many} (systemlogs.north);
+    \draw[rel] (plants) -- node[midway, above, cardinality] {1} node[pos=0.85, above, cardinality] {many} (sensors);
+    \draw[rel] (plants) -- node[midway, left, cardinality] {1} node[pos=0.85, left, cardinality] {many} (alerts);
+    \draw[rel] (plants.east) |- node[pos=0.22, above, cardinality] {1} node[pos=0.88, left, cardinality] {many} (sensordata.north west);
+    \draw[rel] (sensors.east) -- node[midway, above, cardinality] {1} node[pos=0.85, above, cardinality] {many} (sensordata);
+    \draw[rel] (users.east) |- node[pos=0.18, above, cardinality] {1} node[pos=0.88, left, cardinality] {many} (notifications.north west);
+    \draw[rel] (alerts) -- node[midway, above, cardinality] {1} node[pos=0.85, above, cardinality] {many} (notifications);
+    \draw[rel] (alerts) -- node[midway, left, cardinality] {1} node[pos=0.85, left, cardinality] {many} (transitions);
+    \draw[rel] (plants.east) |- node[pos=0.22, below, cardinality] {1} node[pos=0.88, left, cardinality] {many} (recommendations.north west);
+    \draw[rel] (alerts.east) |- node[pos=0.25, right, cardinality] {1} node[pos=0.88, above, cardinality] {many} (recommendations.north);
+    \draw[lookup] (profiles.south) -- node[midway, right, cardinality] {species lookup} (plants.north);
+
+    \end{tikzpicture}%
+    }
+    \caption{Entity--relationship diagram of the database}
+    \label{fig:database-erd}
+\end{figure}

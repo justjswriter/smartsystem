@@ -1,0 +1,84 @@
+\begin{figure}[H]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        >=Latex,
+        font=\small,
+        line/.style={-Latex, thick},
+        sync/.style={-Latex, thick, dashed},
+        block/.style={
+            draw,
+            rounded corners=4pt,
+            thick,
+            align=center,
+            fill=blue!6,
+            minimum height=1.6cm,
+            text width=3.1cm,
+            inner sep=6pt
+        },
+        primary/.style={block, fill=green!10},
+        support/.style={block, fill=violet!10},
+        note/.style={
+            draw,
+            rounded corners=3pt,
+            fill=white,
+            font=\scriptsize,
+            align=center,
+            inner sep=3pt
+        },
+        callout/.style={
+            draw,
+            rounded corners=4pt,
+            dashed,
+            fill=yellow!12,
+            font=\scriptsize,
+            align=center,
+            inner sep=4pt
+        },
+        group/.style={
+            draw,
+            rounded corners=6pt,
+            dashed,
+            inner sep=8pt
+        }
+    ]
+
+    \node[block, fill=teal!12, text width=2.8cm] (device) {Arduino Uno\\Sensor Node};
+    \node[block, right=1.4cm of device, text width=2.9cm] (gateway) {Python Serial\\Gateway};
+    \node[block, right=1.4cm of gateway, text width=3.2cm] (backend) {FastAPI Backend\\REST API + SSE};
+    \node[block, fill=orange!10, right=1.4cm of backend, text width=2.8cm] (db) {PostgreSQL\\Database};
+    \node[primary, right=1.4cm of db, text width=3.3cm] (rule) {PlantConditionService\\Rule-Based\\Primary Layer};
+    \node[support, right=1.4cm of rule, text width=3.2cm] (ml) {MLConditionService\\Random Forest\\Support Layer};
+    \node[block, fill=orange!14, right=1.4cm of ml, text width=2.9cm] (alerts) {Recommendations\\and Alerts};
+    \node[block, fill=blue!10, right=1.4cm of alerts, text width=2.7cm] (dashboard) {React\\Dashboard};
+    \node[block, fill=gray!12, right=1.4cm of dashboard, text width=2.7cm] (users) {Users /\\Administrators};
+
+    \begin{scope}[on background layer]
+        \node[group, fit=(rule) (ml), label=above:{\small Hybrid condition analysis}] {};
+    \end{scope}
+
+    \draw[line] (device) -- node[midway, above, note] {USB serial JSON} (gateway);
+    \draw[line] (gateway) -- node[midway, above, note] {Sensor ingest request} (backend);
+    \draw[line] (backend) -- node[midway, above, note] {Validated data access} (db);
+    \draw[line] (db) -- node[midway, above, note] {Current reading + history} (rule);
+    \draw[line] (rule) -- node[midway, above, note] {Primary result} (ml);
+    \draw[line] (ml) -- node[midway, above, note] {Support prediction} (alerts);
+    \draw[line] (alerts) -- node[midway, above, note] {Condition response} (dashboard);
+    \draw[line] (dashboard) -- node[midway, above, note] {Monitoring interface} (users);
+
+    \draw[sync] (backend.south) |- node[pos=0.32, left, note] {REST API + SSE\\streams} (dashboard.south);
+
+    \node[callout, below=0.9cm of db] (compose) {Docker Compose\\runs PostgreSQL};
+    \draw[sync] (compose.north) -- (db.south);
+
+    \node[callout, below=0.9cm of gateway] (deviceauth) {X-Device-Token\\for sensor ingest};
+    \draw[sync] (deviceauth.north) -- (gateway.south);
+
+    \node[callout, below=0.9cm of dashboard] (jwtauth) {JWT authentication\\for users};
+    \draw[sync] (jwtauth.north) -- (dashboard.south);
+
+    \end{tikzpicture}%
+    }
+    \caption{System architecture diagram}
+    \label{fig:system-architecture-diagram}
+\end{figure}

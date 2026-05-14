@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import require_admin
 from app.application.schemas.admin import (
     AdminAlertResponse,
+    AdminPlantResponse,
     AdminSensorResponse,
     AdminUserResponse,
     SystemLogResponse,
@@ -33,6 +34,15 @@ async def list_sensors(
     db: AsyncSession = Depends(get_db),
 ):
     return await AdminService(db).sensors(limit=limit, offset=offset)
+
+
+@router.get("/plants", response_model=list[AdminPlantResponse])
+async def list_plants(
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    return await AdminService(db).plants(limit=limit, offset=offset)
 
 
 @router.get("/alerts", response_model=list[AdminAlertResponse])

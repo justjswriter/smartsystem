@@ -7,7 +7,7 @@ from app.application.services.plant_condition_service import PlantConditionServi
 
 def point(**overrides):
     payload = {
-        "recorded_at": datetime.now(timezone.utc),
+        "recorded_at": datetime(2026, 5, 13, 7, 0, tzinfo=timezone.utc),
         "moisture": 45.0,
         "temperature": 24.0,
         "humidity": 45.0,
@@ -31,10 +31,10 @@ def test_condition_normal():
 
 
 def test_condition_critical_for_bad_sensor_values():
-    current = point(moisture=5.0, temperature=42.0, humidity=15.0, light=50.0)
+    current = point(moisture=5.0, temperature=42.0, humidity=15.0, light=10.0)
     condition = PlantConditionService().evaluate(current=current, history=[current])
     assert condition.condition_status == "critical"
-    assert "low_soil_moisture" in condition.risk_factors
+    assert "low_moisture" in condition.risk_factors
 
 
 def test_dashboard_condition_works_without_model(tmp_path):
@@ -74,8 +74,17 @@ class StubMLService:
 def test_dashboard_condition_includes_ml_fields_when_model_exists():
     current = point(moisture=5.0, temperature=42.0, humidity=15.0, light=50.0)
     service = PlantConditionService(ml_service=StubMLService(prediction="critical", confidence=0.91))
-    condition = service.evaluate(current=current, history=[current, point(moisture=20.0, temperature=35.0, humidity=25.0, light=150.0)])
+    condition = service.evaluate(current=current, history=[current, point(moisture=20.0, temperature=35.0, humidity=25.0, light=50.0)])
     assert condition.analysis_method == "hybrid_rule_based_and_ml"
     assert condition.ml_prediction == "critical"
     assert condition.ml_confidence == 0.91
     assert condition.class_probabilities["critical"] == 0.91
+
+
+def test_low_light_at_night_does_not_reduce_health_score():
+    current = point(recorded_at=datetime(2026, 5, 13, 18, 0, tzinfo=timezone.utc), light=0.0)
+
+    condition = PlantConditionService().evaluate(current=current, history=[current])
+
+    assert "low_light" not in condition.risk_factors
+    assert condition.health_score == 100

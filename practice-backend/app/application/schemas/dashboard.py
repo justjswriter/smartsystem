@@ -18,10 +18,34 @@ class PlantConditionResponse(BaseModel):
 class RecommendationSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    id: int | None = None
     text: str
     reason: str | None
-    created_at: datetime
+    created_at: datetime | None = None
+    metric: str | None = None
+    severity: str | None = None
+    source: str = "historical_alert"
+
+
+class CareTextItem(BaseModel):
+    icon: str
+    color: str
+    title: str
+    text: str
+
+
+class CareActionItem(CareTextItem):
+    detail: str | None = None
+    status: str | None = None
+
+
+class CareProfileResponse(BaseModel):
+    slug: str
+    canonical_species: str
+    display_names: dict[str, str]
+    thresholds: dict
+    basic_care: list[CareTextItem]
+    gardener_advice: list[CareTextItem]
 
 
 class DashboardPoint(BaseModel):
@@ -39,3 +63,5 @@ class DashboardResponse(BaseModel):
     history: list[DashboardPoint]
     condition: PlantConditionResponse
     active_recommendation: RecommendationSummary | None
+    care_profile: CareProfileResponse | None = None
+    today_care: list[CareActionItem] = Field(default_factory=list)

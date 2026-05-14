@@ -1,146 +1,569 @@
 \chapter{Practical Part}
+\label{ch:practical-part}
 
-\section{Overview of the Proposed System}
+\section{Overview of the Developed Web Application}
+\label{sec:overview-developed-web-application}
 
-This section should provide a practical overview of the implemented diploma prototype. Describe the system as an end-to-end solution that includes an IoT data source, backend API, PostgreSQL database, dashboard frontend, rule-based condition scoring, and a supervised machine learning classifier.
+The practical part of the diploma project presents the implementation of a functional smart web application for plant condition monitoring. The developed system is designed to support users in observing the environmental state of plants, receiving alerts when monitored parameters move outside acceptable ranges, and using recommendations and AI-supported classification as decision-support tools. The implementation demonstrates how the theoretical requirements defined in the previous chapter were translated into a working software solution.
 
-You can briefly summarize the implemented technology stack and state that the prototype supports the full flow from telemetry ingestion to visualization, recommendations, and alerts.
+The application enables users to monitor environmental conditions in near real time. However, it is not intended to perform all tasks required for farming or agricultural automation. Its primary focus is environmental plant condition monitoring. The system evaluates four environmental parameters: soil moisture, air temperature, air humidity, and light intensity. These parameters were selected because they are important for everyday plant care, can be measured using commonly available sensor hardware, and provide useful information about the plant's surrounding environment. By collecting and analyzing these values, the system assesses whether a plant is currently exposed to acceptable environmental conditions.
+
+The developed system should not be interpreted as an industrial smart agriculture platform. It does not diagnose plant diseases, does not use image recognition or computer vision, does not apply deep learning, and does not control actuators such as irrigation pumps, lamps, fans, valves, or greenhouse devices. It also does not claim real-world agronomic validation. Instead, the implemented system provides environmental plant condition assessment, dashboard visualization, alert lifecycle management, recommendation support, and AI-supported classification.
+
+The active implementation consists of four main technical components. First, the physical sensing component is represented by an Arduino Uno-based sensor node connected to the computer through USB. The device collects raw environmental measurements and transmits them as JSON-formatted serial messages. Second, a Python serial gateway reads these messages, parses them, normalizes selected values, and sends structured sensor readings to the backend. Third, the backend is implemented using FastAPI and PostgreSQL. It receives sensor readings, validates device access, stores monitoring data, performs threshold-based analysis, creates alerts when abnormal conditions are detected, generates recommendations, and provides structured API responses to the frontend. Fourth, the frontend is implemented as a React and TypeScript web dashboard. It allows users to view plant profiles, monitor current and historical environmental readings, inspect alerts, and follow recommendations. It also provides administrators with additional functions for sensor management and system monitoring.
+
+The system supports two main roles: User and Admin. The User role represents a plant owner who creates plant profiles, monitors current values, views historical data, receives alerts, and follows recommendation support. The Admin role is responsible for administrative monitoring and sensor management. Administrators can provision sensors, assign sensors to users, attach sensors to plants, rotate sensor tokens, and inspect users, alerts, sensors, and logs. Regular users do not provision sensors or change sensor-device bindings. This role-based separation provides a controlled structure for ordinary user actions and administrative operations.
+
+The developed application implements the following core functions: user registration and authentication, plant profile creation, plant monitoring dashboard, sensor assignment, IoT data ingestion, historical data visualization, alert creation, alert lifecycle transitions, recommendation generation, AI-supported plant condition classification, notification support, and administrative monitoring. These functions form a complete web-based monitoring workflow from sensor measurement to user-facing interpretation.
+
+The system is especially suitable for educational and small-scale plant monitoring scenarios. It shows how IoT data can be integrated into a web application, how backend logic can process sensor readings, and how machine learning can be added cautiously as a supporting layer. The implementation also demonstrates important software engineering principles, including layered backend architecture, repository-based database access, role-based access control, persistent logging, and separation between sensor ingestion and user-facing web functionality.
 
 \section{System Architecture}
+\label{sec:system-architecture}
 
-This section should describe the architecture of the implemented system in layers and explain the role of each subsystem.
+The system architecture is organized as a modular client-server application with a dedicated IoT data ingestion layer. The architecture separates the user interface, backend application logic, persistent database storage, sensor gateway, and physical sensing device. This separation makes the system easier to maintain, test, and extend.
 
-\subsection{Client-side}
+At the highest level, the system consists of the client-side frontend, server-side backend, database layer, IoT sensor layer, and AI-supported analysis layer. The frontend communicates with the backend through REST API calls and Server-Sent Events. The backend stores and retrieves data from PostgreSQL using asynchronous SQLAlchemy repositories. The IoT layer sends environmental readings to the backend through a Python gateway. The AI-supported analysis layer processes current sensor readings and trend indicators to provide an additional classification result.
 
-In this subsection, describe the web interface implemented for users and administrators. Explain that the client side provides authentication pages, plant views, sensor management, analytics charts, alert handling, and admin monitoring.
+The architecture avoids direct communication between the frontend and the sensor device. All sensor readings pass through the backend before being displayed. This design ensures that data validation, authorization, storage, condition assessment, alert generation, and recommendation logic remain centralized. It also prevents inconsistent interpretations of raw readings on the client side.
 
-\subsection{Server-side}
+The developed backend follows a layered architecture. API routers handle HTTP requests and responses. Application services contain business logic. Domain modules define enums, plant knowledge, thresholds, and rule-based logic. Infrastructure modules contain database models, repositories, database configuration, and event streaming support. This structure reduces coupling between components and improves testability.
 
-This subsection should describe the backend API layer, application services, repositories, schemas, authentication, and alert logic. Explain how the server processes user requests and telemetry, persists records, and exposes structured responses to the frontend.
+The database maintains persistent records for users, plants, plant care profiles, sensors, sensor readings, alerts, alert transitions, recommendations, notifications, user notification settings, and system logs. Each entity has a clear role in the monitoring workflow. Users own plants. Plants are connected to sensors. Sensors produce readings. Readings are analyzed to create alerts and recommendations. Alert transitions preserve the lifecycle history. Notification settings control user-facing email behavior. System logs support administrative traceability.
 
-\subsection{IoT and Sensor Data Flow}
+The IoT architecture is intentionally simple. Instead of a wireless sensor network, the implemented version uses a USB-connected Arduino sensor device. This device sends readings to a Python gateway running on a host computer. The gateway then sends readings to the backend through HTTP. This design is sufficient for a controlled functional implementation and avoids overclaiming industrial-scale IoT deployment.
 
-This subsection should explain how the simulated or physical sensor sends telemetry to the backend ingest endpoint, how device authentication is performed, and how data moves into storage and user-facing monitoring views.
+\input{figures/system-architecture.tex}
+
+\subsection{Client-side Architecture}
+\label{subsec:client-side-architecture}
+
+The client-side component of the system is implemented as a React and TypeScript web application. The frontend uses Vite as its build tool and follows a component-based structure. It provides route-level pages for authentication, dashboard overview, plant list, plant details, analytics, alerts, notifications, settings, profile, and administration. Reusable components are used for dashboard cards, plant details, charts, alert lists, notification panels, sensor views, and authentication forms.
+
+The system controls access to protected areas through a frontend layout that allows access only to authenticated users. After login, the JWT access token is stored in local storage. During application startup, the frontend attempts to restore the user session by requesting the current-user endpoint. If the token is valid, the user gains access to protected content. If the token is missing or invalid, the system redirects the user to the authentication interface.
+
+Role-based interface behavior is also implemented on the client side. Ordinary users can access plant monitoring pages, alerts, notifications, profile settings, and read-only sensor information. The admin panel is displayed only for users with the Admin role. This client-side restriction improves usability, although the actual security enforcement remains on the backend.
+
+The user interface is Kazakh-first by default. Russian and English are also available through the language switcher.
+
+The main dashboard page presents an overview of the user's plants. It loads plant profiles and selected dashboard snapshots from the backend. The dashboard shows current environmental values, condition status, health score, and AI-supported result fields where available. It also supports search, sorting, and refresh actions.
+
+The plant details page provides a deeper view of a selected plant. It shows plant metadata, current sensor readings, historical charts, condition explanation, risk factors, AI-supported classification, confidence information, active recommendation, and attached sensors. The page also supports plant photo upload. The photo is used only for plant profile display and is not processed by any computer vision module.
+
+Historical data are presented through charts that show changes in soil moisture, air temperature, air humidity, and light intensity over time. The backend provides historical sensor readings to the frontend, where they are displayed as time-series visualizations. This allows users to observe trends, compare previous and current environmental conditions, and better understand how the plant's surroundings change over time. As a result, the dashboard supports more informed plant care decisions than a single current measurement alone.
+
+The frontend also implements alert interaction. Users can view alerts, filter them, open alert details, inspect recommendations, and move alerts through allowed lifecycle transitions. Notification streams provide user-facing updates about new events. Server-Sent Events are used for selected live updates, including alerts, notifications, and plant dashboard updates.
+
+\subsection{Server-side Architecture}
+\label{subsec:server-side-architecture}
+
+The server-side part of the system is built with FastAPI. It provides REST API endpoints and streaming endpoints under the \texttt{/api/v1} prefix. Through these endpoints, the backend handles the main operations of the application, including user authentication and authorization, plant and sensor management, sensor data ingestion, monitoring, alerts, notifications, recommendations, AI-supported classification, logging, and administrative monitoring.
+
+The backend is divided into several layers. The API layer contains routers for authentication, plants, sensors, monitoring, data ingestion, alerts, notifications, administration, and streaming. These routers define the available endpoints, HTTP methods, request and response formats, and required dependencies. They mainly handle communication with the client side, while the main business logic is passed to the service layer.
+
+The application service layer implements the main workflows. The authentication service handles registration and login. The plant service handles plant profile creation, update, deletion, and photo upload. The sensor service handles sensor provisioning, assignment, attachment, detachment, and token rotation. The alert service processes incoming sensor readings, evaluates thresholds, creates alerts, generates recommendations, creates notifications, and publishes streaming events. The monitoring service prepares dashboard data. The recommendation service generates current and alert-related recommendations. The plant condition service combines rule-based analysis with machine learning support.
+
+The infrastructure layer contains SQLAlchemy ORM models and repositories. Repositories isolate database queries from service logic. This repository-based approach improves maintainability because database access is centralized. For example, plant retrieval, sensor data history retrieval, alert creation, recommendation creation, and log creation are handled through dedicated repositories.
+
+FastAPI endpoints are implemented as asynchronous functions, while database operations are handled through asynchronous SQLAlchemy sessions with the \texttt{asyncpg} PostgreSQL driver. This approach is suitable for a system that receives sensor readings, supports multiple users, and updates dashboard data efficiently.
+
+Authentication is implemented with JWT bearer tokens. User passwords are protected using bcrypt hashing. Access to protected endpoints is checked through backend dependencies that decode the token, identify the current user, and verify the user's permissions. Administrative access is enforced through a separate dependency that checks the user role. Sensor ingestion uses a different mechanism: a device token sent through the \texttt{X-Device-Token} header. Only the hash of this token is stored in the database.
+
+The backend also includes request logging and persistent system logs. System logs record important events such as user registration, login, plant creation, plant deletion, sensor registration, sensor assignment, sensor attachment, sensor token rotation, sensor detachment, ingestion authentication failure, alert creation, and alert transitions. These logs provide traceability for administrative monitoring.
+
+\subsection{IoT Sensor Data Flow}
+\label{subsec:iot-sensor-data-flow}
+
+The IoT sensor data stream originates from an Arduino Uno-based sensor node. The node collects raw measurements of soil moisture, air temperature, air humidity, and light intensity. The Arduino firmware periodically transmits JSON-formatted data through the USB serial port. In the current implementation, the serial transfer rate is 9600 baud, and readings are sent approximately every five seconds.
+
+The Python serial gateway reads the serial output. It receives raw JSON messages for soil moisture, air humidity, temperature, and light intensity. The gateway parses each message and checks whether it contains valid JSON data. If a row of data is corrupted or does not contain a valid object, the gateway ignores it and writes a warning message to the log.
+
+After parsing, the gateway normalizes selected values. Soil moisture is converted from a raw analog value into a percentage scale. Light is converted into a normalized project score from 0 to 1000. This light value is not a lux measurement; it is a normalized value used within the system. Temperature and humidity are passed as numeric values where available.
+
+The gateway then sends the normalized payload to the backend ingestion endpoint. The endpoint path includes the device identifier. The request also includes a device token and source label in HTTP headers. This enables the backend to verify that the reading comes from a registered sensor. If authentication fails, the backend rejects the request and records diagnostic information.
+
+The backend ingestion endpoint validates both the incoming sensor reading and the associated device. It checks whether the device exists, whether the device token is valid, whether the sensor is active, and whether the sensor is attached to a plant profile. If these checks are successful, the reading is stored in the \texttt{sensor\_data} table. The backend then evaluates the stored values against predefined threshold rules and, when necessary, creates alerts, recommendations, and notifications.
+
+If a reading contains missing metric values, these values are stored as null. Alert evaluation skips missing values. AI-supported classification is performed only when all four current metrics are available. This behavior prevents invalid or incomplete readings from producing misleading AI-supported results.
+
+\subsection{AI-Based Analysis and Recommendation Flow}
+\label{subsec:ai-analysis-recommendation-flow}
+
+The AI-based analysis flow is implemented as a hybrid condition assessment process. The system combines a transparent rule-based layer with a machine learning layer based on a Random Forest classifier. The term ``AI-based'' in this context refers to AI-supported classification, not autonomous diagnosis or automated control.
+
+The rule-based layer is primary. It uses plant-profile thresholds to evaluate whether each monitored parameter is within an acceptable range. The current active plant knowledge base is centered on the Golden pothos profile, or \textit{Epipremnum aureum}. In the updated implementation, several related indoor aroid species names resolve to this shared care profile. The profile defines minimum, maximum, and optimal ranges for soil moisture, air temperature, air humidity, and light. It also defines issue types and recommendation texts.
+
+When a current reading is available, the rule-based layer starts with a health score and subtracts penalties for threshold violations and certain trend-related risks. For example, the score is reduced when the system detects conditions such as low or excessive soil moisture, low or high temperature, low air humidity, or insufficient light. Recent trends can also affect the final assessment, especially when soil moisture is decreasing or temperature is rising over time.
+
+The resulting condition can be normal, attention, critical, or insufficient data. If no current reading is available, the condition is marked as insufficient data. If the score is low or a severe penalty is detected, the condition becomes critical. If there are moderate issues or risk factors, the condition becomes attention. Otherwise, the condition remains normal.
+
+The machine learning layer provides additional support. The Random Forest classifier analyzes eight input features: current soil moisture, current air temperature, current air humidity, current light intensity, and the short-term trends of these four parameters. It classifies the plant condition into one of three categories: normal, attention, or critical. The model is trained on a synthetic scenario dataset generated in the project code. Therefore, its results are interpreted cautiously.
+
+The final dashboard output consists of the rule-based result, health score, risk factors, explanation, machine learning prediction, confidence score, and analysis method. If the machine learning prediction differs from the rule-based result, the system keeps the rule-based result as the primary output. If the machine learning model is not available for the prediction process, the system falls back to the rule-based output.
+
+Recommendation generation is separate from machine learning. In the active implementation, recommendations are rule-based. Recommendations are generated according to problems detected in the plant profile. For instance, low moisture results in advice to increase watering and check the soil again; high moisture results in advice to stop watering temporarily; low humidity results in advice to increase ambient humidity; and low light results in advice to move the plant to an area with better lighting.
+
+\input{figures/ai-ml-pipeline.tex}
+
+\section{Database Design}
+\label{sec:database-design}
+
+The database serves as one of the main components of the implemented application because all data related to monitoring, users, plants, plant care profiles, sensors, alerts, recommendations, notifications, notification settings, and logs are stored persistently. PostgreSQL is used as the database management system \cite{postgresql2025docs}. The backend connects to the database through asynchronous SQLAlchemy ORM models and repositories.
+
+The database design reflects the main functional requirements of the system. It must store users and roles for authentication and authorization. It must store plant profiles so that users can monitor their own plants. It must store sensor devices and their assignment to users and plants. It must store time-series sensor readings. It must support alert creation and alert lifecycle history. It must store recommendations, notifications, and notification settings. It must also provide persistent system logs for administrative traceability.
+
+The database does not contain some entities as separate normalized tables. For example, roles are stored as an enum field in the \texttt{users} table. Sensor types are stored as an enum field in the \texttt{sensors} table. Plant ownership is not enforced through a foreign key to a species reference table; instead, the plant species field is stored directly in the \texttt{plants} table, while the \texttt{plant\_care\_profiles} table provides a separate knowledge lookup used by backend logic. Alert types are also not stored in a separate table; alert meaning is represented by metric, title, message, severity, and plant-profile issue definitions.
+
+This design is suitable for the current implementation scope. It supports the required workflows without unnecessary complexity. It can also accommodate extensions. Future versions may include additional tables for plant types, alert types, and thresholds if there is a need to support multiple plant species or customized plant rules defined by users.
+
+\input{figures/database-er.tex}
+
+\subsection{Entity-Relationship Model}
+\label{subsec:entity-relationship-model}
+
+The entity-relationship model is based on the main objects involved in plant monitoring. The central entities are User, UserNotificationSettings, Plant, PlantCareProfile, Sensor, SensorData, Alert, AlertTransition, Recommendation, Notification, and SystemLog.
+
+The User entity represents a registered account. A user can own multiple plants. A user can also have assigned sensors and alerts. The role field determines whether the user is a regular User or Admin. This supports role-based access control without a separate roles table. The same user can also have one notification-settings record and many notifications and system logs.
+
+The UserNotificationSettings entity stores per-user notification preferences. It controls whether email notifications are enabled, whether only critical notifications should be sent, and whether category-specific alert emails are allowed. This entity is linked one-to-one with a user.
+
+The Plant entity represents a monitored plant profile. Each plant belongs to one user. A plant can have many sensor records attached to it, many sensor data records, many alerts, many recommendations, and many notifications. The plant profile contains descriptive information such as name, species, location, description, image URL, and status.
+
+The PlantCareProfile entity stores shared threshold ranges, issue definitions, and care guidance used by the backend logic. In the current implementation, it acts as a lookup source that is resolved by plant species rather than by a direct foreign-key relationship from the \texttt{plants} table.
+
+The Sensor entity represents a registered sensor device. A sensor may be assigned to a user and attached to a plant. It has a unique device identifier and a stored device token hash. The sensor can produce many sensor data records. It can also be associated with alerts if a reading from that sensor produces an abnormal condition.
+
+The SensorData entity stores actual environmental readings. Each reading belongs to one sensor and one plant. It stores moisture, temperature, humidity, light, recorded time, and creation time. Since sensor readings are time-series data, the recorded time is essential for dashboard history and trend calculation.
+
+The Alert entity represents a detected environmental issue. Alerts are linked to users and plants and may be linked to sensors. They store status, severity, metric, measured value, threshold, title, message, and timestamps. The AlertTransition entity stores the lifecycle history of each alert.
+
+The Recommendation entity stores decision-support text. It belongs to a plant and may be associated with an alert. The current active recommendation for a plant is shown on the dashboard, while older recommendations can remain stored as inactive history.
+
+The Notification entity supports user-facing notifications. It may refer to a plant, alert, or sensor. It stores notification type, severity, title, message, read status, and deduplication information. The SystemLog entity stores audit-oriented events that administrators can inspect.
+
+The main relationships are as follows. One user has many plants. One user has one notification-settings record. One user may have many assigned sensors. One plant has many sensors. One sensor has many sensor data records. One plant has many sensor data records. One user has many alerts. One plant has many alerts. One alert has many alert transitions. One plant has many recommendations. One user has many notifications. One user may also have many system log entries. The plant care profile is resolved through species lookup rather than a direct plant foreign key. This relationship model provides traceability between plant ownership, sensor assignment, readings, alerts, recommendations, notifications, and administrative events.
+
+\subsection{Description of Main Database Tables}
+\label{subsec:description-main-database-tables}
+
+The \texttt{users} table stores the main information about registered accounts in the system. It includes the user ID, full name, email address, hashed password, role, account activity status, creation timestamp, and update timestamp. The email field is unique, which prevents several accounts from using the same email address. Passwords are stored as hashes for security reasons, not as plain text. The role field defines whether the account belongs to a regular User or an Admin, while the activity status allows the backend to block inactive accounts from protected system functions.
+
+The \texttt{plants} table stores plant profiles. Its main fields are plant identifier, user identifier, plant name, species, location, description, image URL, activity status, deletion timestamp, creation timestamp, and update timestamp. The \texttt{user\_id} field links each plant to its owner. The activity and deletion fields support soft deletion. This allows the system to preserve historical records even if the plant profile is no longer active.
+
+The \texttt{plant\_care\_profiles} table stores shared plant-profile knowledge used by the backend condition and recommendation logic. Its fields include profile identifier, slug, canonical species, display names, threshold definitions, issue definitions, stable advice, and activity state. This table is used as a backend lookup source for supported plant-care logic.
+
+The \texttt{sensors} table stores registered devices. It includes sensor identifier, user identifier, device identifier, device token hash, sensor type, status, plant identifier, activity status, last seen timestamp, last ingestion source, last error timestamp, and last error message. The device identifier is unique. The token hash is used to authenticate sensor ingestion requests. The plant identifier links the sensor to the plant being monitored.
+
+The \texttt{sensor\_data} table stores environmental readings. Its main fields are sensor data identifier, sensor identifier, plant identifier, moisture, temperature, humidity, light, recorded time, and creation time. Metric values are nullable because a reading may contain partial data. The recorded time is used for historical charts and trend indicators. The table has indexes on sensor, plant, and recorded time to support efficient dashboard queries.
+
+The \texttt{alerts} table stores alert records. It includes alert identifier, user identifier, plant identifier, sensor identifier, status, severity, title, message, metric, measured value, threshold, creation timestamp, update timestamp, and resolution timestamp. The status field supports the alert lifecycle. The severity field allows the frontend to distinguish low, medium, high, and critical alerts.
+
+The \texttt{alert\_transitions} table stores lifecycle changes. It includes transition identifier, alert identifier, previous status, new status, user who changed the status, optional note, and transition time. This table is important for traceability because it records how an alert moved from creation to closure.
+
+The \texttt{recommendations} table stores care recommendation messages. It includes recommendation identifier, plant identifier, alert identifier, recommendation text, reason, activity status, creation timestamp, and update timestamp. The system can deactivate previous recommendations when a new active recommendation is generated. This keeps the current recommendation clear while preserving previous records.
+
+The \texttt{notifications} table stores user notifications. It includes notification identifier, user identifier, type, severity, title key, message key, parameters, optional rendered title, optional rendered message, related plant, related alert, related sensor, deduplication key, read timestamp, and creation timestamp. This table supports notification display and read/unread state.
+
+The \texttt{user\_notification\_settings} table stores per-user notification preferences. It includes setting identifier, user identifier, optional notification email, whether email delivery is enabled, whether only critical email notifications are allowed, category-specific alert flags, verification timestamp, and standard creation and update timestamps.
+
+The \texttt{system\_logs} table stores persistent system events. It includes log identifier, user identifier, event type, message, structured payload, and creation timestamp. This table supports administrative review and debugging. It is especially useful for events related to authentication, plant management, sensor management, ingestion failures, alert creation, and alert transitions.
+
+\begin{table}[H]
+\centering
+\caption{Main database tables and their purposes}
+\label{tab:main-database-tables}
+\begin{tabular}{p{0.20\textwidth}p{0.32\textwidth}p{0.36\textwidth}}
+\hline
+\textbf{Table} & \textbf{Purpose} & \textbf{Main relationships and usage} \\
+\hline
+\texttt{users} & Stores registered user accounts and role information. & Owns plants, alerts, notifications, and system log records. \\
+\texttt{plants} & Stores plant profiles created by users. & Connected to sensors, sensor data, alerts, recommendations, and notifications. \\
+\texttt{plant\_care\_profiles} & Stores shared threshold and care-profile knowledge. & Used by backend logic to resolve species-specific thresholds and recommendation rules. \\
+\texttt{sensors} & Stores registered physical or logical sensor devices. & Assigned to users and attached to plants; produces sensor data. \\
+\texttt{sensor\_data} & Stores environmental readings. & Linked to one sensor and one plant; used by dashboard and condition assessment. \\
+\texttt{alerts} & Stores detected environmental issues. & Linked to users, plants, and optionally sensors; managed through lifecycle transitions. \\
+\texttt{alert\_transitions} & Stores alert status change history. & Linked to alerts and users who changed the status. \\
+\texttt{recommendations} & Stores rule-based care recommendation messages. & Linked to plants and optionally alerts. \\
+\texttt{notifications} & Stores user-facing notifications. & Linked to users and optionally plants, alerts, or sensors. \\
+\texttt{user\_notification\_settings} & Stores per-user notification delivery preferences. & Linked one-to-one with users and used by notification services. \\
+\texttt{system\_logs} & Stores audit-oriented system events. & Used for administrative monitoring and traceability. \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{User Experience and Core Functions}
+\label{sec:user-experience-core-functions}
+
+The user experience of the developed system is organized around a typical plant monitoring workflow. A user creates an account, logs in, creates plant profiles, receives sensor data through attached devices, monitors current and historical values, reacts to alerts, and uses recommendations for plant care decisions. An administrator supports this process by registering and managing sensors, inspecting logs, and monitoring system-level information.
+
+The system was designed so that the user does not need to interpret raw sensor data manually. Instead, the dashboard converts readings into understandable visual elements: current metric cards, charts, condition status, health score, risk factors, alert severity, and recommendation text. This supports users who may not have technical or agronomic expertise.
+
+The user experience also emphasizes traceability. Alerts are not just temporary messages; they have a lifecycle. Users can view, acknowledge, resolve, and close alerts. This makes the response process more structured. The system stores alert transition history so that previous actions can be reviewed.
+
+From an administrative perspective, the system supports controlled sensor provisioning. Sensors are created by administrators, assigned to users, and attached to plant profiles. This avoids uncontrolled data ingestion and supports a clearer relationship between physical devices and plant profiles.
+
+\subsection{Customer Journey Map}
+\label{subsec:customer-journey-map}
+
+The Customer Journey Map presents the key steps associated with user interaction with the developed software solution. The journey begins when the user opens the application and registers an account. During registration, the user must provide required data, including name, email, and password. After the application validates the provided data, the user account is created.
+
+The next step is login. The registered user enters an email address and password. If the credentials are correct, the backend sends a JWT access token to the frontend. Based on this token, the frontend opens the protected area of the application.
+
+The next stage is plant profile creation. The user adds a plant by entering its name, species, location, and optional description. The plant profile becomes visible in the plant list and dashboard. A plant photo may also be uploaded for display purposes. The image is used only as part of the profile interface and is not analyzed by the system.
+
+Sensor assignment and attachment represent the administrative part of the journey. An administrator provisions a sensor device, assigns it to a user, and attaches it to a plant. The sensor device then becomes associated with the plant profile. This step connects the physical monitoring device with the digital plant record.
+
+Once the sensor is connected using the Python gateway, data start flowing to the backend. The user can open the dashboard and view near-real-time data on soil moisture, temperature, humidity, and light. Graphs for all four parameters display how their values have changed over time. The dashboard also displays condition assessment, health score, AI-supported classification, and recommendation text.
+
+If the value of one of the parameters crosses the defined threshold, an alert is generated. The user is informed through a notification and may then proceed to the alert section. In this section, the user can find details about which metric crossed the threshold, its current value, the threshold value, violation severity, and offered recommendation.
+
+The final phase involves continuous monitoring. The user continues checking the dashboard or receiving notifications. In this way, the application supports a more systematic approach to everyday plant care.
+
+\subsection{User Stories and Acceptance Criteria}
+\label{subsec:user-stories-acceptance-criteria}
+
+The implemented system covers several key user stories. First, there is a registration and login story. As a plant owner, the user needs to create an account and log in to protect personal plant information and monitoring data. The acceptance criteria are the ability to create a new account with valid data, rejection of duplicate email addresses, password hashing, and login with valid credentials.
+
+The second user story concerns plant profile management. To represent each monitored plant separately, the user needs to create plant profiles. The acceptance criteria include creating a new plant with valid data, listing plants, viewing a plant details page, uploading a plant profile picture, and deleting a plant profile if it is no longer monitored.
+
+The third user story concerns registering and attaching a sensor device to a plant profile. The user acting as an administrator is expected to register a sensor, receive its device token, assign it to a user, connect it to a plant, change the device token, and detach it from the plant if necessary.
+
+The fourth user story concerns environmental monitoring. The plant owner wants to view current and previous sensor readings in order to make informed plant care decisions. The acceptance criteria include displaying current measurements of moisture, temperature, humidity, and light; creating graphs based on historical readings; and handling missing values.
+
+The fifth user story concerns alert handling. As a plant owner, the user wants to receive alerts whenever environmental deviations require attention. The acceptance criteria include generating alerts when a threshold value is exceeded, avoiding duplicate alerts for the same metric, showing alert severity and relevant details, and enabling valid transitions in the alert lifecycle.
+
+The sixth user story is recommendation support. As a user, the plant owner wants to receive understandable recommendations when an issue is detected so that the next action is easier to decide. The acceptance criteria are that the recommendation is related to the detected parameter, is shown on the dashboard or alert page, and is presented as decision support rather than guaranteed treatment.
+
+The seventh user story is AI-supported classification. As a user, the plant owner wants to see an additional AI-supported result that classifies the plant condition as normal, attention, or critical. The acceptance criteria are that the system uses current readings and trend indicators, displays the AI-supported result and confidence where available, and keeps the rule-based result as primary when there is disagreement.
+
+\begin{table}[H]
+\centering
+\caption{User stories and acceptance criteria}
+\label{tab:user-stories-acceptance-criteria}
+\begin{tabular}{p{0.18\textwidth}p{0.18\textwidth}p{0.28\textwidth}p{0.28\textwidth}}
+\hline
+\textbf{User story} & \textbf{Actor} & \textbf{Goal} & \textbf{Acceptance criteria} \\
+\hline
+Registration and login & User & Create and access a protected account. & Valid account creation, duplicate email rejection, password hashing, successful login. \\
+Plant profile management & User & Manage monitored plants. & Plant creation, listing, detail view, photo upload, soft deletion. \\
+Sensor registration and attachment & Admin & Connect a physical sensor to a plant profile. & Sensor provisioning, token generation, user assignment, plant attachment, detachment. \\
+Environmental monitoring & User & View current and historical sensor readings. & Display of four parameters, historical charts, missing value handling. \\
+Alert handling & User & React to abnormal environmental conditions. & Alert creation, duplicate prevention, severity display, lifecycle transitions. \\
+Recommendation support & User & Receive understandable decision-support advice. & Recommendation shown on dashboard or alert page and linked to the detected issue. \\
+AI-supported classification & User & View an additional condition classification. & Current readings and trends used; AI output shown as supporting information. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Core Functions of the Web Application}
+\label{subsec:core-functions-web-application}
+
+The core functions of the web application can be grouped into user management, plant management, sensor management, monitoring, alerts, recommendations, AI-supported analysis, notifications, and administration.
+
+User management includes registration, login, current user retrieval, token-based authentication, and protected route handling. It ensures that personal plant data are accessible only to authenticated users.
+
+Plant management includes creating plant profiles, listing plants, opening plant details, updating plant information through backend support, uploading plant photos, and soft deletion. The plant profile is the central object around which monitoring data are organized.
+
+Sensor management includes administrative sensor provisioning, user assignment, plant attachment, detachment, and token rotation. This function connects physical sensor devices to digital plant profiles.
+
+Monitoring includes receiving readings, storing them, retrieving the latest reading, retrieving historical readings, and visualizing them through dashboard components and charts. Monitoring is the central function of the system because it transforms raw environmental measurements into user-facing information.
+
+Alert management includes alert creation, deduplication, display, filtering, detail viewing, lifecycle transition, and transition history. Alerts help users identify abnormal environmental states and manage their response.
+
+Recommendation support includes generating text recommendations based on detected issues and showing them in the dashboard and alert details. Recommendations are rule-based and linked to plant-profile thresholds.
+
+AI-supported analysis includes condition scoring, trend feature preparation, Random Forest classification, confidence display, and safe fallback behavior. The AI output is not used as a final diagnosis but as supporting information for the user.
+
+Notification support provides user-facing updates related to plant condition, alerts, and sensor events. Notifications can be marked as read and are updated through Server-Sent Events.
+
+Administration includes user overview, sensor overview, alert overview, system log viewing, and sensor lifecycle operations. These functions support system management and traceability.
+
+\section{Implementation of the Web Application}
+\label{sec:implementation-web-application}
+
+The implementation of the web application combines backend development, frontend development, IoT sensor integration, alert logic, recommendation logic, and AI-supported classification. The implementation was designed to be functional, modular, and connected to the actual monitoring workflow.
+
+The backend provides the central application logic and persistent data management. The frontend provides the user interface and visualization. The IoT gateway provides the connection between sensor hardware and software. The alert and recommendation modules interpret the readings. The AI module adds a machine learning-supported classification layer.
+
+The implementation uses modern web development technologies but remains within the realistic scope of a diploma project. It demonstrates a complete end-to-end flow from physical sensor measurement to user-facing decision support.
+
+\begin{table}[H]
+\centering
+\caption{Technologies used in the implemented system}
+\label{tab:technologies-used}
+\begin{tabular}{p{0.20\textwidth}p{0.28\textwidth}p{0.42\textwidth}}
+\hline
+\textbf{Layer} & \textbf{Technology} & \textbf{Purpose in the implemented system} \\
+\hline
+Frontend & React, TypeScript, Vite & Web dashboard, user interaction, routing, and visualization of monitoring data. \\
+Backend & Python, FastAPI, Pydantic & REST API implementation, request validation, business logic, and streaming support. \\
+Database & PostgreSQL, SQLAlchemy & Persistent storage of users, plants, sensors, readings, alerts, recommendations, and logs. \\
+IoT gateway & Python serial gateway & Reading USB serial sensor messages, normalizing values, and sending ingestion requests. \\
+Machine learning support & Random Forest classifier & Additional condition classification based on current values and trend features. \\
+Sensor device & Arduino Uno-based sensor node & Collection and transmission of environmental measurements from the monitored plant environment. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Backend Implementation}
+\label{subsec:backend-implementation}
+
+The backend is implemented in FastAPI \cite{fastapi2025docs}. It provides REST API endpoints and Server-Sent Events streams. The main routers include authentication, plants, sensors, ingestion, monitoring, alerts, notifications, administration, and streams. These routers are mounted under the \texttt{/api/v1} prefix, while the health check endpoint is available separately.
+
+Authentication APIs include registration, login, and current user retrieval. The registration API creates a new user account. The login API authenticates the user and returns a JWT access token. The current user API returns the details of the authenticated user.
+
+Plant APIs allow authenticated users to perform operations on plant profiles. They enable the creation of plant details, listing plants, fetching a particular plant, updating plant details, uploading plant images, and soft deletion of a plant.
+
+Sensor endpoints are partly user-facing and partly admin-only. Ordinary users can list sensors visible to them. Administrators can create sensors, assign them to users, attach them to plants, detach them, and rotate device tokens. Sensor token rotation is important because it allows administrators to replace compromised or outdated device credentials.
+
+The ingestion endpoint receives sensor data. It is not authenticated with user JWT tokens. Instead, it uses the device identifier and \texttt{X-Device-Token} header. This is appropriate because the gateway acts as a device client rather than a human user.
+
+Monitoring endpoints provide dashboard data. The dashboard response includes current reading, historical readings, computed condition, and current recommendation. This endpoint reduces the amount of logic required on the frontend because the backend already prepares structured monitoring information.
+
+Alert endpoints allow users to list alerts, view alert details, and perform lifecycle transitions. Notification endpoints allow users to list notifications and mark them as read. Admin endpoints provide user, sensor, alert, and log monitoring.
+
+The backend uses Pydantic schemas for request and response data. It also uses repository classes for database access. This implementation separates HTTP handling, business logic, and persistence. Such separation makes the backend easier to maintain and test.
+
+\begin{table}[H]
+\centering
+\caption{Main backend API endpoint groups}
+\label{tab:backend-api-endpoint-groups}
+\begin{tabular}{p{0.22\textwidth}p{0.32\textwidth}p{0.34\textwidth}}
+\hline
+\textbf{Module} & \textbf{Endpoint group} & \textbf{Purpose and access role} \\
+\hline
+Authentication & \texttt{/auth/register}, \texttt{/auth/login}, \texttt{/auth/me} & User registration, login, and current-user retrieval. \\
+Plants & \texttt{/plants} & Plant profile creation, listing, retrieval, update, photo upload, and soft deletion. \\
+Sensors & \texttt{/sensors} & Sensor provisioning and lifecycle management; mutation operations are admin-only. \\
+Ingestion & \texttt{/ingest/sensors/\{device\_id\}/data} & Sensor telemetry ingestion using device token authentication. \\
+Dashboard & \texttt{/dashboard/plants/\{plant\_id\}} & Current readings, history, condition assessment, and recommendation. \\
+Alerts & \texttt{/alerts} & Alert listing, detail view, and lifecycle transitions. \\
+Notifications & \texttt{/notifications} & User notification listing and read-state updates. \\
+Admin & \texttt{/admin/users}, \texttt{/admin/sensors}, \texttt{/admin/alerts}, \texttt{/admin/logs} & Administrative monitoring and system traceability. \\
+Streams & \texttt{/stream/...} & Server-Sent Events for dashboard, alert, and notification updates. \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Functional requirements of the implemented system}
+\label{tab:functional-requirements}
+\begin{tabular}{p{0.24\textwidth}p{0.30\textwidth}p{0.36\textwidth}}
+\hline
+\textbf{Requirement area} & \textbf{Required function} & \textbf{Implemented support} \\
+\hline
+Authentication and access control & Register users, authenticate access, and separate User and Admin permissions. & Account registration, JWT-based login, protected routes, backend authorization checks, and admin-only operations. \\
+Plant profile management & Create and manage monitored plant profiles. & Plant creation, listing, detail view, photo upload, and soft deletion. \\
+Sensor lifecycle management & Register sensors and connect them to users and plants. & Sensor provisioning, assignment, attachment, detachment, and token rotation. \\
+Environmental data ingestion & Receive sensor telemetry and store valid readings. & Python gateway forwarding, ingestion endpoint validation, device token checks, and database insertion. \\
+Monitoring and visualization & Show current values and historical changes. & Dashboard summaries, plant detail view, charts, and historical reading retrieval. \\
+Alert and notification handling & Detect abnormal conditions and inform the user. & Threshold evaluation, alert creation, lifecycle transitions, deduplication, and notifications. \\
+Recommendation support & Provide understandable decision-support advice. & Rule-based recommendations linked to detected issues and dashboard context. \\
+AI-supported analysis & Add an additional condition classification layer. & Hybrid rule-based and ML analysis with confidence output and safe fallback behavior. \\
+Administrative monitoring & Support system-level oversight and traceability. & Admin views for users, sensors, alerts, and persistent system logs. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Frontend and Dashboard Implementation}
+\label{subsec:frontend-dashboard-implementation}
+
+The frontend was created using React, TypeScript, and Vite \cite{react2025docs}. Communication with the backend is performed through an API client. State management is achieved through React context, which stores data about authentication, plants, alerts, notifications, sensors, and application actions.
+
+User login and registration are performed on the login and registration pages. After successful login, the user is redirected to the protected part of the application. The primary layout contains navigation, language support, profile access, notifications, and an admin section for administrators.
+
+The dashboard page is the main monitoring interface. It shows the user's plant profiles and monitoring summaries. Each plant summary can display current environmental values, condition status, health score, and AI-supported fields. Users can navigate from the dashboard to a detailed plant page.
+
+The plant details page is the most important monitoring page. It displays the latest readings for soil moisture, temperature, humidity, and light. It also shows historical charts, condition status, explanation, risk factors, AI-supported prediction, confidence, recommendation, and attached sensors. This page gives the user a complete view of the plant's current environmental state.
+
+The analytics page provides additional historical visualization and export support. It allows the user to inspect parameter trends. This is useful because changes over time may be more informative than a single measurement.
+
+The alerts page provides alert filtering, alert details, and lifecycle transition controls. The notification panel provides quick access to recent events. The admin page provides tabs for users, sensors, alerts, and logs.
+
+The frontend is connected to Server-Sent Events for real-time updates. When a dashboard event, alert event, or notification event is received, the frontend refreshes relevant data. This creates a more responsive user experience without requiring constant manual page reloads.
 
 \begin{figure}[H]
     \centering
-    \fbox{\rule{0pt}{2.2in}\rule{0.85\textwidth}{0pt}}
-    \caption{Placeholder architecture diagram for the complete IoT-to-dashboard data flow}
-    \label{fig:architecture-placeholder}
+    \includegraphics[width=0.95\textwidth]{figures/main-dashboard-screenshot.png}
+    \caption{Main dashboard screenshot}
+    \label{fig:main-dashboard-screenshot}
 \end{figure}
 
-Figure~\ref{fig:architecture-placeholder} is a sample figure block. Replace the framed placeholder with the final architecture image exported from a diagram tool or prepared in vector format.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/plant-details-screenshot.png}
+    \caption{Plant details page with charts and AI-supported result}
+    \label{fig:plant-details-screenshot}
+\end{figure}
 
-\subsection{AI/ML Condition Analysis Flow}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/alerts-page-screenshot.png}
+    \caption{Alerts page screenshot}
+    \label{fig:alerts-page-screenshot}
+\end{figure}
 
-This subsection should describe the hybrid analysis flow implemented in the final system. Explain that the rule-based layer remains primary, while the Random Forest classifier provides supporting condition classification with confidence and class probabilities.
+\subsection{IoT Sensor Integration and Data Ingestion}
+\label{subsec:iot-sensor-integration-data-ingestion}
 
-Suggested sequence to describe:
-\begin{enumerate}
-    \item sensor data is received and stored;
-    \item current values and recent history are selected;
-    \item rule-based condition scoring is calculated;
-    \item trend features are derived;
-    \item machine learning prediction is executed if the model is available;
-    \item the dashboard returns a hybrid result with explanation and AI support fields.
-\end{enumerate}
+The IoT integration is implemented through the Arduino sensor node and Python serial gateway. The Arduino node reads environmental values and prints JSON messages over USB serial. The gateway reads these messages and sends them to the backend.
 
-\section{Database Design}
+The gateway includes command-line configuration for serial port, baud rate, backend URL, device identifier, device token, interval, timeout, retry delay, Arduino reset delay, source label, and log level. This allows the same gateway script to be used with different devices or local environments.
 
-This section should explain the structure of the PostgreSQL database and how the main entities support the implemented workflows.
+Normalization occurs before the data are sent by the gateway. Soil moisture is converted into a percentage. Light is normalized into a numerical score. Temperature and humidity are sent as numeric values. Invalid data are also managed by the gateway. If the serial line does not contain JSON data, the data are skipped. If there are errors in numeric parameters, the reading is discarded.
 
-\subsection{Entity-Relationship Model}
+The backend ingestion endpoint authenticates the device through the device token. If authentication succeeds, the backend stores the data. If the device is unknown, disabled, not attached to a plant, or uses an invalid token, the backend rejects the request.
 
-In this subsection, describe the key entities and their relationships, for example users, plants, sensors, sensor data, alerts, recommendations, and logs. Explain the logical links between them and the purpose of these links.
+After data storage, the backend evaluates the reading. If a value violates thresholds, the alert service may create an alert and recommendation. The system also publishes events through the event bus so that the frontend can update dashboard and notification views.
 
-\subsection{Description of Main Database Tables}
+This implementation demonstrates an end-to-end IoT data flow while staying within the actual system scope. It is not a wireless sensor network and does not include distributed sensor nodes. However, the database and backend structure can support multiple registered sensors if more devices are connected in the future.
 
-This subsection should provide a textual explanation of the main tables and their attributes.
+\subsection{Alert and Hybrid AI Recommendation Module Implementation}
+\label{subsec:alert-hybrid-ai-recommendation-implementation}
+
+The alert module is implemented as part of the backend service layer. During data ingestion, the alert service evaluates incoming readings against plant-profile thresholds. If an issue is detected, the service creates an alert unless an open alert for the same plant and metric already exists. This deduplication mechanism prevents repeated abnormal readings from creating many identical alerts.
+
+Every alert has its own severity level. Severity levels are determined by the distance between the detected value and the threshold. This allows the system to distinguish minor discrepancies from more serious environmental issues. There are four types of alert severity: low, medium, high, and critical.
+
+The alert lifecycle is implemented through a finite-state model. Allowed statuses are created, viewed, acknowledged, resolved, and closed. Allowed transitions are controlled by the backend. This prevents invalid status changes. Transition records are stored in a separate table, which provides a history of user actions.
+
+The recommendation creation process is related to the alerts generated by the rule logic. Once an alert is triggered, the recommendation engine creates a recommendation for the detected problem. For instance, if soil moisture is below the acceptable level, the recommendation is to increase watering and continue monitoring soil moisture after some time. If temperature is high, the recommendation advises reducing heat exposure.
+
+The system also generates current recommendations for the dashboard. These recommendations are based on the current condition and are shown as decision support. Old recommendations can be deactivated when a new active recommendation is generated, while still remaining stored in the database.
+
+The hybrid AI condition module is implemented through two services: the plant condition service and the ML condition service. The plant condition service performs rule-based scoring and prepares features. The ML condition service loads the saved Random Forest model and performs prediction \cite{breiman2001randomforest,pedregosa2011scikit}. The AI-supported result includes prediction class, confidence, and class probabilities.
+
+Current data and trend data are considered in the model. Current data consist of moisture, temperature, humidity, and light. Trend data are determined based on recent historical data. These data represent changes in the parameters during the selected period of time.
+
+The Random Forest classifier is trained on a synthetic dataset generated in the repository. Therefore, the model is used carefully. It supports classification but does not validate biological plant health. The rule-based result remains primary, and the AI-supported result is presented as additional information. This conservative approach prevents overclaiming and keeps the system aligned with the actual data source.
 
 \begin{table}[H]
-    \centering
-    \caption{Sample table describing important database entities}
-    \label{tab:db-entities-placeholder}
-    \begin{tabular}{>{\raggedright\arraybackslash}p{0.22\textwidth} >{\raggedright\arraybackslash}p{0.28\textwidth} >{\raggedright\arraybackslash}p{0.36\textwidth}}
-        \toprule
-        Table & Main fields & Purpose \\
-        \midrule
-        users & id, email, password\_hash, role & Stores user accounts and access roles \\
-        plants & id, user\_id, name, species, location & Stores plant profiles created by users \\
-        sensors & id, device\_id, plant\_id, device\_token\_hash & Stores registered sensor devices and bindings \\
-        sensor\_data & sensor\_id, plant\_id, moisture, temperature, humidity, light & Stores historical telemetry \\
-        alerts & user\_id, plant\_id, severity, status, metric & Stores detected alert conditions \\
-        recommendations & plant\_id, alert\_id, text, reason & Stores active care advice \\
-        \bottomrule
-    \end{tabular}
+\centering
+\caption{Alert rules and recommendations}
+\label{tab:alert-rules-recommendations}
+\begin{tabular}{p{0.20\textwidth}p{0.16\textwidth}p{0.20\textwidth}p{0.34\textwidth}}
+\hline
+\textbf{Condition} & \textbf{Parameter} & \textbf{Threshold direction} & \textbf{Recommendation direction} \\
+\hline
+Low moisture & Soil moisture & Below minimum & Increase watering and re-check the soil later. \\
+High moisture & Soil moisture & Above maximum & Pause watering and allow the soil to dry. \\
+Low temperature & Air temperature & Below minimum & Move the plant to a warmer area. \\
+High temperature & Air temperature & Above maximum & Reduce direct heat exposure. \\
+Low humidity & Air humidity & Below minimum & Increase ambient humidity. \\
+Low light & Light intensity & Below minimum & Move the plant to a brighter location or add supplemental light. \\
+\hline
+\end{tabular}
 \end{table}
 
-Table~\ref{tab:db-entities-placeholder} is a sample table block. Replace or extend it with the final table list and descriptions based on the actual schema used in the project.
+\section{Testing and Validation}
+\label{sec:testing-validation}
 
-\section{User Scenarios and Core Functionality}
+Testing and validation were performed to verify that the developed system works as a functional software solution for plant condition monitoring. The testing process focused on backend logic, API behavior, database operations, sensor gateway processing, alert lifecycle, recommendation generation, AI-supported classification, frontend build validation, and manual workflow checking.
 
-This section should explain the practical system behavior from the user perspective. Describe how a user interacts with the final prototype and what steps are required to achieve each scenario.
+The testing process should be understood as software validation. It confirms that the implemented modules behave according to the designed workflows. It does not represent agronomic field validation and does not prove biological accuracy across plant species or environmental conditions.
 
-\subsection{User Registration and Plant Profile Management}
+The repository contains automated backend tests. These tests cover security functions, sensor lifecycle, alert deduplication, alert lifecycle, notifications, recommendation selection, plant condition scoring, machine learning fallback behavior, plant knowledge resolution, and gateway normalization. Manual API validation is supported through FastAPI Swagger/OpenAPI documentation and HTTP smoke-test files.
 
-Describe how a user creates an account, logs in, and manages plant profiles. Mention fields such as plant name, species, location, and description. Explain why plant profiles are needed to bind telemetry and organize monitoring.
+The frontend was validated through build execution and manual testing of user workflows. Automated frontend unit tests were not found in the active implementation. Therefore, frontend validation is based on build success, route behavior, API integration, and visual inspection of pages.
 
-\subsection{Sensor Connection and Plant Monitoring}
+In the final validation run, the automated backend suite reported 53 passed tests. The frontend production build completed successfully, the database was confirmed at Alembic head revision \texttt{0009\_notification\_email\_flags}, dashboard and alert API checks returned HTTP 200, and unauthorized ingest with an invalid device token returned HTTP 401.
 
-Explain how a user creates a sensor record, receives a one-time device token, attaches the sensor to a plant, and then receives readings in the dashboard. Mention both physical device ingest and software simulation as valid demo modes for the diploma presentation.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/testing-terminal-screenshot.png}
+    \caption{Testing terminal screenshot}
+    \label{fig:testing-terminal-screenshot}
+\end{figure}
 
-\subsection{Alerts and AI-Based Recommendations}
+\subsection{Functional Testing}
+\label{subsec:functional-testing}
 
-Describe how alerts are generated, displayed, and transitioned through their lifecycle. Explain that recommendations are generated as explainable care suggestions and that the dashboard also exposes machine learning support fields such as prediction, confidence, and analysis method.
+Functional testing focused on whether the main user-facing workflows operate correctly. The first tested workflow was user registration and login. The system was expected to generate a valid user account, reject registration attempts using a duplicate email address, hash the password, validate the user, and produce a JWT token after successful login.
 
-\section{Implementation and Testing}
+The second tested workflow was plant profile management. The system was expected to create plant profiles, list them for the current user, open individual plant details, upload plant photos, and soft-delete plants. Ownership checks were important because users should not access plants that belong to other users.
 
-This section should describe how the software was implemented and how its correctness was verified.
+The third tested workflow was sensor management. Administrative operations were tested to verify that only Admin users can provision sensors, assign sensors, attach sensors to plants, detach sensors, and rotate tokens. User access to sensor mutation endpoints was expected to be denied.
 
-\subsection{Backend Implementation}
+The fourth tested workflow was monitoring. When sensor data are ingested, the system should store readings and display them on the dashboard. The frontend should show current values, historical charts, condition status, recommendation, and AI-supported fields where available.
 
-In this subsection, describe the FastAPI backend structure, authentication, business services, repositories, and database interaction. Explain how REST endpoints support user, sensor, monitoring, alert, and admin functionality.
+The fifth tested workflow was alert management. When a reading violates thresholds, the system should create an alert. If an open alert for the same plant and metric already exists, the system should not create a duplicate. Users should be able to open alert details and move alerts through valid lifecycle states.
 
-\subsection{Dashboard and Interface Implementation}
+The sixth tested workflow was notification support. Notifications should be created for relevant events, displayed in the frontend panel, and marked as read when the user performs the corresponding action.
 
-Describe the frontend implementation, routes, dashboard widgets, charts, condition cards, alerts page, settings page, and admin view. Mention how the interface displays both traditional analytical outputs and ML-enhanced condition data.
+\subsection{API and Database Testing}
+\label{subsec:api-database-testing}
 
-\subsection{Machine Learning Module Implementation}
+API testing verified that backend endpoints accept valid requests, reject invalid requests, and return structured responses. Authentication endpoints were checked for registration, login, and current-user retrieval. Plant endpoints were checked for creation, listing, retrieval, update support, photo upload, and deletion. Sensor endpoints were checked for admin-only access and correct sensor lifecycle behavior.
 
-This subsection should focus on the implemented Random Forest classifier. Explain:
-\begin{itemize}
-    \item selected input features;
-    \item synthetic expert-labeled training dataset;
-    \item model training script;
-    \item saved model artifact and metadata;
-    \item safe runtime loading and fallback behavior;
-    \item hybrid integration with rule-based logic.
-\end{itemize}
+The ingestion API was especially important because it connects the physical sensor layer with the software system. It was tested with valid and invalid device tokens, active and inactive sensors, attached and unattached sensors, and valid telemetry payloads. The expected behavior was that valid readings are stored and invalid requests are rejected.
 
-You can cite the theoretical background here again if needed \cite{breiman2001randomforests}.
+Database testing verified that records are inserted and related correctly. User records must be linked to plants. Plants must be linked to sensor data. Sensors must be linked to plants when attached. Alerts must be linked to users and plants. Alert transitions must be linked to alerts. Recommendations must be linked to plants and optionally to alerts. System logs must preserve relevant event information.
 
-\subsection{Testing Results}
+The database schema supports indexes on important fields such as user email, device identifier, plant identifier, sensor identifier, recorded time, alert status, and notification state. These indexes support efficient lookup and dashboard queries.
 
-This subsection should summarize what was tested and what the outcome was. Use repository evidence such as backend tests, frontend build checks, ingest verification, dashboard verification, alert generation, and access-control checks.
+OpenAPI documentation was used as a manual validation tool. It provides visibility into available endpoints, request schemas, and response schemas. The HTTP smoke-test file supports manual verification of the main backend workflows.
 
-Suggested content:
-\begin{itemize}
-    \item unit tests for security, alert transitions, and condition logic;
-    \item machine learning service fallback and prediction tests;
-    \item successful frontend build;
-    \item successful simulated demo flow;
-    \item known warnings or limitations that do not block the defense demo.
-\end{itemize}
+\subsection{AI Module Testing}
+\label{subsec:ai-module-testing}
 
-\section{Limitations and Future Improvements}
+AI module testing focused on verifying technical integration and safe fallback behavior. The Random Forest model is loaded from a saved model artifact. The model metadata contains feature information, labels, dataset size, and accuracy. The classifier is called only when all required current readings are available.
 
-This section should honestly describe the current boundaries of the implemented prototype. Mention that the machine learning module is trained on a synthetic expert-labeled dataset and therefore should be presented as a supervised classification support module rather than a clinically or agronomically validated diagnostic engine.
+The AI input features include current moisture, temperature, humidity, light, moisture trend, temperature trend, humidity trend, and light trend. The output classes are normal, attention, and critical. If any required metric is missing, the system skips the ML prediction. If the model artifact is missing or prediction fails, the backend returns a safe null result and continues with rule-based assessment.
 
-Possible improvement directions:
-\begin{itemize}
-    \item collecting real sensor datasets for model retraining;
-    \item adding species-specific thresholds;
-    \item adding richer visualization or mobile support;
-    \item improving sensor calibration and reliability;
-    \item extending notifications and long-term analytics.
-\end{itemize}
+\begin{table}[H]
+\centering
+\caption{ML model features used for condition classification}
+\label{tab:ml-model-features}
+\begin{tabular}{p{0.26\textwidth}p{0.22\textwidth}p{0.42\textwidth}}
+\hline
+\textbf{Feature} & \textbf{Type} & \textbf{Meaning in the model input} \\
+\hline
+Moisture & Current reading & Current soil moisture value from the latest stored sensor reading. \\
+Temperature & Current reading & Current air temperature value from the latest stored sensor reading. \\
+Humidity & Current reading & Current air humidity value from the latest stored sensor reading. \\
+Light & Current reading & Current normalized light intensity value from the latest stored sensor reading. \\
+Moisture trend & Trend feature & Short-term change in soil moisture based on recent history. \\
+Temperature trend & Trend feature & Short-term change in air temperature based on recent history. \\
+Humidity trend & Trend feature & Short-term change in air humidity based on recent history. \\
+Light trend & Trend feature & Short-term change in light intensity based on recent history. \\
+\hline
+\end{tabular}
+\end{table}
+
+The plant condition service was tested to verify that rule-based results are still produced without the ML component. This is important because the rule-based layer is primary. The ML classifier adds support but must not become a single point of failure.
+
+The training dataset is synthetic and generated by project code. It contains controlled scenario examples and rule-crafted labels. Therefore, AI module testing verifies internal software behavior rather than real-world agronomic accuracy. This limitation must be stated clearly. The model can support classification in the context of the application but cannot be used as evidence of biological diagnosis.
+
+\subsection{Results of Testing}
+\label{subsec:results-of-testing}
+
+The testing results show that the developed system implements an end-to-end workflow. A user can sign up, sign in, create plant profiles, receive monitoring details, receive alerts, view alert details, see recommendations, and manage alert lifecycle states. An administrator is able to configure sensors, assign sensors to users, assign sensors to plants, change device tokens, and monitor logs.
+
+Backend tests confirm key logic areas such as authentication helpers, sensor lifecycle, alert deduplication, alert finite-state transitions, recommendation selection, plant condition scoring, machine learning fallback, and plant knowledge behavior. Gateway tests confirm normalization, JSON parsing, and ingestion URL construction. Frontend build validation confirms that the web interface can be compiled.
+
+The final validation set also confirms that the database schema is at the expected migration head, protected dashboard and alert endpoints respond correctly for authenticated owners, and invalid sensor-ingest credentials are rejected. These checks are consistent with the practical security and monitoring requirements of the implemented system.
+
+The results also show limitations. Frontend automated unit tests are not present in the active implementation. The AI model is trained on synthetic data and should not be presented as agronomically validated. The system does not include wireless sensor network deployment, actuator control, automated irrigation, deep learning, or computer vision.
+
+In general, the testing and validation process confirms that the designed software application is a working software solution for environmental plant condition monitoring. This software application incorporates IoT data ingestion, backend processing, database storage, dashboard visualization, alert lifecycle management, recommendation support, and AI-supported classification.
+
+\begin{table}[H]
+\centering
+\caption{Testing results of the implemented system}
+\label{tab:testing-results}
+\begin{tabular}{p{0.24\textwidth}p{0.34\textwidth}p{0.32\textwidth}}
+\hline
+\textbf{Test area} & \textbf{Validation focus} & \textbf{Observed result} \\
+\hline
+Authentication and access & Registration, login, duplicate email handling, and protected access. & Expected authentication flow and access restrictions were confirmed. \\
+Plant and sensor workflows & Plant ownership checks, plant lifecycle, sensor provisioning, assignment, and attachment. & Main plant and sensor management workflows behaved according to the designed logic. \\
+Ingestion and monitoring & Telemetry acceptance, device-token validation, reading storage, and dashboard data flow. & Valid readings were stored and invalid ingestion requests were rejected. \\
+Alerts and recommendations & Threshold evaluation, deduplication, alert lifecycle, and recommendation generation. & Alert creation and lifecycle control worked with linked recommendation support. \\
+Hybrid AI support & Feature preparation, model invocation, and fallback to rule-based output. & ML support was available when inputs were complete, and safe fallback behavior was preserved. \\
+Frontend validation & Build execution, route behavior, and integration with backend APIs. & The frontend build completed and the main monitoring pages were validated manually. \\
+Database migration state & Alembic revision consistency and schema readiness. & The database was confirmed at revision \texttt{0009\_notification\_email\_flags (head)}. \\
+API and ingest access checks & Dashboard retrieval, alert retrieval, and unauthorized ingest rejection. & Dashboard and alert endpoints returned HTTP 200 for the authenticated owner, and invalid device-token ingest returned HTTP 401. \\
+\hline
+\end{tabular}
+\end{table}

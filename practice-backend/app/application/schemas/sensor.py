@@ -15,6 +15,10 @@ class SensorAttachRequest(BaseModel):
     plant_id: int
 
 
+class SensorAssignRequest(BaseModel):
+    user_id: int
+
+
 class SensorResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

@@ -50,6 +50,29 @@ export type DashboardResponse = {
   history: DashboardPoint[];
   condition: PlantCondition;
   active_recommendation: RecommendationSummary | null;
+  care_profile?: CareProfile | null;
+  today_care?: CareActionItem[];
+};
+
+export type CareTextItem = {
+  icon: "water" | "light" | "humidity" | "temperature" | string;
+  color: "blue" | "amber" | "green" | "orange" | string;
+  title: string;
+  text: string;
+};
+
+export type CareActionItem = CareTextItem & {
+  detail?: string | null;
+  status?: "normal" | "attention" | "warning" | "critical" | "unknown" | string | null;
+};
+
+export type CareProfile = {
+  slug: string;
+  canonical_species: string;
+  display_names: Record<string, string>;
+  thresholds: Record<string, unknown>;
+  basic_care: CareTextItem[];
+  gardener_advice: CareTextItem[];
 };
 
 export type PlantCondition = {
@@ -65,10 +88,13 @@ export type PlantCondition = {
 };
 
 export type RecommendationSummary = {
-  id: number;
+  id: number | null;
   text: string;
   reason: string | null;
-  created_at: string;
+  created_at: string | null;
+  metric?: string | null;
+  severity?: string | null;
+  source?: "current_condition" | "historical_alert" | string;
 };
 
 export type AlertStatus = "created" | "viewed" | "acknowledged" | "resolved" | "closed";
@@ -121,11 +147,70 @@ export type SensorProvisionResponse = {
   device_token: string;
 };
 
+export type Notification = {
+  id: number;
+  user_id: number;
+  type: string;
+  severity: "info" | "warning" | "critical" | string;
+  title_key: string;
+  message_key: string;
+  params: Record<string, string | number | null | undefined> | null;
+  title: string | null;
+  message: string | null;
+  related_plant_id: number | null;
+  related_alert_id: number | null;
+  related_sensor_id: number | null;
+  dedupe_key: string | null;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type NotificationSettings = {
+  id: number;
+  user_id: number;
+  notification_email: string | null;
+  email_enabled: boolean;
+  critical_only: boolean;
+  email_critical_alerts: boolean;
+  email_moisture_alerts: boolean;
+  email_temperature_alerts: boolean;
+  email_humidity_alerts: boolean;
+  email_light_alerts: boolean;
+  verified_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NotificationSettingsUpdate = {
+  notification_email?: string | null;
+  email_enabled?: boolean;
+  critical_only?: boolean;
+  email_critical_alerts?: boolean;
+  email_moisture_alerts?: boolean;
+  email_temperature_alerts?: boolean;
+  email_humidity_alerts?: boolean;
+  email_light_alerts?: boolean;
+};
+
+export type TestEmailResponse = {
+  status: string;
+  detail: string;
+};
+
 export type AdminLog = {
   id: number;
   user_id: number | null;
   event_type: string;
   message: string;
   payload: Record<string, unknown> | null;
+  created_at: string;
+};
+
+export type AdminPlant = {
+  id: number;
+  user_id: number;
+  name: string;
+  species: string | null;
+  location: string | null;
   created_at: string;
 };

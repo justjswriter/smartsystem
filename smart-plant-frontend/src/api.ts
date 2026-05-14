@@ -3,12 +3,18 @@ import type {
   AuthResponse,
   DashboardResponse,
   LoginPayload,
+  Notification,
+  NotificationSettings,
+  NotificationSettingsUpdate,
   Plant,
   RegisterPayload,
   Sensor,
   SensorProvisionResponse,
+  TestEmailResponse,
   User,
   AdminLog,
+  AdminPlant,
+  CareProfile,
 } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
@@ -29,6 +35,33 @@ async function apiFetch<T>(path: string, options: RequestInit = {}, token?: stri
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
+  });
+
+  if (!response.ok) {
+    let message = `Request failed: ${response.status}`;
+    try {
+      const payload = (await response.json()) as { detail?: string | Array<{ msg?: string }> };
+      if (typeof payload.detail === "string") {
+        message = payload.detail;
+      } else if (Array.isArray(payload.detail) && payload.detail[0]?.msg) {
+        message = payload.detail[0].msg;
+      }
+    } catch {
+      // Ignore non-JSON error payloads.
+    }
+    throw new Error(message);
+  }
+
+  return (await response.json()) as T;
+}
+
+async function uploadFetch<T>(path: string, formData: FormData, token: string): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
   });
 
   if (!response.ok) {
@@ -76,16 +109,31 @@ function mapPlant(raw: Record<string, unknown>): Plant {
       ? Number(healthCandidate)
       : undefined;
 
+  const rawImageUrl = typeof raw.image_url === "string" ? raw.image_url : undefined;
+
   return {
     id: Number(raw.id),
     name: String(raw.name ?? "Unnamed plant"),
     species: typeof raw.species === "string" ? raw.species : undefined,
     location: typeof raw.location === "string" ? raw.location : undefined,
     description: typeof raw.description === "string" ? raw.description : undefined,
-    image_url: typeof raw.image_url === "string" ? raw.image_url : undefined,
+    image_url: resolveImageUrl(rawImageUrl),
     health: Number.isFinite(numericHealth) ? numericHealth : undefined,
     notes: typeof raw.notes === "string" ? raw.notes : undefined,
   };
+}
+
+function resolveImageUrl(value: string | undefined) {
+  if (!value) {
+    return undefined;
+  }
+  if (/^(https?:|data:|blob:)/.test(value)) {
+    return value;
+  }
+  if (value.startsWith("/")) {
+    return `${new URL(API_BASE_URL).origin}${value}`;
+  }
+  return value;
 }
 
 export async function getPlant(token: string, plantId: number): Promise<Plant> {
@@ -117,6 +165,29 @@ export async function createPlant(
   return mapPlant(created);
 }
 
+export async function updatePlant(
+  token: string,
+  plantId: number,
+  payload: { name?: string; species?: string; location?: string; description?: string | null }
+): Promise<Plant> {
+  const updated = await apiFetch<Record<string, unknown>>(
+    `/plants/${plantId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+    token
+  );
+  return mapPlant(updated);
+}
+
+export async function uploadPlantPhoto(token: string, plantId: number, file: File): Promise<Plant> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const updated = await uploadFetch<Record<string, unknown>>(`/plants/${plantId}/photo`, formData, token);
+  return mapPlant(updated);
+}
+
 export async function getPlantDashboard(
   token: string,
   plantId: number,
@@ -127,6 +198,10 @@ export async function getPlantDashboard(
     { method: "GET" },
     token
   );
+}
+
+export async function getPlantCareProfiles(token: string): Promise<CareProfile[]> {
+  return apiFetch<CareProfile[]>("/plant-care-profiles", { method: "GET" }, token);
 }
 
 export async function getAlerts(token: string): Promise<Alert[]> {
@@ -147,6 +222,44 @@ export async function transitionAlert(
     method: "POST",
     body: JSON.stringify({ to_status: toStatus, note: note ?? null }),
   }, token);
+}
+
+export async function getNotifications(token: string, unreadOnly = false): Promise<Notification[]> {
+  return apiFetch<Notification[]>(
+    `/notifications?unread_only=${String(unreadOnly)}`,
+    { method: "GET" },
+    token
+  );
+}
+
+export async function markNotificationRead(token: string, notificationId: number): Promise<Notification> {
+  return apiFetch<Notification>(`/notifications/${notificationId}/read`, { method: "POST" }, token);
+}
+
+export async function markAllNotificationsRead(token: string): Promise<Notification[]> {
+  return apiFetch<Notification[]>("/notifications/read-all", { method: "POST" }, token);
+}
+
+export async function getNotificationSettings(token: string): Promise<NotificationSettings> {
+  return apiFetch<NotificationSettings>("/notification-settings", { method: "GET" }, token);
+}
+
+export async function updateNotificationSettings(
+  token: string,
+  payload: NotificationSettingsUpdate
+): Promise<NotificationSettings> {
+  return apiFetch<NotificationSettings>(
+    "/notification-settings",
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+    token
+  );
+}
+
+export async function sendTestNotificationEmail(token: string): Promise<TestEmailResponse> {
+  return apiFetch<TestEmailResponse>("/notification-settings/test-email", { method: "POST" }, token);
 }
 
 export async function getSensors(token: string): Promise<Sensor[]> {
@@ -175,6 +288,17 @@ export async function attachSensor(token: string, sensorId: number, plantId: num
   );
 }
 
+export async function assignSensor(token: string, sensorId: number, userId: number): Promise<Sensor> {
+  return apiFetch<Sensor>(
+    `/sensors/${sensorId}/assign`,
+    {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId }),
+    },
+    token
+  );
+}
+
 export async function detachSensor(token: string, sensorId: number): Promise<Sensor> {
   return apiFetch<Sensor>(`/sensors/${sensorId}/detach`, { method: "POST" }, token);
 }
@@ -189,6 +313,10 @@ export async function getAdminUsers(token: string): Promise<User[]> {
 
 export async function getAdminSensors(token: string): Promise<Sensor[]> {
   return apiFetch<Sensor[]>("/admin/sensors", { method: "GET" }, token);
+}
+
+export async function getAdminPlants(token: string): Promise<AdminPlant[]> {
+  return apiFetch<AdminPlant[]>("/admin/plants?limit=500", { method: "GET" }, token);
 }
 
 export async function getAdminAlerts(token: string): Promise<Alert[]> {

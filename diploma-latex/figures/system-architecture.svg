@@ -1,0 +1,93 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='2200' height='1220' viewBox='0 0 2200 1220'>
+<defs><marker id='arrow' viewBox='0 0 12 12' refX='10' refY='6' markerWidth='12' markerHeight='12' orient='auto-start-reverse'><path d='M 0 0 L 12 6 L 0 12 z' fill='#4C6175'/></marker></defs>
+<rect x='0' y='0' width='2200' height='1220' fill='#F7F9FC'/>
+<text x='1100.0' y='76' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='42' font-weight='700' fill='#18324A'>System Architecture of the Implemented Smart Plant Monitoring System</text>
+<text x='1100.0' y='120' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='22' fill='#5D7488'>Clean overview of ingestion, backend services, persistence, and user-facing monitoring flow</text>
+<rect x='70' y='240' width='300' height='205' rx='24' ry='24' fill='#E9F7F4' stroke='#4C6175' stroke-width='3'/>
+<path d='M 94 240 H 346 Q 370 240 370 264 V 286 H 70 V 264 Q 70 240 94 240 Z' fill='#178F76' stroke='#4C6175' stroke-width='3'/>
+<text x='88' y='270' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>Arduino Uno Sensor Node</text>
+<text x='88' y='322' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>USB or simulated telemetry</text>
+<text x='88' y='348' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>source</text>
+<text x='88' y='366' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Sends normalized plant</text>
+<text x='88' y='392' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>environment readings</text>
+<text x='88' y='418' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Authenticated with</text>
+<text x='88' y='440' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>X-Device-Token</text>
+<rect x='430' y='205' width='390' height='280' rx='24' ry='24' fill='#EAF1FB' stroke='#4C6175' stroke-width='3'/>
+<path d='M 454 205 H 796 Q 820 205 820 229 V 251 H 430 V 229 Q 430 205 454 205 Z' fill='#2D6CDF' stroke='#4C6175' stroke-width='3'/>
+<text x='448' y='235' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>FastAPI Backend</text>
+<text x='448' y='287' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>REST API routers</text>
+<text x='448' y='309' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>SSE streams for live updates</text>
+<text x='448' y='335' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>JWT auth dependencies for users</text>
+<text x='448' y='361' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Device ingestion endpoint</text>
+<rect x='500' y='625' width='285' height='175' rx='24' ry='24' fill='#EDF7EE' stroke='#4C6175' stroke-width='3'/>
+<path d='M 524 625 H 761 Q 785 625 785 649 V 671 H 500 V 649 Q 500 625 524 625 Z' fill='#2F855A' stroke='#4C6175' stroke-width='3'/>
+<text x='518' y='655' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>PostgreSQL Database</text>
+<text x='518' y='707' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>sensor_data</text>
+<text x='518' y='733' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>plants, sensors, alerts</text>
+<text x='518' y='759' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>recommendations and</text>
+<text x='518' y='781' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>logs</text>
+<rect x='900' y='175' width='340' height='185' rx='24' ry='24' fill='#EAF8F0' stroke='#4C6175' stroke-width='3'/>
+<path d='M 924 175 H 1216 Q 1240 175 1240 199 V 221 H 900 V 199 Q 900 175 924 175 Z' fill='#2F855A' stroke='#4C6175' stroke-width='3'/>
+<text x='918' y='205' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>PlantConditionService</text>
+<text x='918' y='257' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Threshold evaluation</text>
+<text x='918' y='279' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Trend-aware scoring</text>
+<text x='918' y='305' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Primary hybrid orchestration</text>
+<rect x='900' y='435' width='340' height='220' rx='24' ry='24' fill='#F2EEFF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 924 435 H 1216 Q 1240 435 1240 459 V 481 H 900 V 459 Q 900 435 924 435 Z' fill='#6B46C1' stroke='#4C6175' stroke-width='3'/>
+<text x='918' y='465' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>MLConditionService</text>
+<text x='918' y='517' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>RandomForestClassifier</text>
+<text x='918' y='539' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Feature preparation</text>
+<text x='918' y='565' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>ml_prediction and probabilities</text>
+<rect x='1310' y='215' width='410' height='215' rx='24' ry='24' fill='#FFF4E8' stroke='#4C6175' stroke-width='3'/>
+<path d='M 1334 215 H 1696 Q 1720 215 1720 239 V 261 H 1310 V 239 Q 1310 215 1334 215 Z' fill='#DD8A28' stroke='#4C6175' stroke-width='3'/>
+<text x='1328' y='245' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>Recommendation and Alert Service</text>
+<text x='1328' y='297' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Recommendation generation</text>
+<text x='1328' y='323' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Alert creation and lifecycle updates</text>
+<text x='1328' y='349' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Notification event publishing</text>
+<rect x='1310' y='530' width='380' height='225' rx='24' ry='24' fill='#EEF3FF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 1334 530 H 1666 Q 1690 530 1690 554 V 576 H 1310 V 554 Q 1310 530 1334 530 Z' fill='#3451B2' stroke='#4C6175' stroke-width='3'/>
+<text x='1328' y='560' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>React Dashboard</text>
+<text x='1328' y='612' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Dashboard cards and charts</text>
+<text x='1328' y='634' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Alerts, notifications, admin views</text>
+<text x='1328' y='659' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Consumes REST API and SSE</text>
+<text x='1328' y='681' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>updates</text>
+<rect x='1760' y='530' width='280' height='225' rx='24' ry='24' fill='#F1F4F7' stroke='#4C6175' stroke-width='3'/>
+<path d='M 1784 530 H 2016 Q 2040 530 2040 554 V 576 H 1760 V 554 Q 1760 530 1784 530 Z' fill='#60758A' stroke='#4C6175' stroke-width='3'/>
+<text x='1778' y='560' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>User / Admin</text>
+<text x='1778' y='612' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>User monitoring workflow</text>
+<text x='1778' y='638' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Admin sensor and log</text>
+<text x='1778' y='664' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>oversight</text>
+<polyline points='370,342 430,342' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='330' y='278' width='158' height='56' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='339' y='302' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>HTTP ingest +</text>
+<text x='339' y='325' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>X-Device-Token</text>
+<polyline points='625,485 625,625' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='650' y='540' width='156' height='56' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='659' y='564' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Store and query</text>
+<text x='659' y='587' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>monitoring data</text>
+<polyline points='785,712 880,712 880,268 900,268' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='760' y='650' width='228' height='56' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='769' y='674' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Current reading + recent</text>
+<text x='769' y='697' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>history</text>
+<polyline points='1070,360 1070,435' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1090' y='382' width='177' height='56' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1099' y='406' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Feature prep + ML</text>
+<text x='1099' y='429' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>invocation</text>
+<polyline points='1240,545 1310,325' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1195' y='455' width='175' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1204' y='479' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Support prediction</text>
+<polyline points='1690,642 1760,642' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1690' y='585' width='82' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1699' y='609' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Web UI</text>
+<polyline points='820,342 1260,342 1260,642 1310,642' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1035' y='585' width='240' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1044' y='609' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>REST API + SSE streams</text>
+<polyline points='1720,325 1720,642 1690,642' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1645' y='470' width='173' height='56' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1654' y='494' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Condition, alerts,</text>
+<text x='1654' y='517' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>recommendations</text>
+<rect x='485' y='826' width='320' height='42' rx='21.0' ry='21.0' fill='#2F855A' stroke='#2F855A' stroke-width='2'/>
+<text x='645.0' y='853.0' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='18' font-weight='700' fill='#FFFFFF'>Docker Compose runs PostgreSQL</text>
+<rect x='1360' y='790' width='300' height='42' rx='21.0' ry='21.0' fill='#2D6CDF' stroke='#2D6CDF' stroke-width='2'/>
+<text x='1510.0' y='817.0' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='18' font-weight='700' fill='#FFFFFF'>JWT authentication for users</text>
+</svg>

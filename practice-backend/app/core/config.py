@@ -2,6 +2,13 @@ from typing import List
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+DEFAULT_CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
@@ -23,7 +30,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     ALGORITHM: str = "HS256"
 
-    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: List[str] = DEFAULT_CORS_ORIGINS.copy()
 
     LOG_LEVEL: str = "INFO"
 
@@ -37,9 +44,21 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str | None = None
     ADMIN_PASSWORD: str | None = None
 
+    # Optional SMTP email notification channel.
+    EMAIL_NOTIFICATIONS_ENABLED: bool = False
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_FROM_EMAIL: str | None = None
+    SMTP_USE_TLS: bool = True
+
     PAGE_SIZE_DEFAULT: int = 20
     PAGE_SIZE_MAX: int = 100
     SSE_HEARTBEAT_SECONDS: int = Field(default=15, ge=5, le=60)
 
 
 settings = Settings()
+for origin in DEFAULT_CORS_ORIGINS:
+    if origin not in settings.CORS_ORIGINS:
+        settings.CORS_ORIGINS.append(origin)

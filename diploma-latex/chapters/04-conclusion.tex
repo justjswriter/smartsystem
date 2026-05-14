@@ -1,14 +1,16 @@
 \chapter{Conclusion}
+\label{ch:conclusion}
 
-This chapter should summarize the completed diploma work and evaluate how the goal and tasks were achieved. State that the developed system demonstrates a functional integration of IoT telemetry, backend processing, database persistence, web visualization, explainable rule-based analysis, and supervised machine learning support for plant condition classification.
+This diploma project resulted in the development of a final diploma prototype for plant condition monitoring that combines IoT data collection, secure backend processing, relational database storage, explainable rule-based analysis, supervised machine learning support, recommendations, alerts, and a web dashboard. The implemented system demonstrates how several modern software engineering and artificial intelligence components can be integrated into one coherent solution for a practical monitoring task.
 
-Suggested points to cover:
-\begin{itemize}
-    \item what was designed and implemented;
-    \item what practical problem the system solves;
-    \item what technologies were integrated successfully;
-    \item what results were achieved during testing;
-    \item what limitations remain for future work.
-\end{itemize}
+The objectives defined at the beginning of the work were achieved in a consistent manner. Existing AI-IoT approaches for plant monitoring were analyzed, and their common limitations helped motivate the chosen architecture. A complete system design was prepared and implemented using FastAPI, PostgreSQL, SQLAlchemy, Alembic, React, TypeScript, Vite, and Docker Compose. Secure IoT ingest was implemented through a protected HTTP endpoint using \texttt{X-Device-Token}, while user-facing access was protected through JWT authentication. The backend stores telemetry in the \texttt{sensor\_data} table and supports plants, sensors, alerts, recommendations, and monitoring views.
 
-The conclusion should be concise but confident. It should show that the diploma project produced a complete, defendable final system rather than only an abstract concept.
+An important result of the project is the hybrid analytical module. The system preserves a rule-based safety layer that calculates \texttt{condition\_status}, \texttt{health\_score}, \texttt{risk\_factors}, \texttt{confidence}, and \texttt{explanation}. In addition, a supervised machine learning classifier based on Random Forest was integrated as AI support. The classifier uses moisture, temperature, humidity, light, and trend features to predict whether a plant state is \textit{normal}, \textit{attention}, or \textit{critical}. This ML module is trained on expert-labeled synthetic environmental data and therefore serves as decision support rather than as a validated biological diagnosis tool. This honest positioning is important for the academic integrity of the diploma work.
+
+The implemented system was verified through migration checks, automated tests, frontend build validation, ingest contract checks, dashboard validation, alert retrieval, and simulator-based demo flows. The documented results include successful ML training, confirmed database migration state at Alembic head, successful backend testing with 53 passed tests, successful frontend build, acceptance of valid ingest requests, rejection of unauthorized ingest with HTTP 401, successful dashboard condition retrieval, successful alert retrieval, and ownership protection on SSE endpoints with HTTP 403 for non-owners.
+
+The practical value of the project lies in the fact that it is not only a conceptual description. It is an implemented system that can be demonstrated in a browser, supplied with simulated or real telemetry, and extended in future work. The prototype can support educational demonstrations, software engineering study, and further development toward more advanced plant monitoring features.
+
+At the same time, several limitations remain. The current prototype focuses on four environmental parameters and does not include advanced plant-specific agronomic personalization. The machine learning module was trained on synthetic expert-labeled data, not on long-term real field measurements. The system does not diagnose diseases and should not be described as a medical or botanical expert system. These limitations do not reduce the value of the prototype as a bachelor diploma result, but they define the boundaries of the achieved claims.
+
+In summary, the diploma project achieved its main aim: to develop a smart plant condition monitoring system that integrates IoT telemetry, backend storage, explainable rule-based analysis, supervised machine learning, recommendations, alerts, and a web dashboard. The resulting functional prototype provides a strong basis for further research and practical extension in the area of smart plant care and explainable AI-assisted monitoring.

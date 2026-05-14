@@ -1,0 +1,118 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='2200' height='1440' viewBox='0 0 2200 1440'>
+<defs><marker id='arrow' viewBox='0 0 12 12' refX='10' refY='6' markerWidth='12' markerHeight='12' orient='auto-start-reverse'><path d='M 0 0 L 12 6 L 0 12 z' fill='#4C6175'/></marker></defs>
+<rect x='0' y='0' width='2200' height='1440' fill='#F7F9FC'/>
+<text x='1100.0' y='76' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='42' font-weight='700' fill='#18324A'>Entity-Relationship Model of the Implemented PostgreSQL Database</text>
+<text x='1100.0' y='120' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='22' fill='#5D7488'>Core monitoring entities and the main one-to-many relationships used by the diploma prototype</text>
+<rect x='70' y='140' width='380' height='210' rx='24' ry='24' fill='#FFFFFF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 94 140 H 426 Q 450 140 450 164 V 188 H 70 V 164 Q 70 140 94 140 Z' fill='#375A7F' stroke='#4C6175' stroke-width='3'/>
+<text x='88' y='170' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>users</text>
+<text x='88' y='223' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>id (PK)</text>
+<text x='88' y='249' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>email</text>
+<text x='88' y='271' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>role</text>
+<text x='88' y='293' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>created_at</text>
+<rect x='610' y='140' width='410' height='250' rx='24' ry='24' fill='#FFFFFF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 634 140 H 996 Q 1020 140 1020 164 V 188 H 610 V 164 Q 610 140 634 140 Z' fill='#375A7F' stroke='#4C6175' stroke-width='3'/>
+<text x='628' y='170' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>plants</text>
+<text x='628' y='223' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>id (PK)</text>
+<text x='628' y='249' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>user_id (FK)</text>
+<text x='628' y='275' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>name</text>
+<text x='628' y='293' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>species</text>
+<text x='628' y='319' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>location</text>
+<rect x='1210' y='140' width='450' height='270' rx='24' ry='24' fill='#FFFFFF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 1234 140 H 1636 Q 1660 140 1660 164 V 188 H 1210 V 164 Q 1210 140 1234 140 Z' fill='#375A7F' stroke='#4C6175' stroke-width='3'/>
+<text x='1228' y='170' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>sensors</text>
+<text x='1228' y='223' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>id (PK)</text>
+<text x='1228' y='249' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>device_id</text>
+<text x='1228' y='275' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>plant_id (FK)</text>
+<text x='1228' y='301' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>token_hash</text>
+<text x='1228' y='327' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>status</text>
+<text x='1228' y='349' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>last_seen_at</text>
+<rect x='1710' y='430' width='400' height='320' rx='24' ry='24' fill='#FFFFFF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 1734 430 H 2086 Q 2110 430 2110 454 V 478 H 1710 V 454 Q 1710 430 1734 430 Z' fill='#375A7F' stroke='#4C6175' stroke-width='3'/>
+<text x='1728' y='460' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>sensor_data</text>
+<text x='1728' y='513' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>id (PK)</text>
+<text x='1728' y='539' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>sensor_id (FK)</text>
+<text x='1728' y='565' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>plant_id (FK)</text>
+<text x='1728' y='591' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>moisture</text>
+<text x='1728' y='613' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>temperature</text>
+<text x='1728' y='639' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>humidity</text>
+<text x='1728' y='665' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>light</text>
+<text x='1728' y='691' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>recorded_at</text>
+<rect x='670' y='500' width='430' height='280' rx='24' ry='24' fill='#FFFFFF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 694 500 H 1076 Q 1100 500 1100 524 V 548 H 670 V 524 Q 670 500 694 500 Z' fill='#375A7F' stroke='#4C6175' stroke-width='3'/>
+<text x='688' y='530' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>alerts</text>
+<text x='688' y='583' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>id (PK)</text>
+<text x='688' y='609' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>user_id (FK)</text>
+<text x='688' y='635' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>plant_id (FK)</text>
+<text x='688' y='661' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>sensor_id (FK)</text>
+<text x='688' y='687' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>severity</text>
+<text x='688' y='713' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>status</text>
+<text x='688' y='735' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>metric</text>
+<text x='688' y='757' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>recommendation</text>
+<rect x='1330' y='850' width='470' height='220' rx='24' ry='24' fill='#FFFFFF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 1354 850 H 1776 Q 1800 850 1800 874 V 898 H 1330 V 874 Q 1330 850 1354 850 Z' fill='#375A7F' stroke='#4C6175' stroke-width='3'/>
+<text x='1348' y='880' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>alert_transitions</text>
+<text x='1348' y='933' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>id (PK)</text>
+<text x='1348' y='959' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>alert_id (FK)</text>
+<text x='1348' y='985' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>from_status</text>
+<text x='1348' y='1011' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>to_status</text>
+<text x='1348' y='1037' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>note</text>
+<text x='1348' y='1059' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>created_at</text>
+<rect x='670' y='910' width='430' height='220' rx='24' ry='24' fill='#FFFFFF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 694 910 H 1076 Q 1100 910 1100 934 V 958 H 670 V 934 Q 670 910 694 910 Z' fill='#375A7F' stroke='#4C6175' stroke-width='3'/>
+<text x='688' y='940' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>recommendations</text>
+<text x='688' y='993' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>id (PK)</text>
+<text x='688' y='1019' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>plant_id (FK)</text>
+<text x='688' y='1045' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>text</text>
+<text x='688' y='1067' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>reason</text>
+<text x='688' y='1085' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>created_at</text>
+<rect x='90' y='930' width='380' height='180' rx='24' ry='24' fill='#FFFFFF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 114 930 H 446 Q 470 930 470 954 V 978 H 90 V 954 Q 90 930 114 930 Z' fill='#375A7F' stroke='#4C6175' stroke-width='3'/>
+<text x='108' y='960' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>system_logs</text>
+<text x='108' y='1013' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>id (PK)</text>
+<text x='108' y='1039' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>user_id (FK)</text>
+<text x='108' y='1065' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>action</text>
+<text x='108' y='1087' font-family='Arial, Helvetica, sans-serif' font-size='20' fill='#18324A'>created_at</text>
+<polyline points='450,245 610,245' fill='none' stroke='#4C6175' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='444' y='205' width='29' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='453' y='229' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>1</text>
+<rect x='584' y='205' width='66' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='593' y='229' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>many</text>
+<polyline points='1020,265 1210,265' fill='none' stroke='#4C6175' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1014' y='225' width='29' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1023' y='249' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>1</text>
+<rect x='1184' y='225' width='66' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1193' y='249' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>many</text>
+<polyline points='880,390 880,500' fill='none' stroke='#4C6175' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='874' y='350' width='29' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='883' y='374' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>1</text>
+<rect x='854' y='460' width='66' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='863' y='484' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>many</text>
+<polyline points='1020,320 1520,320 1520,490 1710,490' fill='none' stroke='#4C6175' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1014' y='280' width='29' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1023' y='304' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>1</text>
+<rect x='1684' y='450' width='66' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1693' y='474' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>many</text>
+<polyline points='1660,310 1850,310 1850,430' fill='none' stroke='#4C6175' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1654' y='270' width='29' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1663' y='294' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>1</text>
+<rect x='1824' y='390' width='66' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1833' y='414' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>many</text>
+<polyline points='1100,640 1330,960' fill='none' stroke='#4C6175' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1094' y='600' width='29' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1103' y='624' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>1</text>
+<rect x='1304' y='920' width='66' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1313' y='944' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>many</text>
+<polyline points='885,780 885,910' fill='none' stroke='#4C6175' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='879' y='740' width='29' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='888' y='764' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>1</text>
+<rect x='859' y='870' width='66' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='868' y='894' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>many</text>
+<polyline points='260,350 260,930' fill='none' stroke='#4C6175' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='254' y='310' width='29' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='263' y='334' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>1</text>
+<rect x='234' y='890' width='66' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='243' y='914' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>many</text>
+<rect x='1480' y='1330' width='470' height='40' rx='20.0' ry='20.0' fill='#60758A' stroke='#60758A' stroke-width='2'/>
+<text x='1715.0' y='1356.0' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='18' font-weight='700' fill='#FFFFFF'>One-to-many relationships shown for the main diploma entities</text>
+</svg>

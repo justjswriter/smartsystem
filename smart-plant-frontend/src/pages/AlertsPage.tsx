@@ -1,8 +1,10 @@
 import { Alerts } from "../components/Alerts";
 import { useAppState } from "../context/AppStateContext";
 import { getAlert } from "../api";
+import { useI18n } from "../i18n";
 
 export function AlertsPage() {
+  const { t } = useI18n();
   const {
     alerts,
     token,
@@ -17,8 +19,8 @@ export function AlertsPage() {
 
   return (
     <div className="page-stack">
-      <h1 className="page-title">Alerts</h1>
-      <p className="muted page-lead">Threshold and system alerts for your plants.</p>
+      <h1 className="page-title">{t("alerts.title")}</h1>
+      <p className="muted page-lead">{t("alerts.subtitle")}</p>
       <Alerts
         alerts={alerts}
         isLoading={isAlertsLoading}

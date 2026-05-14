@@ -33,3 +33,16 @@ class AlertSeverity(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
+
+class NotificationType(str, Enum):
+    PLANT_CONDITION = "plant_condition"
+    CRITICAL_ALERT = "critical_alert"
+    SENSOR_STALE = "sensor_stale"
+    SENSOR_SUBSCRIPTION = "sensor_subscription"
+
+
+class NotificationSeverity(str, Enum):
+    INFO = "info"
+    WARNING = "warning"
+    CRITICAL = "critical"

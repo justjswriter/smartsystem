@@ -1,6 +1,8 @@
 from app.domain.enums.common import (
     AlertSeverity,
     AlertStatus,
+    NotificationSeverity,
+    NotificationType,
     SensorStatus,
     SensorType,
     UserRole,
@@ -9,6 +11,8 @@ from app.domain.enums.common import (
 __all__ = [
     "AlertSeverity",
     "AlertStatus",
+    "NotificationSeverity",
+    "NotificationType",
     "SensorStatus",
     "SensorType",
     "UserRole",

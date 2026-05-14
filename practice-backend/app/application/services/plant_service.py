@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.schemas.plant import PlantCreate, PlantUpdate
+from app.domain.plant_knowledge import normalize_species
 from app.infrastructure.repositories import PlantRepository, SensorRepository, SystemLogRepository
 
 
@@ -12,7 +13,9 @@ class PlantService:
         self.log_repo = SystemLogRepository(db)
 
     async def create(self, *, user_id: int, payload: PlantCreate):
-        plant = await self.plant_repo.create(user_id=user_id, payload=payload.model_dump())
+        plant_payload = payload.model_dump()
+        plant_payload["species"] = normalize_species(plant_payload.get("species"))
+        plant = await self.plant_repo.create(user_id=user_id, payload=plant_payload)
         await self.log_repo.create(
             event_type="plant_created",
             message=f"Plant {plant.id} created",
@@ -33,6 +36,8 @@ class PlantService:
     async def update(self, *, user_id: int, plant_id: int, payload: PlantUpdate):
         plant = await self.get(user_id=user_id, plant_id=plant_id)
         updated_payload = payload.model_dump(exclude_none=True)
+        if "species" in updated_payload:
+            updated_payload["species"] = normalize_species(updated_payload.get("species"))
         if not updated_payload:
             return plant
         return await self.plant_repo.update(plant, updated_payload)

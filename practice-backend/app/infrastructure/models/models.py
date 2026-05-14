@@ -17,7 +17,15 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.domain.enums import AlertSeverity, AlertStatus, SensorStatus, SensorType, UserRole
+from app.domain.enums import (
+    AlertSeverity,
+    AlertStatus,
+    NotificationSeverity,
+    NotificationType,
+    SensorStatus,
+    SensorType,
+    UserRole,
+)
 from app.infrastructure.models.base import Base, TimestampMixin
 
 
@@ -41,6 +49,10 @@ class User(Base, TimestampMixin):
 
     plants: Mapped[list[Plant]] = relationship(back_populates="owner")
     alerts: Mapped[list[Alert]] = relationship(back_populates="user")
+    notifications: Mapped[list[Notification]] = relationship(back_populates="user")
+    notification_settings: Mapped[UserNotificationSettings | None] = relationship(
+        back_populates="user", cascade="all, delete-orphan", uselist=False
+    )
 
 
 class Plant(Base, TimestampMixin):
@@ -60,6 +72,22 @@ class Plant(Base, TimestampMixin):
     sensors: Mapped[list[Sensor]] = relationship(back_populates="plant")
     alerts: Mapped[list[Alert]] = relationship(back_populates="plant")
     recommendations: Mapped[list[Recommendation]] = relationship(back_populates="plant")
+    notifications: Mapped[list[Notification]] = relationship(back_populates="plant")
+
+
+class PlantCareProfile(Base, TimestampMixin):
+    __tablename__ = "plant_care_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    slug: Mapped[str] = mapped_column(String(120), unique=True, index=True, nullable=False)
+    canonical_species: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    display_names: Mapped[dict] = mapped_column(JSON, nullable=False)
+    thresholds: Mapped[dict] = mapped_column(JSON, nullable=False)
+    basic_care: Mapped[list[dict]] = mapped_column(JSON, nullable=False)
+    gardener_advice: Mapped[list[dict]] = mapped_column(JSON, nullable=False)
+    issues: Mapped[dict] = mapped_column(JSON, nullable=False)
+    stable_advice: Mapped[dict] = mapped_column(JSON, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
 class Sensor(Base, TimestampMixin):
@@ -89,6 +117,7 @@ class Sensor(Base, TimestampMixin):
     plant: Mapped[Plant | None] = relationship(back_populates="sensors")
     data_points: Mapped[list[SensorData]] = relationship(back_populates="sensor")
     alerts: Mapped[list[Alert]] = relationship(back_populates="sensor")
+    notifications: Mapped[list[Notification]] = relationship(back_populates="sensor")
 
 
 class SensorData(Base):
@@ -142,6 +171,7 @@ class Alert(Base, TimestampMixin):
     sensor: Mapped[Sensor | None] = relationship(back_populates="alerts")
     transitions: Mapped[list[AlertTransition]] = relationship(back_populates="alert")
     recommendations: Mapped[list[Recommendation]] = relationship(back_populates="alert")
+    notifications: Mapped[list[Notification]] = relationship(back_populates="alert")
 
     __table_args__ = (Index("ix_alerts_user_status_created", "user_id", "status", "created_at"),)
 
@@ -188,6 +218,65 @@ class Recommendation(Base, TimestampMixin):
 
     plant: Mapped[Plant] = relationship(back_populates="recommendations")
     alert: Mapped[Alert | None] = relationship(back_populates="recommendations")
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    type: Mapped[NotificationType] = mapped_column(
+        Enum(NotificationType, name="notification_type", values_callable=_enum_values),
+        nullable=False,
+    )
+    severity: Mapped[NotificationSeverity] = mapped_column(
+        Enum(NotificationSeverity, name="notification_severity", values_callable=_enum_values),
+        default=NotificationSeverity.INFO,
+        nullable=False,
+    )
+    title_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    message_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    params: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    related_plant_id: Mapped[int | None] = mapped_column(ForeignKey("plants.id"), index=True, nullable=True)
+    related_alert_id: Mapped[int | None] = mapped_column(ForeignKey("alerts.id"), index=True, nullable=True)
+    related_sensor_id: Mapped[int | None] = mapped_column(ForeignKey("sensors.id"), index=True, nullable=True)
+    dedupe_key: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=text("now()"), index=True
+    )
+
+    user: Mapped[User] = relationship(back_populates="notifications")
+    plant: Mapped[Plant | None] = relationship(back_populates="notifications")
+    alert: Mapped[Alert | None] = relationship(back_populates="notifications")
+    sensor: Mapped[Sensor | None] = relationship(back_populates="notifications")
+
+    __table_args__ = (
+        Index("ix_notifications_user_read_created", "user_id", "read_at", "created_at"),
+        Index("ix_notifications_user_dedupe_read", "user_id", "dedupe_key", "read_at"),
+    )
+
+
+class UserNotificationSettings(Base, TimestampMixin):
+    __tablename__ = "user_notification_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True, nullable=False
+    )
+    notification_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    email_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    critical_only: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_critical_alerts: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_moisture_alerts: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_temperature_alerts: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_humidity_alerts: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_light_alerts: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    user: Mapped[User] = relationship(back_populates="notification_settings")
 
 
 class SystemLog(Base):

@@ -1,0 +1,116 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='2200' height='1320' viewBox='0 0 2200 1320'>
+<defs><marker id='arrow' viewBox='0 0 12 12' refX='10' refY='6' markerWidth='12' markerHeight='12' orient='auto-start-reverse'><path d='M 0 0 L 12 6 L 0 12 z' fill='#4C6175'/></marker></defs>
+<rect x='0' y='0' width='2200' height='1320' fill='#F7F9FC'/>
+<text x='1100.0' y='76' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='42' font-weight='700' fill='#18324A'>Hybrid AI and Rule-Based Plant Condition Analysis Pipeline</text>
+<text x='1100.0' y='120' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='22' fill='#5D7488'>Rule-based scoring remains the primary safety and explanation layer; machine learning adds supporting interpretation</text>
+<rect x='70' y='330' width='290' height='230' rx='24' ry='24' fill='#FFFFFF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 94 330 H 336 Q 360 330 360 354 V 376 H 70 V 354 Q 70 330 94 330 Z' fill='#375A7F' stroke='#4C6175' stroke-width='3'/>
+<text x='88' y='360' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>sensor_data table</text>
+<text x='88' y='412' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Latest stored telemetry</text>
+<text x='88' y='438' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>rows</text>
+<text x='88' y='456' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>moisture, temperature,</text>
+<text x='88' y='482' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>humidity, light</text>
+<text x='88' y='508' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>recorded_at timestamps</text>
+<rect x='450' y='270' width='270' height='150' rx='24' ry='24' fill='#EAF1FB' stroke='#4C6175' stroke-width='3'/>
+<path d='M 474 270 H 696 Q 720 270 720 294 V 316 H 450 V 294 Q 450 270 474 270 Z' fill='#2D6CDF' stroke='#4C6175' stroke-width='3'/>
+<text x='468' y='300' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>Current reading</text>
+<text x='468' y='352' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Latest validated metrics</text>
+<rect x='450' y='500' width='270' height='150' rx='24' ry='24' fill='#EAF1FB' stroke='#4C6175' stroke-width='3'/>
+<path d='M 474 500 H 696 Q 720 500 720 524 V 546 H 450 V 524 Q 450 500 474 500 Z' fill='#2D6CDF' stroke='#4C6175' stroke-width='3'/>
+<text x='468' y='530' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>Recent history</text>
+<text x='468' y='582' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Short rolling window</text>
+<rect x='810' y='455' width='290' height='160' rx='24' ry='24' fill='#F4F3FE' stroke='#4C6175' stroke-width='3'/>
+<path d='M 834 455 H 1076 Q 1100 455 1100 479 V 501 H 810 V 479 Q 810 455 834 455 Z' fill='#5B4BDB' stroke='#4C6175' stroke-width='3'/>
+<text x='828' y='485' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>Trend feature extraction</text>
+<text x='828' y='537' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>moisture trend</text>
+<text x='828' y='559' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>temperature trend</text>
+<text x='828' y='585' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>humidity trend</text>
+<text x='828' y='611' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>light trend</text>
+<rect x='1150' y='180' width='420' height='42' rx='21.0' ry='21.0' fill='#2F855A' stroke='#2F855A' stroke-width='2'/>
+<text x='1360.0' y='207.0' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='18' font-weight='700' fill='#FFFFFF'>PRIMARY safety and explanation layer</text>
+<rect x='1140' y='230' width='390' height='240' rx='24' ry='24' fill='#EAF8F0' stroke='#4C6175' stroke-width='3'/>
+<path d='M 1164 230 H 1506 Q 1530 230 1530 254 V 276 H 1140 V 254 Q 1140 230 1164 230 Z' fill='#2F855A' stroke='#4C6175' stroke-width='3'/>
+<text x='1158' y='260' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>Rule-based condition scoring</text>
+<text x='1158' y='312' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Explicit thresholds by plant profile</text>
+<text x='1158' y='338' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Recent-trend penalties and risk</text>
+<text x='1158' y='364' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>factors</text>
+<text x='1158' y='386' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Health score, explanation,</text>
+<text x='1158' y='412' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>confidence</text>
+<rect x='1150' y='520' width='300' height='42' rx='21.0' ry='21.0' fill='#6B46C1' stroke='#6B46C1' stroke-width='2'/>
+<text x='1300.0' y='547.0' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='18' font-weight='700' fill='#FFFFFF'>SUPPORT decision layer</text>
+<rect x='1140' y='570' width='390' height='195' rx='24' ry='24' fill='#F2EEFF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 1164 570 H 1506 Q 1530 570 1530 594 V 616 H 1140 V 594 Q 1140 570 1164 570 Z' fill='#6B46C1' stroke='#4C6175' stroke-width='3'/>
+<text x='1158' y='600' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>Random Forest classifier</text>
+<text x='1158' y='652' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Feature vector from current values</text>
+<text x='1158' y='674' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>and trends</text>
+<text x='1158' y='696' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Probability-based class prediction</text>
+<text x='1158' y='722' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Used only as supporting</text>
+<text x='1158' y='748' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>interpretation</text>
+<rect x='1600' y='300' width='430' height='445' rx='24' ry='24' fill='#FFFDF2' stroke='#4C6175' stroke-width='3'/>
+<path d='M 1624 300 H 2006 Q 2030 300 2030 324 V 346 H 1600 V 324 Q 1600 300 1624 300 Z' fill='#9A6700' stroke='#4C6175' stroke-width='3'/>
+<text x='1618' y='330' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>Hybrid condition response</text>
+<text x='1618' y='380' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Rule-based result remains primary if ML</text>
+<text x='1618' y='405' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>disagrees or is unavailable.</text>
+<text x='1618' y='429' font-family='Arial, Helvetica, sans-serif' font-size='18' fill='#18324A'>condition_status</text>
+<text x='1618' y='454' font-family='Arial, Helvetica, sans-serif' font-size='18' fill='#18324A'>health_score</text>
+<text x='1618' y='479' font-family='Arial, Helvetica, sans-serif' font-size='18' fill='#18324A'>risk_factors</text>
+<text x='1618' y='504' font-family='Arial, Helvetica, sans-serif' font-size='18' fill='#18324A'>confidence</text>
+<text x='1618' y='524' font-family='Arial, Helvetica, sans-serif' font-size='18' fill='#18324A'>explanation</text>
+<text x='1618' y='549' font-family='Arial, Helvetica, sans-serif' font-size='18' fill='#18324A'>ml_prediction</text>
+<text x='1618' y='574' font-family='Arial, Helvetica, sans-serif' font-size='18' fill='#18324A'>ml_confidence</text>
+<text x='1618' y='598' font-family='Arial, Helvetica, sans-serif' font-size='18' fill='#18324A'>class_probabilities</text>
+<text x='1618' y='623' font-family='Arial, Helvetica, sans-serif' font-size='18' fill='#18324A'>analysis_method</text>
+<rect x='1580' y='850' width='290' height='170' rx='24' ry='24' fill='#FFF4E8' stroke='#4C6175' stroke-width='3'/>
+<path d='M 1604 850 H 1846 Q 1870 850 1870 874 V 896 H 1580 V 874 Q 1580 850 1604 850 Z' fill='#DD8A28' stroke='#4C6175' stroke-width='3'/>
+<text x='1598' y='880' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>Recommendation</text>
+<text x='1598' y='932' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Actionable care advice</text>
+<text x='1598' y='954' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Linked to detected issues</text>
+<rect x='1920' y='850' width='230' height='170' rx='24' ry='24' fill='#FFF4E8' stroke='#4C6175' stroke-width='3'/>
+<path d='M 1944 850 H 2126 Q 2150 850 2150 874 V 896 H 1920 V 874 Q 1920 850 1944 850 Z' fill='#DD8A28' stroke='#4C6175' stroke-width='3'/>
+<text x='1938' y='880' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>Alerts</text>
+<text x='1938' y='932' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Severity and</text>
+<text x='1938' y='958' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>lifecycle</text>
+<text x='1938' y='984' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Attention workflow</text>
+<rect x='1670' y='1070' width='360' height='185' rx='24' ry='24' fill='#EEF3FF' stroke='#4C6175' stroke-width='3'/>
+<path d='M 1694 1070 H 2006 Q 2030 1070 2030 1094 V 1116 H 1670 V 1094 Q 1670 1070 1694 1070 Z' fill='#3451B2' stroke='#4C6175' stroke-width='3'/>
+<text x='1688' y='1100' text-anchor='start' font-family='Arial, Helvetica, sans-serif' font-size='24' font-weight='700' fill='#FFFFFF'>Dashboard condition card</text>
+<text x='1688' y='1152' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>User-facing hybrid summary</text>
+<text x='1688' y='1178' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>Status, score, explanation, ML</text>
+<text x='1688' y='1204' font-family='Arial, Helvetica, sans-serif' font-size='21' fill='#18324A'>support</text>
+<polyline points='360,445 450,345' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='345' y='360' width='107' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='354' y='384' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Latest row</text>
+<polyline points='360,445 450,575' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='330' y='560' width='150' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='339' y='584' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Recent records</text>
+<polyline points='720,345 810,345 810,510' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='730' y='392' width='180' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='739' y='416' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Context for scoring</text>
+<polyline points='720,575 810,575' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='732' y='526' width='148' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='741' y='550' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>History window</text>
+<polyline points='1100,510 1140,350' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1075' y='405' width='135' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1084' y='429' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Trend signals</text>
+<polyline points='1100,510 1140,667' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1075' y='610' width='144' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1084' y='634' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Feature vector</text>
+<polyline points='720,345 1140,345' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='885' y='290' width='149' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='894' y='314' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Current metrics</text>
+<polyline points='1530,350 1600,480' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1510' y='395' width='137' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1519' y='419' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Primary result</text>
+<polyline points='1530,667 1600,565' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1495' y='610' width='175' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1504' y='634' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Support prediction</text>
+<polyline points='1740,745 1740,850' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1630' y='770' width='167' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1639' y='794' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Response output</text>
+<polyline points='1890,745 2035,850' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1910' y='770' width='123' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1919' y='794' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Alert branch</text>
+<polyline points='1850,1020 1850,1070' fill='none' stroke='#4C6175' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='1725' y='1035' width='189' height='33' rx='15' ry='15' fill='#FFFFFF' stroke='#8CA0B3' stroke-width='2'/>
+<text x='1734' y='1059' font-family='Arial, Helvetica, sans-serif' font-size='19' fill='#18324A'>Displayed summary</text>
+</svg>

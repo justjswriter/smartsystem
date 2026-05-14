@@ -38,6 +38,24 @@ async def stream_alerts(current_user: User = Depends(get_current_user)):
     return EventSourceResponse(event_generator())
 
 
+@router.get("/notifications")
+async def stream_notifications(current_user: User = Depends(get_current_user)):
+    queue = event_bus.subscribe(f"notifications:{current_user.id}")
+
+    async def event_generator():
+        try:
+            while True:
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=settings.SSE_HEARTBEAT_SECONDS)
+                    yield _event_payload(event)
+                except TimeoutError:
+                    yield {"event": "heartbeat", "data": "keepalive"}
+        finally:
+            event_bus.unsubscribe(f"notifications:{current_user.id}", queue)
+
+    return EventSourceResponse(event_generator())
+
+
 @router.get("/dashboard/{plant_id}")
 async def stream_dashboard(
     plant_id: int,

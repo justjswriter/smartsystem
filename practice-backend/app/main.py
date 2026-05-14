@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.routers import api_router
 from app.core.config import settings
@@ -32,6 +34,9 @@ async def lifespan(_: FastAPI):
     yield
 
 
+UPLOADS_DIR = Path("uploads")
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
@@ -41,6 +46,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
 

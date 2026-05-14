@@ -11,7 +11,15 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 
+from app.domain.plant_knowledge import resolve_plant_profile
 from app.ml import DATASET_PATH, FEATURE_COLUMNS, LABELS, METADATA_PATH, MODEL_PATH
+
+
+PROFILE = resolve_plant_profile()
+MOISTURE = PROFILE.thresholds["moisture"]
+TEMPERATURE = PROFILE.thresholds["temperature"]
+HUMIDITY = PROFILE.thresholds["humidity"]
+LIGHT = PROFILE.thresholds["light"]
 
 
 def _uniform(rng: random.Random, start: float, stop: float) -> float:
@@ -20,14 +28,14 @@ def _uniform(rng: random.Random, start: float, stop: float) -> float:
 
 def _base_normal_row(rng: random.Random) -> dict[str, float]:
     return {
-        "moisture": _uniform(rng, 38.0, 68.0),
-        "temperature": _uniform(rng, 19.0, 28.0),
-        "humidity": _uniform(rng, 36.0, 65.0),
-        "light": _uniform(rng, 260.0, 900.0),
+        "moisture": _uniform(rng, MOISTURE.optimal_min or 45.0, MOISTURE.optimal_max or 65.0),
+        "temperature": _uniform(rng, TEMPERATURE.optimal_min or 20.0, TEMPERATURE.optimal_max or 27.0),
+        "humidity": _uniform(rng, HUMIDITY.optimal_min or 50.0, HUMIDITY.optimal_max or 70.0),
+        "light": _uniform(rng, LIGHT.optimal_min or 45.0, LIGHT.optimal_max or 180.0),
         "moisture_trend": _uniform(rng, -4.0, 4.0),
         "temperature_trend": _uniform(rng, -2.0, 2.0),
         "humidity_trend": _uniform(rng, -4.0, 4.0),
-        "light_trend": _uniform(rng, -60.0, 60.0),
+        "light_trend": _uniform(rng, -20.0, 20.0),
     }
 
 
@@ -43,22 +51,22 @@ def _attention_row(rng: random.Random) -> dict[str, float]:
         ]
     )
     if scenario == "moderate_low_moisture":
-        row["moisture"] = _uniform(rng, 20.0, 29.5)
+        row["moisture"] = _uniform(rng, 20.0, (MOISTURE.min or 35.0) - 2.0)
         row["moisture_trend"] = _uniform(rng, -14.0, -5.0)
     elif scenario == "moderate_high_temperature":
-        row["temperature"] = _uniform(rng, 31.0, 37.0)
+        row["temperature"] = _uniform(rng, (TEMPERATURE.max or 30.0) + 1.0, 36.0)
         row["temperature_trend"] = _uniform(rng, 3.0, 8.0)
     elif scenario == "moderate_low_humidity":
-        row["humidity"] = _uniform(rng, 20.0, 29.5)
+        row["humidity"] = _uniform(rng, 25.0, (HUMIDITY.min or 40.0) - 2.0)
         row["humidity_trend"] = _uniform(rng, -12.0, -3.0)
     elif scenario == "moderate_low_light":
-        row["light"] = _uniform(rng, 120.0, 220.0)
-        row["light_trend"] = _uniform(rng, -220.0, -40.0)
+        row["light"] = _uniform(rng, 22.0, (LIGHT.min or 40.0) - 2.0)
+        row["light_trend"] = _uniform(rng, -35.0, -8.0)
     else:
-        row["moisture"] = _uniform(rng, 25.0, 34.0)
-        row["temperature"] = _uniform(rng, 28.0, 34.0)
-        row["humidity"] = _uniform(rng, 25.0, 35.0)
-        row["light"] = _uniform(rng, 180.0, 260.0)
+        row["moisture"] = _uniform(rng, 25.0, (MOISTURE.min or 35.0) - 1.0)
+        row["temperature"] = _uniform(rng, (TEMPERATURE.optimal_max or 27.0) + 1.0, 34.0)
+        row["humidity"] = _uniform(rng, 25.0, (HUMIDITY.min or 40.0) - 4.0)
+        row["light"] = _uniform(rng, 20.0, (LIGHT.min or 40.0) - 3.0)
         row["moisture_trend"] = _uniform(rng, -10.0, -3.0)
         row["temperature_trend"] = _uniform(rng, 2.5, 6.0)
     return row
@@ -79,23 +87,23 @@ def _critical_row(rng: random.Random) -> dict[str, float]:
         row["moisture"] = _uniform(rng, 2.0, 18.0)
         row["moisture_trend"] = _uniform(rng, -24.0, -8.0)
     elif scenario == "severe_high_temperature":
-        row["temperature"] = _uniform(rng, 38.0, 48.0)
+        row["temperature"] = _uniform(rng, 37.0, 48.0)
         row["temperature_trend"] = _uniform(rng, 6.0, 12.0)
     elif scenario == "severe_low_humidity":
         row["humidity"] = _uniform(rng, 5.0, 20.0)
         row["humidity_trend"] = _uniform(rng, -18.0, -6.0)
     elif scenario == "severe_low_light":
-        row["light"] = _uniform(rng, 10.0, 110.0)
-        row["light_trend"] = _uniform(rng, -320.0, -80.0)
+        row["light"] = _uniform(rng, 1.0, 20.0)
+        row["light_trend"] = _uniform(rng, -45.0, -12.0)
     else:
         row["moisture"] = _uniform(rng, 4.0, 22.0)
         row["temperature"] = _uniform(rng, 37.0, 45.0)
         row["humidity"] = _uniform(rng, 8.0, 24.0)
-        row["light"] = _uniform(rng, 20.0, 130.0)
+        row["light"] = _uniform(rng, 1.0, 22.0)
         row["moisture_trend"] = _uniform(rng, -20.0, -6.0)
         row["temperature_trend"] = _uniform(rng, 5.0, 11.0)
         row["humidity_trend"] = _uniform(rng, -16.0, -5.0)
-        row["light_trend"] = _uniform(rng, -260.0, -70.0)
+        row["light_trend"] = _uniform(rng, -42.0, -10.0)
     return row
 
 

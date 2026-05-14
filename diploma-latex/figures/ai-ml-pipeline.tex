@@ -1,0 +1,87 @@
+\begin{figure}[H]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        >=Latex,
+        font=\small,
+        line/.style={-Latex, thick},
+        block/.style={
+            draw,
+            rounded corners=4pt,
+            thick,
+            align=center,
+            fill=blue!6,
+            minimum height=1.5cm,
+            text width=2.9cm,
+            inner sep=6pt
+        },
+        primary/.style={block, fill=green!10, text width=3.8cm},
+        support/.style={block, fill=violet!10, text width=3.8cm},
+        response/.style={
+            draw,
+            rounded corners=4pt,
+            thick,
+            align=left,
+            fill=orange!6,
+            text width=4.8cm,
+            inner sep=7pt
+        },
+        note/.style={
+            draw,
+            rounded corners=3pt,
+            fill=white,
+            font=\scriptsize,
+            align=center,
+            inner sep=3pt
+        },
+        group/.style={
+            draw,
+            rounded corners=6pt,
+            dashed,
+            inner sep=8pt
+        }
+    ]
+
+    \node[block, fill=gray!12, text width=2.8cm] (table) {sensor\_data\\table};
+    \node[block, above right=1.0cm and 1.8cm of table, text width=2.8cm] (current) {Current\\reading};
+    \node[block, below right=1.0cm and 1.8cm of table, text width=2.8cm] (history) {Recent\\history};
+    \node[block, right=2.2cm of history, text width=3.1cm] (trend) {Trend feature\\extraction};
+    \node[primary, above right=1.0cm and 1.8cm of trend] (rule) {Rule-based condition scoring\\PRIMARY};
+    \node[support, below right=1.0cm and 1.8cm of trend] (forest) {Random Forest classifier\\SUPPORT};
+    \node[response, right=2.2cm of rule] (responsebox) {\textbf{Hybrid condition response}\\[0.2cm]
+        \texttt{condition\_status}\\
+        \texttt{health\_score}\\
+        \texttt{risk\_factors}\\
+        \texttt{confidence}\\
+        \texttt{explanation}\\
+        \texttt{ml\_prediction}\\
+        \texttt{ml\_confidence}\\
+        \texttt{class\_probabilities}\\
+        \texttt{analysis\_method}};
+    \node[block, fill=orange!12, below left=1.5cm and 0.3cm of responsebox, text width=2.8cm] (recommendation) {Active\\recommendation};
+    \node[block, fill=orange!14, below=1.5cm of responsebox, text width=2.4cm] (alerts) {Alerts};
+    \node[block, fill=blue!10, below right=1.5cm and 0.3cm of responsebox, text width=3.1cm] (dashboard) {Dashboard\\condition card};
+
+    \begin{scope}[on background layer]
+        \node[group, fit=(rule), label=above:{\small Rule-based = primary safety and explanation layer}] {};
+        \node[group, fit=(forest), label=below:{\small ML = support decision layer}] {};
+    \end{scope}
+
+    \draw[line] (table) -- node[midway, above, note] {Latest stored data} (current);
+    \draw[line] (table) -- node[midway, below, note] {Short history window} (history);
+    \draw[line] (current) -- node[midway, above, note] {Current metrics} (rule);
+    \draw[line] (current) |- node[pos=0.25, right, note] {Reading context} (trend);
+    \draw[line] (history) -- node[midway, above, note] {Recent changes} (trend);
+    \draw[line] (trend) -- node[midway, above, note] {Trend features} (rule);
+    \draw[line] (trend) -- node[midway, below, note] {Feature vector} (forest);
+    \draw[line] (rule) -- node[midway, above, note] {Primary result} (responsebox);
+    \draw[line] (forest) |- node[pos=0.35, below, note] {Support prediction} (responsebox.south west);
+    \draw[line] (responsebox.south west) |- (recommendation.north);
+    \draw[line] (responsebox.south) -- (alerts.north);
+    \draw[line] (responsebox.south east) |- (dashboard.north);
+
+    \end{tikzpicture}%
+    }
+    \caption{AI-supported analysis and recommendation flow}
+    \label{fig:ai-supported-analysis-flow}
+\end{figure}

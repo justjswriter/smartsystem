@@ -1,16 +1,46 @@
 \chapter{Introduction}
 
-This chapter should introduce the diploma topic, explain why plant condition monitoring is important, and justify the relevance of combining IoT technologies with artificial intelligence methods. You can describe the practical problem of manual plant care, the risks of under-watering or over-watering, and the need for continuous monitoring in home, office, or greenhouse environments.
+Modern agriculture and plant care are increasingly influenced by digital technologies, including Internet of Things (IoT) systems, wireless sensors, web applications, and artificial intelligence methods. Smart agriculture is commonly understood as a technology-driven approach that integrates sensors, IoT devices, data analytics, and intelligent decision-making tools to improve the efficiency, accuracy, and sustainability of agricultural processes \cite{ahmed2024smart}.
 
-It is also recommended to explain the research motivation, the main objective of the diploma project, and the expected scientific and practical contribution of the developed system. Mention that the final system integrates a web dashboard, backend services, IoT ingest, rule-based analytics, and a supervised machine learning module for condition classification.
+The relevance of the present diploma project is determined by the need for accessible digital tools that can monitor plant conditions in real time and support users in making timely plant care decisions. Manual inspection requires regular human attention and does not provide continuous access to information about environmental conditions \cite{huda2024iot}. Consequently, a plant owner may find it difficult to anticipate early indicators of plant stress when soil moisture, air temperature, air humidity, and light intensity have already moved beyond acceptable ranges. This creates a practical need for a system that can automatically collect environmental measurements, store them, analyze plant condition, generate alerts, and provide understandable recommendations.
 
-Suggested points to write here:
-\begin{itemize}
-    \item relevance of smart monitoring systems in modern digital agriculture and indoor plant care;
-    \item research object and research subject;
-    \item project goal and main tasks;
-    \item novelty and practical significance;
-    \item short description of the implemented prototype.
-\end{itemize}
+IoT-enabled plant monitoring systems use sensor modules and communication technologies to collect environmental data and transmit it to a software platform for storage and analysis \cite{huda2024iot}. In agricultural and plant monitoring systems, sensor data are usually collected from several groups of indicators, including soil conditions, atmospheric conditions, light environment, nutrient status, and plant physiological responses \cite{huda2024iot,mowla2023iot}. In the proposed system, this broader monitoring approach is adapted to everyday plant care by focusing on four core environmental indicators: soil moisture, air temperature, air humidity, and light intensity.
 
-At the end of the introduction, add a short paragraph describing the overall structure of the diploma project, for example by summarizing the contents of Chapters 2, 3, and 4.
+The integration of IoT sensors with artificial intelligence and machine learning has become an important trend in precision agriculture. Existing research shows that IoT sensors can collect environmental data, while AI and machine learning methods can process this data to identify patterns, detect anomalies, and support decision-making \cite{mansoor2025integration}. A systematic review of IoT and AI in agriculture also highlights that integrated technologies support real-time monitoring and data-driven decision-making \cite{miller2025iot}. However, the adoption of modern technologies in agriculture remains constrained by implementation costs, connectivity limitations, and the need for systems that are understandable and accessible to end users \cite{miller2025iot,nawaz2025iot}. Therefore, the developed system is designed as a functional software solution for plant owners, small greenhouses, and educational smart agriculture scenarios.
+
+The diploma project is titled ``Developing a Smart System with IoT Integration and Artificial Intelligence Technologies for Plant Condition Monitoring.'' The system collects environmental data from sensors, stores the data in a database, analyzes the current condition of each plant, visualizes current and historical values on a dashboard, generates alerts when abnormal conditions are detected, and provides plant care recommendations.
+
+\subsection*{Problem Statement}
+
+The problem addressed in this diploma project is the lack of an accessible and integrated web system that combines plant profile management, IoT sensor connection, sensor data storage, dashboard visualization, plant condition assessment, alert lifecycle management, and AI-supported recommendations. Many existing smart agriculture systems focus on large-scale farming, automated irrigation, crop disease detection, or industrial agriculture automation \cite{qazi2022iot,hassan2021systematic}. These directions are important, but they do not fully address the needs of small-scale users and educational scenarios where the main purpose is to monitor environmental plant conditions and provide understandable decision support.
+
+\subsection*{Aim and Objectives}
+
+The aim of this diploma project is to develop a smart web application with IoT integration and artificial intelligence technologies for monitoring plant conditions, detecting abnormal environmental states, and supporting users with alerts and plant care recommendations.
+
+To achieve this aim, the following objectives were defined:
+
+\begin{enumerate}
+    \item To analyze smart plant monitoring systems and determine the role of IoT and AI technologies in plant condition assessment.
+    \item To study existing smart agriculture and IoT monitoring solutions and identify their limitations for small-scale and educational use.
+    \item To define the functional and non-functional requirements for the proposed system.
+    \item To design the system architecture, database model, IoT sensor data flow, and hybrid AI analysis flow.
+    \item To implement the backend, database, frontend dashboard, IoT data ingestion, alert mechanism, recommendation module, and hybrid AI module.
+    \item To test the system through functional testing, API and database testing, AI module verification, backend tests, and frontend build validation.
+\end{enumerate}
+
+The object of the research is the process of digital plant condition monitoring using IoT sensor data and web application technologies. The subject of the research is the design and implementation of a smart AI-IoT web system for plant condition assessment, alert generation, and recommendation support.
+
+The methodological basis of the project includes literature analysis, requirements engineering, database modeling, architectural design, implementation, machine learning model training, and software testing. The theoretical basis is formed by studies on smart agriculture, IoT-enabled monitoring, wireless sensor networks, and AI-supported decision-making \cite{ahmed2024smart,mowla2023iot,miller2025iot,qazi2022iot}.
+
+The scientific novelty of the project lies in integrating explainable rule-based plant condition scoring and supervised Random Forest classification within one web application. The system interprets sensor data and provides structured condition assessment while keeping the rule-based layer as the primary transparent baseline.
+
+\subsection*{Scope and Limitations}
+
+In the machine learning component, plant condition assessment is based on a combination of current sensor readings and short-term trend indicators for soil moisture, air temperature, air humidity, and light intensity. This allows the model to evaluate not only the current environmental state, but also recent dynamics in the monitored conditions. The machine learning result is used as AI support for condition classification, while the rule-based layer remains the primary transparent baseline. This limitation is important because smart agriculture literature emphasizes that real-world deployment is affected by environmental variability, sensor reliability, data quality, and implementation constraints \cite{miller2025iot,nawaz2025iot}.
+
+The practical significance of the project is that the developed system can be used as a functional web application for plant owners, small greenhouses, and educational smart agriculture scenarios. It allows users to manage plant profiles, monitor environmental values, receive alerts, and view plant care recommendations. The scope of the project is limited to environmental condition monitoring and care recommendation support. The system does not diagnose plant diseases, does not use computer vision, does not use deep learning, and does not claim industrial-grade agricultural automation.
+
+The expected result is a functional smart web application integrating IoT sensors, backend processing, PostgreSQL storage, hybrid AI analysis, alerts, recommendations, and dashboard visualization.
+
+The diploma project is structured into four main chapters, followed by the bibliography and appendices. The Theoretical Part discusses smart plant monitoring systems, IoT technologies, AI-based analysis, existing solutions, and system requirements. The Practical Part presents the developed web application, its architecture, implementation, AI-IoT integration, recommendation logic, and testing results. The Conclusion summarizes the obtained results and outlines directions for further improvement.
