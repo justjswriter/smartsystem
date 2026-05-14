@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { Link, useParams } from "react-router-dom";
-import { API_BASE_URL, getPlant, getPlantDashboard, uploadPlantPhoto } from "../api";
+import { API_BASE_URL, getPlant, getPlantDashboard, updatePlant, uploadPlantPhoto } from "../api";
 import { PlantDetails } from "../components/PlantDetails";
 import { useAppState } from "../context/AppStateContext";
 import { useI18n } from "../i18n";
@@ -17,6 +17,7 @@ export function PlantDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [notesSaving, setNotesSaving] = useState(false);
 
   const id = plantId ? Number(plantId) : NaN;
 
@@ -74,6 +75,26 @@ export function PlantDetailsPage() {
     [token, id, loadPlants, t]
   );
 
+  const saveNotes = useCallback(
+    async (notes: string) => {
+      if (!token || !Number.isFinite(id)) {
+        return;
+      }
+      setNotesSaving(true);
+      setError("");
+      try {
+        const updated = await updatePlant(token, id, { description: notes.trim() || null });
+        setPlant(updated);
+        await loadPlants();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : t("common.failedSaveNotes"));
+      } finally {
+        setNotesSaving(false);
+      }
+    },
+    [token, id, loadPlants, t]
+  );
+
   useEffect(() => {
     void loadPlantDetails();
   }, [loadPlantDetails]);
@@ -120,6 +141,8 @@ export function PlantDetailsPage() {
       isRefreshing={refreshing}
       onPhotoUpload={updatePhoto}
       isPhotoUploading={photoUploading}
+      onNotesSave={saveNotes}
+      isNotesSaving={notesSaving}
     />
   );
 }

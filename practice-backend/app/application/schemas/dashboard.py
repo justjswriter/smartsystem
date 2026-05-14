@@ -27,6 +27,27 @@ class RecommendationSummary(BaseModel):
     source: str = "historical_alert"
 
 
+class CareTextItem(BaseModel):
+    icon: str
+    color: str
+    title: str
+    text: str
+
+
+class CareActionItem(CareTextItem):
+    detail: str | None = None
+    status: str | None = None
+
+
+class CareProfileResponse(BaseModel):
+    slug: str
+    canonical_species: str
+    display_names: dict[str, str]
+    thresholds: dict
+    basic_care: list[CareTextItem]
+    gardener_advice: list[CareTextItem]
+
+
 class DashboardPoint(BaseModel):
     recorded_at: datetime
     moisture: float | None
@@ -42,3 +63,5 @@ class DashboardResponse(BaseModel):
     history: list[DashboardPoint]
     condition: PlantConditionResponse
     active_recommendation: RecommendationSummary | None
+    care_profile: CareProfileResponse | None = None
+    today_care: list[CareActionItem] = Field(default_factory=list)

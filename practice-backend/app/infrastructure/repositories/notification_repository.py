@@ -19,13 +19,16 @@ class NotificationRepository:
         await self.db.refresh(notification)
         return notification
 
-    async def find_unread_by_dedupe_key(self, *, user_id: int, dedupe_key: str) -> Notification | None:
+    async def find_recent_by_dedupe_key(
+        self, *, user_id: int, dedupe_key: str, created_after: datetime
+    ) -> Notification | None:
         result = await self.db.execute(
             select(Notification)
             .where(
                 Notification.user_id == user_id,
                 Notification.dedupe_key == dedupe_key,
                 Notification.read_at.is_(None),
+                Notification.created_at >= created_after,
             )
             .order_by(Notification.created_at.desc())
             .limit(1)

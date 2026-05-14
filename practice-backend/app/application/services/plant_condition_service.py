@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from app.application.schemas.dashboard import DashboardPoint, PlantConditionResponse
 from app.application.services.ml_condition_service import MLConditionService
@@ -9,6 +9,10 @@ from app.domain.plant_knowledge import PlantProfile, resolve_plant_profile
 
 class PlantConditionService:
     """Explainable hybrid condition scoring with rule-based safety baseline."""
+
+    LOCAL_TIME_OFFSET = timedelta(hours=5)
+    NIGHT_START_HOUR = 20
+    NIGHT_END_HOUR = 7
 
     def __init__(self, ml_service: MLConditionService | None = None) -> None:
         self.ml_service = ml_service or MLConditionService()
@@ -81,6 +85,8 @@ class PlantConditionService:
             value = getattr(current, issue.metric, None)
             if value is None:
                 continue
+            if issue.metric == "light" and issue.direction == "below" and PlantConditionService._is_night(current.recorded_at):
+                continue
             if issue.direction == "below" and value < issue.threshold:
                 penalties.append((issue.code, PlantConditionService._below_penalty(value, issue.threshold)))
             elif issue.direction == "above" and value > issue.threshold:
@@ -113,6 +119,14 @@ class PlantConditionService:
             factors.append("rising_temperature_trend")
             penalty += 8
         return penalty, factors
+
+    @staticmethod
+    def _is_night(recorded_at: datetime) -> bool:
+        recorded = recorded_at
+        if recorded.tzinfo is None:
+            recorded = recorded.replace(tzinfo=timezone.utc)
+        local_hour = (recorded.astimezone(timezone.utc) + PlantConditionService.LOCAL_TIME_OFFSET).hour
+        return local_hour >= PlantConditionService.NIGHT_START_HOUR or local_hour < PlantConditionService.NIGHT_END_HOUR
 
     @staticmethod
     def _confidence(recorded_at: datetime, history: list[DashboardPoint]) -> float:

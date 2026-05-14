@@ -11,7 +11,7 @@ from app.application.services.recommendation_service import RecommendationServic
 
 def point(**overrides):
     payload = {
-        "recorded_at": datetime.now(timezone.utc),
+        "recorded_at": datetime(2026, 5, 13, 7, 0, tzinfo=timezone.utc),
         "moisture": 45.0,
         "temperature": 24.0,
         "humidity": 45.0,
@@ -38,7 +38,7 @@ def test_critical_low_moisture_beats_low_light():
 
 
 def test_light_only_issue_returns_light_advice():
-    recommendation = current_recommendation_for(point(light=50.0))
+    recommendation = current_recommendation_for(point(light=10.0))
 
     assert recommendation is not None
     assert recommendation.metric == "light"
@@ -57,12 +57,21 @@ def test_stable_readings_return_stable_care_advice():
 
 
 def test_normalized_readings_do_not_keep_historical_alert_advice():
-    recommendation = current_recommendation_for(point(moisture=55.0, temperature=24.0, humidity=45.0, light=650.0))
+    recommendation = current_recommendation_for(point(moisture=55.0, temperature=24.0, humidity=45.0, light=50.0))
 
     assert recommendation is not None
     assert recommendation.metric == "stable"
     assert "bright indirect light" not in recommendation.text.lower()
     assert "water gradually" not in recommendation.text.lower()
+
+
+def test_low_light_at_night_does_not_create_light_recommendation():
+    recommendation = current_recommendation_for(
+        point(recorded_at=datetime(2026, 5, 13, 18, 0, tzinfo=timezone.utc), light=0.0)
+    )
+
+    assert recommendation is not None
+    assert recommendation.metric == "stable"
 
 
 def test_high_moisture_returns_profile_advice():

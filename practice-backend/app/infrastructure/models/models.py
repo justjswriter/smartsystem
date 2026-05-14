@@ -75,6 +75,21 @@ class Plant(Base, TimestampMixin):
     notifications: Mapped[list[Notification]] = relationship(back_populates="plant")
 
 
+class PlantCareProfile(Base, TimestampMixin):
+    __tablename__ = "plant_care_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    slug: Mapped[str] = mapped_column(String(120), unique=True, index=True, nullable=False)
+    canonical_species: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    display_names: Mapped[dict] = mapped_column(JSON, nullable=False)
+    thresholds: Mapped[dict] = mapped_column(JSON, nullable=False)
+    basic_care: Mapped[list[dict]] = mapped_column(JSON, nullable=False)
+    gardener_advice: Mapped[list[dict]] = mapped_column(JSON, nullable=False)
+    issues: Mapped[dict] = mapped_column(JSON, nullable=False)
+    stable_advice: Mapped[dict] = mapped_column(JSON, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
 class Sensor(Base, TimestampMixin):
     __tablename__ = "sensors"
 
@@ -254,6 +269,11 @@ class UserNotificationSettings(Base, TimestampMixin):
     notification_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     email_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     critical_only: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_critical_alerts: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_moisture_alerts: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_temperature_alerts: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_humidity_alerts: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    email_light_alerts: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     user: Mapped[User] = relationship(back_populates="notification_settings")

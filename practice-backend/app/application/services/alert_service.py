@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,6 +19,12 @@ from app.infrastructure.services.event_bus import event_bus
 
 
 class AlertService:
+    LOCAL_TIME_OFFSET = timedelta(hours=5)
+    NIGHT_START_HOUR = 20
+    NIGHT_END_HOUR = 7
+    SUSTAINED_HIGH_MOISTURE_WINDOW = timedelta(hours=48)
+    SUSTAINED_HIGH_MOISTURE_MIN_SAMPLES = 3
+
     def __init__(self, db: AsyncSession):
         self.alert_repo = AlertRepository(db)
         self.sensor_repo = SensorRepository(db)
@@ -90,8 +96,19 @@ class AlertService:
         checks = self._profile_checks(profile=profile, payload=payload)
 
         for issue, value in checks:
-            existing = await self.alert_repo.find_open_by_metric(plant_id=plant_id, metric=issue.metric)
+            existing = await self.alert_repo.find_open_by_metric_direction(
+                plant_id=plant_id,
+                metric=issue.metric,
+                direction=issue.direction,
+                threshold=issue.threshold,
+            )
             if existing:
+                continue
+            if issue.code == "high_moisture" and not await self._is_sustained_high_moisture(
+                plant_id=plant_id,
+                threshold=issue.threshold,
+                recorded_at=payload.get("recorded_at"),
+            ):
                 continue
             ratio = (issue.threshold / value) if issue.direction == "below" and value > 0 else (value / issue.threshold)
             severity = self._severity_from_ratio(ratio)
@@ -143,8 +160,61 @@ class AlertService:
             value = payload.get(issue.metric)
             if value is None:
                 continue
+            if issue.metric == "light" and issue.direction == "below" and AlertService._is_night(payload.get("recorded_at")):
+                continue
             if issue.direction == "below" and value < issue.threshold:
                 checks.append((issue, value))
             elif issue.direction == "above" and value > issue.threshold:
                 checks.append((issue, value))
         return checks
+
+    async def _is_sustained_high_moisture(
+        self,
+        *,
+        plant_id: int,
+        threshold: float,
+        recorded_at: datetime | None,
+    ) -> bool:
+        history = await self.sensor_data_repo.history_for_plant(plant_id, 72)
+        moisture_points = [
+            item
+            for item in history
+            if getattr(item, "moisture", None) is not None and getattr(item, "recorded_at", None) is not None
+        ]
+        if len(moisture_points) < self.SUSTAINED_HIGH_MOISTURE_MIN_SAMPLES:
+            return False
+
+        current_time = recorded_at or datetime.now(timezone.utc)
+        if current_time.tzinfo is None:
+            current_time = current_time.replace(tzinfo=timezone.utc)
+
+        last_normal_at: datetime | None = None
+        for point in moisture_points:
+            point_time = point.recorded_at
+            if point_time.tzinfo is None:
+                point_time = point_time.replace(tzinfo=timezone.utc)
+            if float(point.moisture) <= threshold:
+                last_normal_at = point_time
+
+        sustained_points = []
+        for point in moisture_points:
+            point_time = point.recorded_at
+            if point_time.tzinfo is None:
+                point_time = point_time.replace(tzinfo=timezone.utc)
+            if last_normal_at and point_time <= last_normal_at:
+                continue
+            if float(point.moisture) > threshold:
+                sustained_points.append(point_time)
+
+        if len(sustained_points) < self.SUSTAINED_HIGH_MOISTURE_MIN_SAMPLES:
+            return False
+        first_high_at = min(sustained_points)
+        return current_time - first_high_at >= self.SUSTAINED_HIGH_MOISTURE_WINDOW
+
+    @staticmethod
+    def _is_night(recorded_at: datetime | None) -> bool:
+        recorded = recorded_at or datetime.now(timezone.utc)
+        if recorded.tzinfo is None:
+            recorded = recorded.replace(tzinfo=timezone.utc)
+        local_hour = (recorded.astimezone(timezone.utc) + AlertService.LOCAL_TIME_OFFSET).hour
+        return local_hour >= AlertService.NIGHT_START_HOUR or local_hour < AlertService.NIGHT_END_HOUR

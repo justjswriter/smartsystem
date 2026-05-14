@@ -26,6 +26,8 @@ def test_supported_aroid_species_resolve_to_shared_profile():
 
         assert profile.slug == "common_tropical_aroid_vines"
         assert profile.thresholds["temperature"].min == 18.0
+        assert profile.thresholds["light"].min == 40.0
+        assert profile.thresholds["light"].optimal_min == 45.0
 
 
 class FakePlantRepository:

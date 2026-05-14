@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Activity, ChevronDown, Droplet, Plus, Search, Sun, Thermometer } from "lucide-react";
 import { useI18n } from "../i18n";
 import { displayPlantSpecies, SUPPORTED_PLANT_OPTIONS, SUPPORTED_PLANT_SPECIES, supportedPlantTypeName } from "../plantKnowledge";
-import type { DashboardPoint, Plant, PlantCondition } from "../types";
+import type { CareProfile, DashboardPoint, Plant, PlantCondition } from "../types";
 
 type DashboardStats = {
   totalPlants: number;
@@ -19,6 +19,7 @@ type DashboardProps = {
   stats: DashboardStats;
   isLoading: boolean;
   error: string;
+  careProfiles: CareProfile[];
   onRefresh: () => void;
   onCreatePlant: (payload: {
     name: string;
@@ -37,10 +38,11 @@ export function Dashboard({
   stats,
   isLoading,
   error,
+  careProfiles,
   onRefresh,
   onCreatePlant,
 }: DashboardProps) {
-  const { t, label } = useI18n();
+  const { t, label, language } = useI18n();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("health");
   const [modalOpen, setModalOpen] = useState(false);
@@ -51,6 +53,10 @@ export function Dashboard({
   const [saving, setSaving] = useState(false);
   const temperatureUnit = t("units.temperature");
   const lightUnit = t("units.light");
+  const speciesOptions =
+    careProfiles.length > 0
+      ? careProfiles.map((profile) => profile.canonical_species)
+      : [...SUPPORTED_PLANT_OPTIONS];
 
   function formatConditionLabel(value: string | null | undefined) {
     if (!value) {
@@ -123,12 +129,17 @@ export function Dashboard({
       });
       setModalOpen(false);
       setName("");
-      setSpecies(SUPPORTED_PLANT_SPECIES);
+      setSpecies(speciesOptions[0] ?? SUPPORTED_PLANT_SPECIES);
       setLocation("");
       setDescription("");
     } finally {
       setSaving(false);
     }
+  }
+
+  function speciesLabel(option: string) {
+    const profile = careProfiles.find((item) => item.canonical_species === option);
+    return profile?.display_names?.[language] ?? displayPlantSpecies(option, t);
   }
 
   return (
@@ -263,9 +274,9 @@ export function Dashboard({
               <label>
                 {t("dashboard.species")}
                 <select value={species} onChange={(e) => setSpecies(e.target.value)}>
-                  {SUPPORTED_PLANT_OPTIONS.map((option) => (
+                  {speciesOptions.map((option) => (
                     <option key={option} value={option}>
-                      {displayPlantSpecies(option, t)}
+                      {speciesLabel(option)}
                     </option>
                   ))}
                 </select>

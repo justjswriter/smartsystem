@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
@@ -16,6 +16,23 @@ class FakeAlertRepository:
 
     async def find_open_by_metric(self, *, plant_id: int, metric: str):
         return self.existing
+
+    async def find_open_by_metric_direction(
+        self, *, plant_id: int, metric: str, direction: str, threshold: float | None = None
+    ):
+        if not self.existing:
+            return None
+        value = getattr(self.existing, "value", None)
+        existing_threshold = getattr(self.existing, "threshold", None)
+        if value is None or existing_threshold is None:
+            return self.existing
+        if threshold is not None and abs(float(existing_threshold) - float(threshold)) > 0.001:
+            return None
+        if direction == "below" and value < existing_threshold:
+            return self.existing
+        if direction == "above" and value > existing_threshold:
+            return self.existing
+        return None
 
     async def create(self, payload: dict):
         self.created.append(payload)
@@ -54,12 +71,15 @@ class FakeNotificationRepository:
         self.notifications = list(notifications or [])
         self.created = []
 
-    async def find_unread_by_dedupe_key(self, *, user_id, dedupe_key):
+    async def find_recent_by_dedupe_key(self, *, user_id, dedupe_key, created_after):
         return next(
             (
                 item
                 for item in self.notifications
-                if item.user_id == user_id and item.dedupe_key == dedupe_key and item.read_at is None
+                if item.user_id == user_id
+                and item.dedupe_key == dedupe_key
+                and item.read_at is None
+                and item.created_at >= created_after
             ),
             None,
         )
@@ -131,7 +151,16 @@ def make_notification_service(notifications=None, settings=None, email_service=N
     return service
 
 
-def notification(notification_id, *, user_id, read_at=None, dedupe_key=None, severity=NotificationSeverity.WARNING, params=None):
+def notification(
+    notification_id,
+    *,
+    user_id,
+    read_at=None,
+    dedupe_key=None,
+    severity=NotificationSeverity.WARNING,
+    params=None,
+    created_at=None,
+):
     return SimpleNamespace(
         id=notification_id,
         user_id=user_id,
@@ -147,16 +176,32 @@ def notification(notification_id, *, user_id, read_at=None, dedupe_key=None, sev
         related_sensor_id=None,
         dedupe_key=dedupe_key,
         read_at=read_at,
-        created_at=datetime.now(timezone.utc),
+        created_at=created_at or datetime.now(timezone.utc),
     )
 
 
-def email_settings(*, user_id=10, enabled=True, critical_only=False, email="demo@example.com"):
+def email_settings(
+    *,
+    user_id=10,
+    enabled=True,
+    critical_only=False,
+    email="demo@example.com",
+    critical_alerts=True,
+    moisture_alerts=True,
+    temperature_alerts=True,
+    humidity_alerts=True,
+    light_alerts=True,
+):
     return SimpleNamespace(
         user_id=user_id,
         notification_email=email,
         email_enabled=enabled,
         critical_only=critical_only,
+        email_critical_alerts=critical_alerts,
+        email_moisture_alerts=moisture_alerts,
+        email_temperature_alerts=temperature_alerts,
+        email_humidity_alerts=humidity_alerts,
+        email_light_alerts=light_alerts,
     )
 
 
@@ -182,7 +227,7 @@ async def test_alert_creation_creates_notification(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_duplicate_readings_with_open_alert_do_not_spam_notifications():
+async def test_duplicate_readings_with_open_alert_do_not_send_repeat_notification():
     service = make_alert_service(existing=SimpleNamespace(id=99))
 
     await service._evaluate_thresholds(
@@ -211,6 +256,7 @@ async def test_critical_alert_creates_critical_notification(monkeypatch):
         severity=AlertSeverity.CRITICAL,
         title="Moisture threshold below",
         message="Moisture is below threshold",
+        threshold=30.0,
     )
 
     created, was_created = await service.create_for_alert(alert=alert, issue_code="low_soil_moisture")
@@ -218,11 +264,11 @@ async def test_critical_alert_creates_critical_notification(monkeypatch):
     assert was_created is True
     assert created.type == NotificationType.CRITICAL_ALERT
     assert created.severity == NotificationSeverity.CRITICAL
-    assert created.dedupe_key == "alert:3:moisture"
+    assert created.dedupe_key == "alert:3:moisture:low_soil_moisture:30"
 
 
 @pytest.mark.asyncio
-async def test_notification_dedupe_skips_existing_unread(monkeypatch):
+async def test_notification_dedupe_skips_recent_duplicate(monkeypatch):
     async def no_publish(*args, **kwargs):
         return None
 
@@ -243,7 +289,79 @@ async def test_notification_dedupe_skips_existing_unread(monkeypatch):
 
     assert created is existing
     assert was_created is False
-    assert service.notification_repo.created == []
+
+
+@pytest.mark.asyncio
+async def test_notification_dedupe_allows_duplicate_after_five_minutes(monkeypatch):
+    async def no_publish(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.application.services.notification_service.event_bus.publish", no_publish)
+    old_notification = notification(
+        1,
+        user_id=10,
+        dedupe_key="alert:3:light:low_light:40",
+        created_at=datetime.now(timezone.utc) - timedelta(minutes=6),
+    )
+    email_service = FakeEmailService()
+    service = make_notification_service(
+        [old_notification],
+        settings=email_settings(enabled=True),
+        email_service=email_service,
+    )
+
+    created, was_created = await service.create_once(
+        payload={
+            "user_id": 10,
+            "type": NotificationType.PLANT_CONDITION,
+            "severity": NotificationSeverity.WARNING,
+            "title_key": "notification.alert.condition.title",
+            "message_key": "notification.alert.condition.message",
+            "params": {"metric": "light", "issue": "low_light", "severity": "medium"},
+            "dedupe_key": "alert:3:light:low_light:40",
+        }
+    )
+
+    assert created is not old_notification
+    assert was_created is True
+    assert email_service.sent == [("demo@example.com", created.id)]
+    assert service.notification_repo.created == [created]
+
+
+@pytest.mark.asyncio
+async def test_notification_dedupe_allows_duplicate_when_previous_was_read(monkeypatch):
+    async def no_publish(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.application.services.notification_service.event_bus.publish", no_publish)
+    read_notification = notification(
+        1,
+        user_id=10,
+        dedupe_key="alert:3:light:low_light:40",
+        read_at=datetime.now(timezone.utc),
+    )
+    email_service = FakeEmailService()
+    service = make_notification_service(
+        [read_notification],
+        settings=email_settings(enabled=True),
+        email_service=email_service,
+    )
+
+    created, was_created = await service.create_once(
+        payload={
+            "user_id": 10,
+            "type": NotificationType.PLANT_CONDITION,
+            "severity": NotificationSeverity.WARNING,
+            "title_key": "notification.alert.condition.title",
+            "message_key": "notification.alert.condition.message",
+            "params": {"metric": "light", "issue": "low_light", "severity": "medium"},
+            "dedupe_key": "alert:3:light:low_light:40",
+        }
+    )
+
+    assert created is not read_notification
+    assert was_created is True
+    assert email_service.sent == [("demo@example.com", created.id)]
 
 
 @pytest.mark.asyncio
@@ -357,6 +475,17 @@ async def test_critical_only_sends_only_high_or_critical(monkeypatch):
             "dedupe_key": "alert:3:humidity",
         }
     )
+    low_light, _ = await service.create_once(
+        payload={
+            "user_id": 10,
+            "type": NotificationType.PLANT_CONDITION,
+            "severity": NotificationSeverity.WARNING,
+            "title_key": "notification.alert.condition.title",
+            "message_key": "notification.alert.condition.message",
+            "params": {"severity": "medium", "issue": "low_light"},
+            "dedupe_key": "alert:3:light:low_light",
+        }
+    )
     high, _ = await service.create_once(
         payload={
             "user_id": 10,
@@ -379,7 +508,49 @@ async def test_critical_only_sends_only_high_or_critical(monkeypatch):
         }
     )
 
-    assert email_service.sent == [("demo@example.com", high.id), ("demo@example.com", critical.id)]
+    assert email_service.sent == [
+        ("demo@example.com", low_light.id),
+        ("demo@example.com", high.id),
+        ("demo@example.com", critical.id),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_email_preferences_filter_notification_categories(monkeypatch):
+    async def no_publish(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr("app.application.services.notification_service.event_bus.publish", no_publish)
+    email_service = FakeEmailService()
+    service = make_notification_service(
+        settings=email_settings(enabled=True, critical_only=False, light_alerts=False, moisture_alerts=True),
+        email_service=email_service,
+    )
+
+    await service.create_once(
+        payload={
+            "user_id": 10,
+            "type": NotificationType.PLANT_CONDITION,
+            "severity": NotificationSeverity.WARNING,
+            "title_key": "notification.alert.condition.title",
+            "message_key": "notification.alert.condition.message",
+            "params": {"severity": "high", "metric": "light", "issue": "low_light"},
+            "dedupe_key": "alert:3:light:low_light",
+        }
+    )
+    moisture, _ = await service.create_once(
+        payload={
+            "user_id": 10,
+            "type": NotificationType.PLANT_CONDITION,
+            "severity": NotificationSeverity.WARNING,
+            "title_key": "notification.alert.condition.title",
+            "message_key": "notification.alert.condition.message",
+            "params": {"severity": "medium", "metric": "moisture", "issue": "low_moisture"},
+            "dedupe_key": "alert:3:moisture:low_moisture",
+        }
+    )
+
+    assert email_service.sent == [("demo@example.com", moisture.id)]
 
 
 @pytest.mark.asyncio

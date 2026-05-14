@@ -42,7 +42,7 @@ BASE_GOLDEN_POTHOS_PROFILE = PlantProfile(
         "moisture": MetricRange(min=35.0, max=75.0, optimal_min=45.0, optimal_max=65.0),
         "temperature": MetricRange(min=18.0, max=30.0, optimal_min=20.0, optimal_max=27.0),
         "humidity": MetricRange(min=40.0, max=80.0, optimal_min=50.0, optimal_max=70.0),
-        "light": MetricRange(min=150.0, max=850.0, optimal_min=250.0, optimal_max=650.0),
+        "light": MetricRange(min=40.0, max=320.0, optimal_min=45.0, optimal_max=180.0),
     },
     issues={},
     stable_advice=_advice(

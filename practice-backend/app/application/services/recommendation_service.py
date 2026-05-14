@@ -1,3 +1,5 @@
+from datetime import timedelta, timezone
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.schemas.dashboard import DashboardPoint, PlantConditionResponse, RecommendationSummary
@@ -7,6 +9,10 @@ from app.infrastructure.repositories import RecommendationRepository
 
 
 class RecommendationService:
+    LOCAL_TIME_OFFSET = timedelta(hours=5)
+    NIGHT_START_HOUR = 20
+    NIGHT_END_HOUR = 7
+
     def __init__(self, db: AsyncSession):
         self.repo = RecommendationRepository(db)
 
@@ -70,6 +76,8 @@ class RecommendationService:
         value = getattr(current, issue.metric, None)
         if value is None:
             return
+        if issue.metric == "light" and issue.direction == "below" and self._is_night(current.recorded_at):
+            return
         if issue.direction == "below":
             if value >= issue.threshold:
                 return
@@ -118,6 +126,14 @@ class RecommendationService:
             "light": 6,
         }.get(metric, 0)
         return severity_base + metric_weight
+
+    @staticmethod
+    def _is_night(recorded_at) -> bool:
+        recorded = recorded_at
+        if recorded.tzinfo is None:
+            recorded = recorded.replace(tzinfo=timezone.utc)
+        local_hour = (recorded.astimezone(timezone.utc) + RecommendationService.LOCAL_TIME_OFFSET).hour
+        return local_hour >= RecommendationService.NIGHT_START_HOUR or local_hour < RecommendationService.NIGHT_END_HOUR
 
     async def create_for_alert(
         self,

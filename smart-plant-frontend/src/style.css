@@ -946,27 +946,120 @@ button:disabled {
   }
 }
 
+.plant-care-hero {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(420px, 1.35fr);
+  gap: 20px;
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+}
+
 .plant-hero-img {
   padding: 0;
   overflow: hidden;
-  min-height: 280px;
+  min-height: 0;
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  max-width: 360px;
 }
 
 .plant-hero-img img {
   width: 100%;
-  height: 320px;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
 
 .plant-hero-fallback {
-  height: 320px;
+  width: 100%;
+  height: 100%;
   display: grid;
   place-items: center;
   font-size: 4rem;
   font-weight: 800;
   color: #16a34a;
   background: linear-gradient(to bottom right, #dcfce7, #ecfdf5);
+}
+
+.species-care-note {
+  position: static;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  background: #fffdf6;
+  border-color: #eadfbd;
+  min-width: 0;
+  width: 100%;
+}
+
+.species-care-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.species-care-head .section-title {
+  margin-bottom: 4px;
+}
+
+.species-care-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #15803d;
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  flex-shrink: 0;
+}
+
+.species-care-mark svg:last-child {
+  margin-top: -16px;
+  margin-left: 16px;
+  color: #d97706;
+}
+
+.species-care-copy {
+  display: grid;
+  gap: 10px;
+  color: #26362d;
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.species-care-copy p {
+  font-size: 0.94rem;
+  overflow-wrap: anywhere;
+}
+
+.species-care-copy strong {
+  color: #111827;
+}
+
+@media (max-width: 1180px) {
+  .plant-care-hero {
+    grid-template-columns: minmax(180px, 0.8fr) minmax(340px, 1.2fr);
+  }
+
+  .plant-hero-img {
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 860px) {
+  .plant-care-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .plant-hero-img {
+    aspect-ratio: 4 / 3;
+    max-width: none;
+  }
 }
 
 .section-title {
@@ -1066,6 +1159,55 @@ button:disabled {
   color: #d97706;
 }
 
+.care-ico.orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.gardener-card {
+  background: #fbfdf8;
+  border-color: #dcead3;
+}
+
+.gardener-card .section-title {
+  margin-bottom: 6px;
+}
+
+.gardener-plan {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.gardener-step {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid #e3ecdc;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.gardener-step strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #111827;
+}
+
+.gardener-step p {
+  color: #26362d;
+  line-height: 1.45;
+}
+
+.gardener-detail {
+  display: inline-block;
+  margin-top: 8px;
+  color: #66756a;
+  font-size: 0.8125rem;
+}
+
 .metric-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1074,12 +1216,39 @@ button:disabled {
 
 .metric {
   padding: 16px;
+  border-width: 1px;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .metric-val {
   font-size: 1.5rem;
   font-weight: 700;
   color: #111827;
+}
+
+.metric-state-normal {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.metric-state-attention {
+  background: #fefce8;
+  border-color: #fde047;
+}
+
+.metric-state-warning {
+  background: #fff7ed;
+  border-color: #fdba74;
+}
+
+.metric-state-critical {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.metric-state-unknown {
+  background: #f8fafc;
+  border-color: #e2e8f0;
 }
 
 .metric-ico {
@@ -1107,9 +1276,22 @@ button:disabled {
   margin-top: 8px;
 }
 
-.ai-hint {
-  background: linear-gradient(to bottom right, #faf5ff, #eff6ff);
-  border-color: #e9d5ff;
+.action-card {
+  background: #f8fbff;
+  border-color: #dbeafe;
+}
+
+.technical-details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5eefc;
+}
+
+.technical-details summary {
+  cursor: pointer;
+  color: #4b5563;
+  font-size: 0.875rem;
+  font-weight: 700;
 }
 
 .analytics-page {
@@ -1397,6 +1579,41 @@ button:disabled {
 
 .toggle-row input {
   width: auto;
+}
+
+.notification-preferences {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #dce8df;
+  border-radius: 8px;
+  background: #fbfdfb;
+}
+
+.notes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.text-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #15803d;
+  font-weight: 700;
+}
+
+.notes-editor {
+  display: grid;
+  gap: 10px;
+}
+
+.notes-editor textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
 }
 
 .plants-grid {

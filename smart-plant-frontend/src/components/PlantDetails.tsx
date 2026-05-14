@@ -1,11 +1,10 @@
-import { useRef, type ChangeEvent } from "react";
+﻿import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
   ArrowLeft,
   Calendar,
   Camera,
-  Clock,
   Droplet,
   MapPin,
   Sun,
@@ -24,7 +23,7 @@ import {
 } from "recharts";
 import { localizeCareText } from "../careText";
 import { useI18n } from "../i18n";
-import { displayPlantSpecies } from "../plantKnowledge";
+import { basicCareItems, displayPlantSpecies } from "../plantKnowledge";
 import type { DashboardResponse, Plant, Sensor } from "../types";
 
 type PlantDetailsProps = {
@@ -38,6 +37,8 @@ type PlantDetailsProps = {
   isRefreshing: boolean;
   onPhotoUpload: (file: File) => Promise<void>;
   isPhotoUploading: boolean;
+  onNotesSave: (notes: string) => Promise<void>;
+  isNotesSaving: boolean;
 };
 
 export function PlantDetails({
@@ -51,12 +52,16 @@ export function PlantDetails({
   isRefreshing,
   onPhotoUpload,
   isPhotoUploading,
+  onNotesSave,
+  isNotesSaving,
 }: PlantDetailsProps) {
   const { t, label, formatDateTime } = useI18n();
   const emptyValue = "--";
   const temperatureUnit = t("units.temperature");
   const lightUnit = t("units.light");
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [notesDraft, setNotesDraft] = useState("");
   const chartData =
     dashboard?.history.map((h, i) => ({
       label: i === dashboard.history.length - 1 ? "now" : `${i}`,
@@ -71,15 +76,21 @@ export function PlantDetails({
   const current = dashboard?.current;
   const condition = dashboard?.condition;
   const recommendation = dashboard?.active_recommendation;
+  const careItems = dashboard?.care_profile?.basic_care ?? basicCareItems(plant?.species, t);
   const mlConfidenceText =
     condition?.ml_confidence != null
       ? t("plant.confidenceValue", { value: Math.round(condition.ml_confidence * 100) })
       : t("common.unavailable");
   const analysisMethodText = label("analysis", condition?.analysis_method ?? "rule_based");
-  const conditionExplanation =
-    condition?.condition_status === "insufficient_data"
-      ? t("plant.insufficientDataExplanation")
-      : condition?.explanation ?? t("plant.noCondition");
+  const riskLabels = condition?.risk_factors.map((risk) => label("issue", risk)) ?? [];
+  const primaryRisk = riskLabels[0];
+  const conditionExplanation = buildHumanConditionSummary();
+  const gardenerAdvice = dashboard?.today_care?.length ? dashboard.today_care : buildGardenerAdvice();
+
+  useEffect(() => {
+    setNotesDraft(plant?.description ?? "");
+    setIsEditingNotes(false);
+  }, [plant?.id, plant?.description]);
 
   if (isLoading) {
     return <p className="muted page-lead">{t("common.loading")}</p>;
@@ -97,6 +108,154 @@ export function PlantDetails({
   }
 
   const health = condition?.health_score ?? plant.health ?? 0;
+  const healthStatusText = buildHealthStatusText();
+
+  function buildHumanConditionSummary() {
+    if (!condition || condition.condition_status === "insufficient_data") {
+      return t("plant.insufficientDataExplanation");
+    }
+    if (condition.condition_status === "normal") {
+      return t("plant.conditionSummary.normal");
+    }
+    if (primaryRisk) {
+      return t(`plant.conditionSummary.${condition.condition_status}`, { issue: primaryRisk });
+    }
+    return t(`plant.conditionSummary.${condition.condition_status}`, { issue: t("plant.conditionIssueFallback") });
+  }
+
+  function buildHealthStatusText() {
+    if (condition?.health_score == null) {
+      return t("plant.healthStatus.unavailable");
+    }
+    if (riskLabels.length > 0 && condition.health_score >= 80) {
+      return t("plant.healthStatus.goodWithIssue", { issue: primaryRisk ?? t("plant.conditionIssueFallback") });
+    }
+    if (condition.health_score >= 80) {
+      return t("plant.healthStatus.good");
+    }
+    if (condition.health_score >= 60) {
+      return t("plant.healthStatus.watch");
+    }
+    return t("plant.healthStatus.bad");
+  }
+
+  function buildGardenerAdvice() {
+    const moisture = current?.moisture;
+    const light = current?.light;
+    const humidity = current?.humidity;
+    const temperature = current?.temperature;
+
+    return [
+      {
+        icon: "water",
+        color: "blue",
+        title: t("plant.gardener.waterTitle"),
+        action:
+          moisture == null
+            ? t("plant.gardener.waterUnknown")
+            : moisture < 35
+              ? t("plant.gardener.waterDry")
+              : moisture < 45
+                ? t("plant.gardener.waterSoon")
+                : moisture > 75
+                  ? t("plant.gardener.waterWet")
+                  : t("plant.gardener.waterOk"),
+        detail:
+          moisture == null
+            ? t("plant.gardener.sensorNeeded")
+            : t("plant.gardener.currentMoisture", { value: moisture }),
+      },
+      {
+        icon: "light",
+        color: "amber",
+        title: t("plant.gardener.lightTitle"),
+        action:
+          light == null
+            ? t("plant.gardener.lightUnknown")
+            : light < 40
+              ? t("plant.gardener.lightLow")
+              : light > 180
+                ? t("plant.gardener.lightHigh")
+                : t("plant.gardener.lightOk"),
+        detail:
+          light == null
+            ? t("plant.gardener.sensorNeeded")
+            : t("plant.gardener.currentLight", { value: light }),
+      },
+      {
+        icon: "humidity",
+        color: "green",
+        title: t("plant.gardener.humidityTitle"),
+        action:
+          humidity == null
+            ? t("plant.gardener.humidityUnknown")
+            : humidity < 40
+              ? t("plant.gardener.humidityLow")
+              : humidity > 75
+                ? t("plant.gardener.humidityHigh")
+                : t("plant.gardener.humidityOk"),
+        detail:
+          humidity == null
+            ? t("plant.gardener.sensorNeeded")
+            : t("plant.gardener.currentHumidity", { value: humidity }),
+      },
+      {
+        icon: "temperature",
+        color: "orange",
+        title: t("plant.gardener.placeTitle"),
+        action:
+          temperature == null
+            ? t("plant.gardener.placeUnknown")
+            : temperature < 18
+              ? t("plant.gardener.placeCold")
+              : temperature > 30
+                ? t("plant.gardener.placeHot")
+                : t("plant.gardener.placeOk"),
+        detail:
+          temperature == null
+            ? t("plant.gardener.sensorNeeded")
+            : t("plant.gardener.currentTemperature", { value: temperature }),
+      },
+    ];
+  }
+
+  function metricState(metric: "temperature" | "moisture" | "light" | "humidity", value: number | null | undefined) {
+    if (value == null) {
+      return "unknown";
+    }
+    if (metric === "temperature") {
+      if (value < 16 || value > 34) return "critical";
+      if (value < 18 || value > 30) return "warning";
+      if (value < 20 || value > 27) return "attention";
+      return "normal";
+    }
+    if (metric === "moisture") {
+      const backendStatus = dashboard?.today_care?.find((item) => item.icon === "water")?.status;
+      if (
+        backendStatus === "normal" ||
+        backendStatus === "attention" ||
+        backendStatus === "warning" ||
+        backendStatus === "critical" ||
+        backendStatus === "unknown"
+      ) {
+        return backendStatus;
+      }
+      if (value < 20) return "critical";
+      if (value < 35 || value > 75) return "warning";
+      if (value < 45 || value > 65) return "attention";
+      return "normal";
+    }
+    if (metric === "light") {
+      if (value < 20 || value > 260) return "critical";
+      if (value < 40 || value > 180) return "warning";
+      if (value < 45) return "attention";
+      return "normal";
+    }
+    if (value < 25 || value > 85) return "critical";
+    if (value < 40 || value > 75) return "warning";
+    if (value < 50 || value > 70) return "attention";
+    return "normal";
+  }
 
   async function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -105,6 +264,11 @@ export function PlantDetails({
     }
     await onPhotoUpload(file);
     event.target.value = "";
+  }
+
+  async function saveNotes() {
+    await onNotesSave(notesDraft);
+    setIsEditingNotes(false);
   }
 
   return (
@@ -147,12 +311,34 @@ export function PlantDetails({
 
       <div className="detail-two-col">
         <div className="detail-col">
-          <div className="card plant-hero-img">
-            {plant.image_url ? (
-              <img src={plant.image_url} alt={plant.name} />
-            ) : (
-              <div className="plant-hero-fallback">{plant.name.charAt(0)}</div>
-            )}
+          <div className="plant-care-hero">
+            <div className="card plant-hero-img">
+              {plant.image_url ? (
+                <img src={plant.image_url} alt={plant.name} />
+              ) : (
+                <div className="plant-hero-fallback">{plant.name.charAt(0)}</div>
+              )}
+            </div>
+
+            <div className="card species-care-note">
+              <div className="species-care-head">
+                <span className="species-care-mark">
+                  <Droplet size={20} />
+                  <Sun size={18} />
+                </span>
+                <div>
+                  <h3 className="section-title">{t("plant.basicCare")}</h3>
+                  <p className="muted small">{t("plant.basicCareIntro", { species: displayPlantSpecies(plant.species, t) })}</p>
+                </div>
+              </div>
+              <div className="species-care-copy">
+                {careItems.map((item) => (
+                  <p key={item.title}>
+                    <strong>{item.title}.</strong> {item.text}
+                  </p>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="card">
@@ -186,15 +372,6 @@ export function PlantDetails({
                 </div>
               </div>
               <div className="info-item">
-                <span className="info-ico purple">
-                  <Activity size={18} />
-                </span>
-                <div>
-                  <p className="muted small">{t("dashboard.description")}</p>
-                  <p>{plant.description ?? emptyValue}</p>
-                </div>
-              </div>
-              <div className="info-item">
                 <span className={`info-ico ${health >= 80 ? "green" : "yellow"}`}>
                   <Activity size={18} />
                 </span>
@@ -203,68 +380,81 @@ export function PlantDetails({
                   <p className={health >= 80 ? "text-ok" : "text-warn"}>
                     {condition?.health_score != null ? `${condition.health_score}%` : emptyValue}
                   </p>
+                  <p className="muted small">{healthStatusText}</p>
                 </div>
               </div>
             </div>
             <div className="border-top">
-              <p className="muted small">{t("plant.notes")}</p>
-              <p>{plant.description ?? t("plant.noNotes")}</p>
+              <div className="notes-head">
+                <p className="muted small">{t("plant.notes")}</p>
+                <button type="button" className="text-button" onClick={() => setIsEditingNotes((current) => !current)}>
+                  {isEditingNotes ? t("common.cancel") : t("plant.editNotes")}
+                </button>
+              </div>
+              {isEditingNotes ? (
+                <div className="notes-editor">
+                  <textarea
+                    value={notesDraft}
+                    onChange={(event) => setNotesDraft(event.target.value)}
+                    placeholder={t("plant.notesPlaceholder")}
+                    rows={4}
+                  />
+                  <button type="button" onClick={() => void saveNotes()} disabled={isNotesSaving}>
+                    {isNotesSaving ? t("common.saving") : t("plant.saveNotes")}
+                  </button>
+                </div>
+              ) : (
+                <p>{plant.description?.trim() ? plant.description : t("plant.noNotes")}</p>
+              )}
             </div>
           </div>
 
-          <div className="card">
+          <div className="card gardener-card">
             <h3 className="section-title">{t("plant.careSchedule")}</h3>
             <p className="muted small">{t("plant.careGuidance")}</p>
-            <div className="care-rows">
-              <div className="care-row">
-                <span className="care-ico blue">
-                  <Droplet size={20} />
-                </span>
-                <div>
-                  <strong>{t("plant.watering")}</strong>
-                  <p className="muted small">{t("plant.trackAlerts")}</p>
+            <div className="gardener-plan">
+              {gardenerAdvice.map((item) => (
+                <div className="gardener-step" key={item.title}>
+                  <span className={`care-ico ${item.color}`}>
+                    {item.icon === "water" ? (
+                      <Droplet size={20} />
+                    ) : item.icon === "light" ? (
+                      <Sun size={20} />
+                    ) : item.icon === "humidity" ? (
+                      <Wind size={20} />
+                    ) : (
+                      <Thermometer size={20} />
+                    )}
+                  </span>
+                  <div>
+                    <strong>{item.title}</strong>
+                    <p>{"action" in item ? item.action : item.text}</p>
+                    <span className="gardener-detail">{item.detail}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="care-row">
-                <span className="care-ico green">
-                  <Activity size={20} />
-                </span>
-                <div>
-                  <strong>{t("plant.healthScore")}</strong>
-                  <p className="muted small">{t("plant.sensorThresholds")}</p>
-                </div>
-              </div>
-              <div className="care-row">
-                <span className="care-ico amber">
-                  <Clock size={20} />
-                </span>
-                <div>
-                  <strong>{t("plant.history")}</strong>
-                  <p className="muted small">{t("plant.dataPoints", { count: dashboard?.history.length ?? 0 })}</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
 
         <div className="detail-col">
           <div className="metric-grid">
-            <div className="card metric">
+            <div className={`card metric metric-state-${metricState("temperature", current?.temperature)}`}>
               <Thermometer className="metric-ico orange" size={22} />
               <p className="muted small">{t("plant.temperature")}</p>
               <p className="metric-val">{current?.temperature != null ? `${current.temperature}${temperatureUnit}` : emptyValue}</p>
             </div>
-            <div className="card metric">
+            <div className={`card metric metric-state-${metricState("moisture", current?.moisture)}`}>
               <Droplet className="metric-ico blue" size={22} />
               <p className="muted small">{t("plant.soilMoisture")}</p>
               <p className="metric-val">{current?.moisture != null ? `${current.moisture}%` : emptyValue}</p>
             </div>
-            <div className="card metric">
+            <div className={`card metric metric-state-${metricState("light", current?.light)}`}>
               <Sun className="metric-ico yellow" size={22} />
               <p className="muted small">{t("dashboard.lightScore")}</p>
               <p className="metric-val">{current?.light != null ? `${current.light} ${lightUnit}` : emptyValue}</p>
             </div>
-            <div className="card metric">
+            <div className={`card metric metric-state-${metricState("humidity", current?.humidity)}`}>
               <Wind className="metric-ico teal" size={22} />
               <p className="muted small">{t("plant.humidity")}</p>
               <p className="metric-val">{current?.humidity != null ? `${current.humidity}%` : emptyValue}</p>
@@ -306,23 +496,26 @@ export function PlantDetails({
             )}
           </div>
 
-          <div className="card ai-hint">
+          <div className="card action-card">
             <h3 className="section-title">{t("plant.currentCondition")}</h3>
             <p>{conditionExplanation}</p>
-            {condition?.risk_factors.length ? (
-              <p className="muted">{t("plant.riskFactors")}: {condition.risk_factors.map((risk) => label("issue", risk)).join(", ")}</p>
+            {riskLabels.length ? (
+              <p className="muted">{t("plant.riskFactors")}: {riskLabels.join(", ")}</p>
             ) : null}
-            <p className="muted small">{t("plant.confidence")}: {condition ? condition.confidence : emptyValue}</p>
-            <p className="muted small">
-              {t("plant.aiPrediction")}:{" "}
-              {condition?.ml_prediction
-                ? `${label("condition", condition.ml_prediction)} (${mlConfidenceText})`
-                : t("common.unavailable")}
-            </p>
-            <p className="muted small">{t("plant.analysisMethod")}: {analysisMethodText}</p>
+            <details className="technical-details">
+              <summary>{t("plant.technicalDetails")}</summary>
+              <p className="muted small">{t("plant.confidence")}: {condition ? condition.confidence : emptyValue}</p>
+              <p className="muted small">
+                {t("plant.aiPrediction")}:{" "}
+                {condition?.ml_prediction
+                  ? `${label("condition", condition.ml_prediction)} (${mlConfidenceText})`
+                  : t("common.unavailable")}
+              </p>
+              <p className="muted small">{t("plant.analysisMethod")}: {analysisMethodText}</p>
+            </details>
           </div>
 
-          <div className="card ai-hint">
+          <div className="card action-card">
             <h3 className="section-title">{t("plant.recommendation")}</h3>
             <p>{localizeCareText(recommendation?.text, t) ?? t("plant.noRecommendation")}</p>
             {recommendation?.reason ? <p className="muted">{localizeCareText(recommendation.reason, t)}</p> : null}

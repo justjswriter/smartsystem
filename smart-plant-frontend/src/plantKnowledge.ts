@@ -33,3 +33,32 @@ export function supportedPlantTypeName(t: Translator) {
 export function displayPlantSpecies(species: string | undefined, t: Translator) {
   return t(plantTypeKey(species));
 }
+
+export function basicCareItems(species: string | undefined, t: Translator) {
+  return [
+    {
+      icon: "water",
+      color: "blue",
+      title: t("plant.basicCare.waterTitle"),
+      text: t("plant.basicCare.waterText"),
+    },
+    {
+      icon: "light",
+      color: "amber",
+      title: t("plant.basicCare.lightTitle"),
+      text: t("plant.basicCare.lightText"),
+    },
+    {
+      icon: "humidity",
+      color: "green",
+      title: t("plant.basicCare.humidityTitle"),
+      text: t("plant.basicCare.humidityText"),
+    },
+    {
+      icon: "temperature",
+      color: "orange",
+      title: t("plant.basicCare.temperatureTitle"),
+      text: t("plant.basicCare.temperatureText", { species: displayPlantSpecies(species, t) }),
+    },
+  ];
+}

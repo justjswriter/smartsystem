@@ -83,6 +83,29 @@ class AlertRepository:
         )
         return result.scalar_one_or_none()
 
+    async def find_open_by_metric_direction(
+        self, *, plant_id: int, metric: str, direction: str, threshold: float | None = None
+    ) -> Alert | None:
+        result = await self.db.execute(
+            select(Alert)
+            .where(
+                Alert.plant_id == plant_id,
+                Alert.metric == metric,
+                Alert.status.in_([AlertStatus.CREATED, AlertStatus.VIEWED, AlertStatus.ACKNOWLEDGED]),
+            )
+            .order_by(Alert.created_at.desc())
+        )
+        for alert in result.scalars().all():
+            if alert.value is None or alert.threshold is None:
+                continue
+            if threshold is not None and abs(float(alert.threshold) - float(threshold)) > 0.001:
+                continue
+            if direction == "below" and alert.value < alert.threshold:
+                return alert
+            if direction == "above" and alert.value > alert.threshold:
+                return alert
+        return None
+
     async def update_status(self, alert: Alert, to_status: AlertStatus) -> Alert:
         alert.status = to_status
         if to_status in (AlertStatus.RESOLVED, AlertStatus.CLOSED):

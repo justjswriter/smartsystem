@@ -14,6 +14,7 @@ import type {
   User,
   AdminLog,
   AdminPlant,
+  CareProfile,
 } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
@@ -164,6 +165,22 @@ export async function createPlant(
   return mapPlant(created);
 }
 
+export async function updatePlant(
+  token: string,
+  plantId: number,
+  payload: { name?: string; species?: string; location?: string; description?: string | null }
+): Promise<Plant> {
+  const updated = await apiFetch<Record<string, unknown>>(
+    `/plants/${plantId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+    token
+  );
+  return mapPlant(updated);
+}
+
 export async function uploadPlantPhoto(token: string, plantId: number, file: File): Promise<Plant> {
   const formData = new FormData();
   formData.append("file", file);
@@ -181,6 +198,10 @@ export async function getPlantDashboard(
     { method: "GET" },
     token
   );
+}
+
+export async function getPlantCareProfiles(token: string): Promise<CareProfile[]> {
+  return apiFetch<CareProfile[]>("/plant-care-profiles", { method: "GET" }, token);
 }
 
 export async function getAlerts(token: string): Promise<Alert[]> {

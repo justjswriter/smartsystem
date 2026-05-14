@@ -50,6 +50,29 @@ export type DashboardResponse = {
   history: DashboardPoint[];
   condition: PlantCondition;
   active_recommendation: RecommendationSummary | null;
+  care_profile?: CareProfile | null;
+  today_care?: CareActionItem[];
+};
+
+export type CareTextItem = {
+  icon: "water" | "light" | "humidity" | "temperature" | string;
+  color: "blue" | "amber" | "green" | "orange" | string;
+  title: string;
+  text: string;
+};
+
+export type CareActionItem = CareTextItem & {
+  detail?: string | null;
+  status?: "normal" | "attention" | "warning" | "critical" | "unknown" | string | null;
+};
+
+export type CareProfile = {
+  slug: string;
+  canonical_species: string;
+  display_names: Record<string, string>;
+  thresholds: Record<string, unknown>;
+  basic_care: CareTextItem[];
+  gardener_advice: CareTextItem[];
 };
 
 export type PlantCondition = {
@@ -148,6 +171,11 @@ export type NotificationSettings = {
   notification_email: string | null;
   email_enabled: boolean;
   critical_only: boolean;
+  email_critical_alerts: boolean;
+  email_moisture_alerts: boolean;
+  email_temperature_alerts: boolean;
+  email_humidity_alerts: boolean;
+  email_light_alerts: boolean;
   verified_at: string | null;
   created_at: string;
   updated_at: string;
@@ -157,6 +185,11 @@ export type NotificationSettingsUpdate = {
   notification_email?: string | null;
   email_enabled?: boolean;
   critical_only?: boolean;
+  email_critical_alerts?: boolean;
+  email_moisture_alerts?: boolean;
+  email_temperature_alerts?: boolean;
+  email_humidity_alerts?: boolean;
+  email_light_alerts?: boolean;
 };
 
 export type TestEmailResponse = {

@@ -22,8 +22,8 @@ The Arduino Uno does not use Wi-Fi and does not know the backend URL, device id,
 Expected Serial Monitor output:
 
 ```json
-{"soil_raw":438,"humidity":36.5,"temperature":27.1,"light_raw":120}
-{"soil_raw":1023,"humidity":null,"temperature":null,"light_raw":5}
+{"soil_raw":40,"humidity":36.5,"temperature":27.1,"light_raw":120}
+{"soil_raw":220,"humidity":null,"temperature":null,"light_raw":5}
 ```
 
 If Serial Monitor is open, close it before running the Python gateway. Only one process can use the COM port at a time.
@@ -130,7 +130,10 @@ Payload sent by gateway:
 
 The Arduino sends raw values and the gateway normalizes them before sending to the backend.
 
-- Soil moisture: `438 = wet = 100%`, `1023 = dry = 0%`
+- Soil moisture: by default `0 = fully saturated = 100%`, `220 = dry/air = 0%`.
+  This avoids reporting slightly damp soil as `100%`. For best results, calibrate your own sensor:
+  put it in dry soil/air and note `soil_raw`, then put it in very wet soil/water and note `soil_raw`.
+  Run the gateway with `--soil-wet-raw <wet_value>` and `--soil-dry-raw <dry_value>`.
 - Light: `light = light_raw / 1023 * 1000`
 - Temperature passes through as a number or `null`
 - Humidity is clamped to `0..100` and gets a default `+20` percentage point calibration offset because inexpensive DHT modules often under-read in dry indoor rooms. Use `--humidity-offset 0` if the sensor is calibrated.

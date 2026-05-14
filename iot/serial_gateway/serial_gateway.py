@@ -13,8 +13,8 @@ import serial
 from serial import SerialException
 
 
-SOIL_WET_RAW = 438.0
-SOIL_DRY_RAW = 1023.0
+SOIL_WET_RAW = 0.0
+SOIL_DRY_RAW = 220.0
 LIGHT_RAW_MAX = 1023.0
 LIGHT_SCORE_MAX = 1000.0
 DEFAULT_HUMIDITY_OFFSET = 20.0
@@ -75,6 +75,21 @@ def build_parser() -> argparse.ArgumentParser:
             "Use 0 when the sensor is calibrated."
         ),
     )
+    parser.add_argument(
+        "--soil-wet-raw",
+        type=float,
+        default=SOIL_WET_RAW,
+        help=(
+            "Raw soil sensor value for fully saturated soil/water. Default: 0 to avoid reporting "
+            "lightly damp soil as 100%. Calibrate with your sensor's wet reading when available."
+        ),
+    )
+    parser.add_argument(
+        "--soil-dry-raw",
+        type=float,
+        default=SOIL_DRY_RAW,
+        help="Raw soil sensor value for dry soil/air. Default: 220 for the current Arduino demo sensor.",
+    )
     parser.add_argument("--log-level", default="INFO", choices=("DEBUG", "INFO", "WARNING", "ERROR"))
     return parser
 
@@ -107,6 +122,10 @@ def parse_json_line(line: str) -> dict[str, Any] | None:
     line = line.replace("\x00", "").strip()
     if not line:
         return None
+    start = line.find("{")
+    end = line.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        line = line[start : end + 1]
     try:
         payload = json.loads(line)
     except json.JSONDecodeError as exc:
@@ -119,7 +138,13 @@ def parse_json_line(line: str) -> dict[str, Any] | None:
     return payload
 
 
-def normalize_reading(raw: dict[str, Any], *, humidity_offset: float = DEFAULT_HUMIDITY_OFFSET) -> dict[str, float | None]:
+def normalize_reading(
+    raw: dict[str, Any],
+    *,
+    humidity_offset: float = DEFAULT_HUMIDITY_OFFSET,
+    soil_wet_raw: float = SOIL_WET_RAW,
+    soil_dry_raw: float = SOIL_DRY_RAW,
+) -> dict[str, float | None]:
     if not is_finite_number(raw.get("soil_raw")):
         raise ValueError("soil_raw must be a finite number")
     if not is_finite_number(raw.get("light_raw")):
@@ -130,12 +155,17 @@ def normalize_reading(raw: dict[str, Any], *, humidity_offset: float = DEFAULT_H
     humidity = optional_number(raw.get("humidity"), "humidity")
     temperature = optional_number(raw.get("temperature"), "temperature")
 
-    if soil_raw < SOIL_WET_RAW or soil_raw > SOIL_DRY_RAW:
+    if soil_wet_raw == soil_dry_raw:
+        raise ValueError("soil_wet_raw and soil_dry_raw must be different")
+    soil_min = min(soil_wet_raw, soil_dry_raw)
+    soil_max = max(soil_wet_raw, soil_dry_raw)
+
+    if soil_raw < soil_min or soil_raw > soil_max:
         logger.warning(
             "soil_raw %.1f is outside calibrated range %.0f..%.0f; value will be clamped",
             soil_raw,
-            SOIL_WET_RAW,
-            SOIL_DRY_RAW,
+            soil_min,
+            soil_max,
         )
     if light_raw < 0 or light_raw > LIGHT_RAW_MAX:
         logger.warning(
@@ -144,7 +174,7 @@ def normalize_reading(raw: dict[str, Any], *, humidity_offset: float = DEFAULT_H
             LIGHT_RAW_MAX,
         )
 
-    moisture = (SOIL_DRY_RAW - soil_raw) / (SOIL_DRY_RAW - SOIL_WET_RAW) * 100.0
+    moisture = (soil_dry_raw - soil_raw) / (soil_dry_raw - soil_wet_raw) * 100.0
     light = light_raw / LIGHT_RAW_MAX * LIGHT_SCORE_MAX
     normalized_humidity = clamp(humidity + humidity_offset, 0.0, 100.0) if humidity is not None else None
 
@@ -261,7 +291,12 @@ def run(args: argparse.Namespace) -> int:
                 continue
 
             try:
-                payload = normalize_reading(raw_payload, humidity_offset=args.humidity_offset)
+                payload = normalize_reading(
+                    raw_payload,
+                    humidity_offset=args.humidity_offset,
+                    soil_wet_raw=args.soil_wet_raw,
+                    soil_dry_raw=args.soil_dry_raw,
+                )
             except ValueError as exc:
                 logger.warning("Skipping invalid reading %s: %s", raw_payload, exc)
                 continue
