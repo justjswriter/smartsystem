@@ -36,18 +36,30 @@ class EmailService:
         )
 
     def send_notification_email(self, *, to_email: str, notification: Notification) -> EmailSendResult:
-        title = notification.title or "Smart Plant notification"
+        params = notification.params if isinstance(notification.params, dict) else {}
+        plant_name = params.get("plant_name")
+        title = notification.title or (
+            f"Smart Plant notification: {plant_name}" if plant_name else "Smart Plant notification"
+        )
         body = self._notification_body(notification)
         return self._send(to_email=to_email, subject=title, body=body)
 
     def _notification_body(self, notification: Notification) -> str:
+        params = notification.params if isinstance(notification.params, dict) else {}
+        plant_name = params.get("plant_name")
         lines = [
             notification.title or "Smart Plant notification",
             "",
-            notification.message or "A new plant notification was created.",
-            "",
-            f"Priority: {notification.severity.value}",
         ]
+        if plant_name:
+            lines.extend([f"Plant: {plant_name}", ""])
+        lines.extend(
+            [
+                notification.message or "A new plant notification was created.",
+                "",
+                f"Priority: {notification.severity.value}",
+            ]
+        )
         lines.extend(
             [
                 "",

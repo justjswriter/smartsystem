@@ -13,7 +13,7 @@ import { useAppState } from "../context/AppStateContext";
 import { useI18n, type Language } from "../i18n";
 
 export function MainLayout() {
-  const { user, logout, notifications, markNotificationAsRead, markAllNotificationsAsRead } = useAppState();
+  const { user, logout, plants, notifications, markNotificationAsRead, markAllNotificationsAsRead } = useAppState();
   const { language, setLanguage, t } = useI18n();
   const navigate = useNavigate();
 
@@ -72,6 +72,7 @@ export function MainLayout() {
             </label>
             <NotificationsPanel
               notifications={notifications}
+              plants={plants}
               onMarkRead={markNotificationAsRead}
               onMarkAllRead={markAllNotificationsAsRead}
             />

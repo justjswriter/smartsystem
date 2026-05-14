@@ -51,6 +51,11 @@ def make_settings(**overrides):
         "notification_email": None,
         "email_enabled": False,
         "critical_only": True,
+        "email_critical_alerts": True,
+        "email_moisture_alerts": True,
+        "email_temperature_alerts": True,
+        "email_humidity_alerts": True,
+        "email_light_alerts": True,
         "verified_at": None,
         "created_at": now,
         "updated_at": now,
@@ -76,6 +81,7 @@ async def test_default_notification_settings_returned():
     assert settings.notification_email is None
     assert settings.email_enabled is False
     assert settings.critical_only is True
+    assert settings.email_light_alerts is True
 
 
 @pytest.mark.asyncio
@@ -85,6 +91,8 @@ async def test_patch_updates_notification_settings():
         notification_email="plant-owner@example.com",
         email_enabled=True,
         critical_only=False,
+        email_light_alerts=False,
+        email_moisture_alerts=True,
     )
 
     settings = await service.update_for_user(user_id=10, payload=payload)
@@ -92,6 +100,8 @@ async def test_patch_updates_notification_settings():
     assert settings.notification_email == "plant-owner@example.com"
     assert settings.email_enabled is True
     assert settings.critical_only is False
+    assert settings.email_light_alerts is False
+    assert settings.email_moisture_alerts is True
 
 
 def test_invalid_notification_email_rejected():

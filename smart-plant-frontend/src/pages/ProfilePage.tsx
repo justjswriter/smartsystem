@@ -11,6 +11,11 @@ export function ProfilePage() {
   const [notificationEmail, setNotificationEmail] = useState("");
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [criticalOnly, setCriticalOnly] = useState(true);
+  const [emailCriticalAlerts, setEmailCriticalAlerts] = useState(true);
+  const [emailMoistureAlerts, setEmailMoistureAlerts] = useState(true);
+  const [emailTemperatureAlerts, setEmailTemperatureAlerts] = useState(true);
+  const [emailHumidityAlerts, setEmailHumidityAlerts] = useState(true);
+  const [emailLightAlerts, setEmailLightAlerts] = useState(true);
   const [isSettingsLoading, setIsSettingsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -40,6 +45,11 @@ export function ProfilePage() {
           setNotificationEmail(settings.notification_email ?? "");
           setEmailEnabled(settings.email_enabled);
           setCriticalOnly(settings.critical_only);
+          setEmailCriticalAlerts(settings.email_critical_alerts);
+          setEmailMoistureAlerts(settings.email_moisture_alerts);
+          setEmailTemperatureAlerts(settings.email_temperature_alerts);
+          setEmailHumidityAlerts(settings.email_humidity_alerts);
+          setEmailLightAlerts(settings.email_light_alerts);
         }
       } catch (error) {
         if (!cancelled) {
@@ -70,10 +80,20 @@ export function ProfilePage() {
         notification_email: notificationEmail.trim() || null,
         email_enabled: emailEnabled,
         critical_only: criticalOnly,
+        email_critical_alerts: emailCriticalAlerts,
+        email_moisture_alerts: emailMoistureAlerts,
+        email_temperature_alerts: emailTemperatureAlerts,
+        email_humidity_alerts: emailHumidityAlerts,
+        email_light_alerts: emailLightAlerts,
       });
       setNotificationEmail(settings.notification_email ?? "");
       setEmailEnabled(settings.email_enabled);
       setCriticalOnly(settings.critical_only);
+      setEmailCriticalAlerts(settings.email_critical_alerts);
+      setEmailMoistureAlerts(settings.email_moisture_alerts);
+      setEmailTemperatureAlerts(settings.email_temperature_alerts);
+      setEmailHumidityAlerts(settings.email_humidity_alerts);
+      setEmailLightAlerts(settings.email_light_alerts);
       setSettingsMessage(t("profile.notificationsSaved"));
     } catch (error) {
       setSettingsError(error instanceof Error ? error.message : t("profile.notificationsSaveFailed"));
@@ -187,6 +207,54 @@ export function ProfilePage() {
           />
           <span>{t("profile.criticalOnly")}</span>
         </label>
+        <div className="notification-preferences">
+          <p className="muted small">{t("profile.emailCategories")}</p>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={emailCriticalAlerts}
+              onChange={(event) => setEmailCriticalAlerts(event.target.checked)}
+              disabled={isSettingsLoading}
+            />
+            <span>{t("profile.emailCriticalAlerts")}</span>
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={emailMoistureAlerts}
+              onChange={(event) => setEmailMoistureAlerts(event.target.checked)}
+              disabled={isSettingsLoading}
+            />
+            <span>{t("profile.emailMoistureAlerts")}</span>
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={emailLightAlerts}
+              onChange={(event) => setEmailLightAlerts(event.target.checked)}
+              disabled={isSettingsLoading}
+            />
+            <span>{t("profile.emailLightAlerts")}</span>
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={emailTemperatureAlerts}
+              onChange={(event) => setEmailTemperatureAlerts(event.target.checked)}
+              disabled={isSettingsLoading}
+            />
+            <span>{t("profile.emailTemperatureAlerts")}</span>
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={emailHumidityAlerts}
+              onChange={(event) => setEmailHumidityAlerts(event.target.checked)}
+              disabled={isSettingsLoading}
+            />
+            <span>{t("profile.emailHumidityAlerts")}</span>
+          </label>
+        </div>
         {settingsError ? <div className="error">{settingsError}</div> : null}
         {settingsMessage ? <div className="success">{settingsMessage}</div> : null}
         <div className="button-row">

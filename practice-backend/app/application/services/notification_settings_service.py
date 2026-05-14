@@ -17,7 +17,17 @@ class NotificationSettingsService:
         values = {
             field: getattr(payload, field)
             for field in payload.model_fields_set
-            if field in {"notification_email", "email_enabled", "critical_only"}
+            if field
+            in {
+                "notification_email",
+                "email_enabled",
+                "critical_only",
+                "email_critical_alerts",
+                "email_moisture_alerts",
+                "email_temperature_alerts",
+                "email_humidity_alerts",
+                "email_light_alerts",
+            }
         }
         if values.get("notification_email") is not None:
             values["notification_email"] = str(values["notification_email"])
