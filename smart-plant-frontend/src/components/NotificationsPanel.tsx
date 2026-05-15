@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Bell } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useI18n } from "../i18n";
 import type { Notification, Plant } from "../types";
 
@@ -18,9 +18,29 @@ export function NotificationsPanel({
   onMarkAllRead,
 }: NotificationsPanelProps) {
   const { t, label, formatDateTime } = useI18n();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
-  const unreadCount = notifications.filter((item) => !item.read_at).length;
-  const latest = useMemo(() => notifications.slice(0, 8), [notifications]);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const unread = useMemo(() => notifications.filter((item) => !item.read_at), [notifications]);
+  const unreadCount = unread.length;
+  const latest = useMemo(() => unread.slice(0, 8), [unread]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (target instanceof Node && menuRef.current?.contains(target)) {
+        return;
+      }
+      setOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
 
   function plantNameFor(notification: Notification) {
     const fromParams = notification.params?.plant_name;
@@ -55,7 +75,7 @@ export function NotificationsPanel({
   }
 
   return (
-    <div className="notification-menu">
+    <div className="notification-menu" ref={menuRef}>
       <button
         type="button"
         className="icon-btn"
@@ -85,6 +105,14 @@ export function NotificationsPanel({
             >
               <NavLink
                 to={linkFor(notification)}
+                state={
+                  notification.related_plant_id
+                    ? {
+                        backTo: location.pathname,
+                        backLabelKey: location.pathname === "/" ? "plant.back" : "common.backToPlants",
+                      }
+                    : undefined
+                }
                 onClick={() => {
                   setOpen(false);
                   if (!notification.read_at) {

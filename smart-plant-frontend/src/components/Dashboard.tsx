@@ -1,9 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Activity, ChevronDown, Droplet, Plus, Search, Sun, Thermometer } from "lucide-react";
+import { Activity, ChevronDown, Droplet, Search, Sun, Thermometer } from "lucide-react";
 import { useI18n } from "../i18n";
-import { displayPlantSpecies, SUPPORTED_PLANT_OPTIONS, SUPPORTED_PLANT_SPECIES, supportedPlantTypeName } from "../plantKnowledge";
-import type { CareProfile, DashboardPoint, Plant, PlantCondition } from "../types";
+import { displayPlantSpecies } from "../plantKnowledge";
+import type { DashboardPoint, Plant, PlantCondition } from "../types";
 
 type DashboardStats = {
   totalPlants: number;
@@ -19,14 +19,7 @@ type DashboardProps = {
   stats: DashboardStats;
   isLoading: boolean;
   error: string;
-  careProfiles: CareProfile[];
   onRefresh: () => void;
-  onCreatePlant: (payload: {
-    name: string;
-    species?: string;
-    location?: string;
-    description?: string;
-  }) => Promise<void>;
 };
 
 type SortKey = "health" | "name";
@@ -38,25 +31,13 @@ export function Dashboard({
   stats,
   isLoading,
   error,
-  careProfiles,
   onRefresh,
-  onCreatePlant,
 }: DashboardProps) {
-  const { t, label, language } = useI18n();
+  const { t, label } = useI18n();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("health");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [species, setSpecies] = useState(SUPPORTED_PLANT_SPECIES);
-  const [location, setLocation] = useState("");
-  const [description, setDescription] = useState("");
-  const [saving, setSaving] = useState(false);
   const temperatureUnit = t("units.temperature");
   const lightUnit = t("units.light");
-  const speciesOptions =
-    careProfiles.length > 0
-      ? careProfiles.map((profile) => profile.canonical_species)
-      : [...SUPPORTED_PLANT_OPTIONS];
 
   function formatConditionLabel(value: string | null | undefined) {
     if (!value) {
@@ -117,31 +98,6 @@ export function Dashboard({
     return label("analysis", value ?? "rule_based");
   }
 
-  async function submitPlant(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await onCreatePlant({
-        name: name.trim(),
-        species,
-        location: location.trim() || undefined,
-        description: description.trim() || undefined,
-      });
-      setModalOpen(false);
-      setName("");
-      setSpecies(speciesOptions[0] ?? SUPPORTED_PLANT_SPECIES);
-      setLocation("");
-      setDescription("");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function speciesLabel(option: string) {
-    const profile = careProfiles.find((item) => item.canonical_species === option);
-    return profile?.display_names?.[language] ?? displayPlantSpecies(option, t);
-  }
-
   return (
     <div className="dashboard-page">
       <div className="page-head dashboard-head">
@@ -149,10 +105,6 @@ export function Dashboard({
           <h1 className="page-title">{t("dashboard.title")}</h1>
           <p className="muted page-lead">{t("dashboard.subtitle")}</p>
         </div>
-        <button type="button" className="btn-primary" onClick={() => setModalOpen(true)}>
-          <Plus size={18} />
-          {t("dashboard.addPlant")}
-        </button>
       </div>
 
       <div className="stats-row four">
@@ -240,7 +192,13 @@ export function Dashboard({
                       </div>
                     </td>
                     <td>
-                      <Link to={`/plants/${plant.id}`} className="text-link">{t("dashboard.viewDetails")}</Link>
+                      <Link
+                        to={`/plants/${plant.id}`}
+                        state={{ backTo: "/", backLabelKey: "plant.back" }}
+                        className="text-link"
+                      >
+                        {t("dashboard.viewDetails")}
+                      </Link>
                     </td>
                   </tr>
                 );
@@ -264,34 +222,6 @@ export function Dashboard({
         </div>
       </div>
 
-      {modalOpen ? (
-        <div className="modal-root" role="dialog" aria-modal="true" aria-labelledby="add-plant-title">
-          <button type="button" className="modal-backdrop" aria-label={t("common.close")} onClick={() => setModalOpen(false)} />
-          <div className="modal-panel card">
-            <h2 id="add-plant-title">{t("dashboard.addPlantTitle")}</h2>
-            <form className="modal-form" onSubmit={submitPlant}>
-              <label>{t("dashboard.name")}<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
-              <label>
-                {t("dashboard.species")}
-                <select value={species} onChange={(e) => setSpecies(e.target.value)}>
-                  {speciesOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {speciesLabel(option)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <p className="muted small">{supportedPlantTypeName(t)}</p>
-              <label>{t("dashboard.location")}<input value={location} onChange={(e) => setLocation(e.target.value)} /></label>
-              <label>{t("dashboard.description")}<input value={description} onChange={(e) => setDescription(e.target.value)} /></label>
-              <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setModalOpen(false)}>{t("common.cancel")}</button>
-                <button type="submit" className="btn-primary" disabled={saving}>{saving ? t("common.saving") : t("common.create")}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -6,12 +6,14 @@ import type {
   Notification,
   NotificationSettings,
   NotificationSettingsUpdate,
+  PasswordUpdatePayload,
   Plant,
   RegisterPayload,
   Sensor,
   SensorProvisionResponse,
   TestEmailResponse,
   User,
+  UserUpdatePayload,
   AdminLog,
   AdminPlant,
   CareProfile,
@@ -52,6 +54,10 @@ async function apiFetch<T>(path: string, options: RequestInit = {}, token?: stri
     throw new Error(message);
   }
 
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return (await response.json()) as T;
 }
 
@@ -90,14 +96,72 @@ export async function register(payload: RegisterPayload): Promise<void> {
 }
 
 export async function login(payload: LoginPayload): Promise<AuthResponse> {
-  return apiFetch<AuthResponse>("/auth/login", {
+  const result = await apiFetch<AuthResponse>("/auth/login", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+  return { ...result, user: mapUser(result.user as unknown as Record<string, unknown>) };
 }
 
-export async function getMe(token: string) {
-  return apiFetch("/auth/me", { method: "GET" }, token);
+function resolveAssetUrl(value: string | undefined | null) {
+  if (!value) {
+    return undefined;
+  }
+  if (/^(https?:|data:|blob:)/.test(value)) {
+    return value;
+  }
+  if (value.startsWith("/")) {
+    return `${new URL(API_BASE_URL).origin}${value}`;
+  }
+  return value;
+}
+
+function mapUser(raw: Record<string, unknown>): User {
+  const rawAvatarUrl = typeof raw.avatar_url === "string" ? raw.avatar_url : undefined;
+  return {
+    id: Number(raw.id),
+    email: String(raw.email ?? ""),
+    full_name: String(raw.full_name ?? ""),
+    avatar_url: resolveAssetUrl(rawAvatarUrl),
+    role: String(raw.role ?? "user"),
+    is_active: typeof raw.is_active === "boolean" ? raw.is_active : undefined,
+    created_at: typeof raw.created_at === "string" ? raw.created_at : undefined,
+  };
+}
+
+export async function getMe(token: string): Promise<User> {
+  const raw = await apiFetch<Record<string, unknown>>("/auth/me", { method: "GET" }, token);
+  return mapUser(raw);
+}
+
+export async function updateMe(token: string, payload: UserUpdatePayload): Promise<User> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    "/auth/me",
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+    token
+  );
+  return mapUser(raw);
+}
+
+export async function uploadProfilePhoto(token: string, file: File): Promise<User> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const raw = await uploadFetch<Record<string, unknown>>("/auth/me/avatar", formData, token);
+  return mapUser(raw);
+}
+
+export async function updatePassword(token: string, payload: PasswordUpdatePayload): Promise<void> {
+  await apiFetch<void>(
+    "/auth/me/password",
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+    token
+  );
 }
 
 function mapPlant(raw: Record<string, unknown>): Plant {
@@ -117,23 +181,10 @@ function mapPlant(raw: Record<string, unknown>): Plant {
     species: typeof raw.species === "string" ? raw.species : undefined,
     location: typeof raw.location === "string" ? raw.location : undefined,
     description: typeof raw.description === "string" ? raw.description : undefined,
-    image_url: resolveImageUrl(rawImageUrl),
+    image_url: resolveAssetUrl(rawImageUrl),
     health: Number.isFinite(numericHealth) ? numericHealth : undefined,
     notes: typeof raw.notes === "string" ? raw.notes : undefined,
   };
-}
-
-function resolveImageUrl(value: string | undefined) {
-  if (!value) {
-    return undefined;
-  }
-  if (/^(https?:|data:|blob:)/.test(value)) {
-    return value;
-  }
-  if (value.startsWith("/")) {
-    return `${new URL(API_BASE_URL).origin}${value}`;
-  }
-  return value;
 }
 
 export async function getPlant(token: string, plantId: number): Promise<Plant> {
@@ -179,6 +230,10 @@ export async function updatePlant(
     token
   );
   return mapPlant(updated);
+}
+
+export async function deletePlant(token: string, plantId: number): Promise<void> {
+  await apiFetch(`/plants/${plantId}`, { method: "DELETE" }, token);
 }
 
 export async function uploadPlantPhoto(token: string, plantId: number, file: File): Promise<Plant> {

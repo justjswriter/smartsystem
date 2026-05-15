@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   Activity,
   ArrowLeft,
+  BookOpen,
   Calendar,
   Camera,
   Droplet,
@@ -10,6 +11,7 @@ import {
   Sun,
   Thermometer,
   Wind,
+  X,
 } from "lucide-react";
 import {
   CartesianGrid,
@@ -39,6 +41,8 @@ type PlantDetailsProps = {
   isPhotoUploading: boolean;
   onNotesSave: (notes: string) => Promise<void>;
   isNotesSaving: boolean;
+  backTo: string;
+  backLabel: string;
 };
 
 export function PlantDetails({
@@ -54,13 +58,15 @@ export function PlantDetails({
   isPhotoUploading,
   onNotesSave,
   isNotesSaving,
+  backTo,
+  backLabel,
 }: PlantDetailsProps) {
   const { t, label, formatDateTime } = useI18n();
   const emptyValue = "--";
   const temperatureUnit = t("units.temperature");
-  const lightUnit = t("units.light");
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [isCareGuideOpen, setIsCareGuideOpen] = useState(false);
   const [notesDraft, setNotesDraft] = useState("");
   const chartData =
     dashboard?.history.map((h, i) => ({
@@ -81,7 +87,6 @@ export function PlantDetails({
     condition?.ml_confidence != null
       ? t("plant.confidenceValue", { value: Math.round(condition.ml_confidence * 100) })
       : t("common.unavailable");
-  const analysisMethodText = label("analysis", condition?.analysis_method ?? "rule_based");
   const riskLabels = condition?.risk_factors.map((risk) => label("issue", risk)) ?? [];
   const primaryRisk = riskLabels[0];
   const conditionExplanation = buildHumanConditionSummary();
@@ -92,6 +97,21 @@ export function PlantDetails({
     setIsEditingNotes(false);
   }, [plant?.id, plant?.description]);
 
+  useEffect(() => {
+    if (!isCareGuideOpen) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsCareGuideOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isCareGuideOpen]);
+
   if (isLoading) {
     return <p className="muted page-lead">{t("common.loading")}</p>;
   }
@@ -100,8 +120,8 @@ export function PlantDetails({
     return (
       <div className="page-stack">
         <p className="error">{error || t("plant.notFound")}</p>
-        <Link to="/" className="text-link">
-          {t("plant.back")}
+        <Link to={backTo} className="text-link">
+          {backLabel}
         </Link>
       </div>
     );
@@ -273,9 +293,9 @@ export function PlantDetails({
 
   return (
     <div className="plant-detail-page">
-      <Link to="/" className="back-link">
+      <Link to={backTo} className="back-link">
         <ArrowLeft size={18} />
-        {t("plant.back")}
+        {backLabel}
       </Link>
 
       <div className="page-head plant-detail-head">
@@ -284,6 +304,15 @@ export function PlantDetails({
           <p className="muted page-lead">{displayPlantSpecies(plant.species, t)}</p>
         </div>
         <div className="button-row">
+          <button
+            type="button"
+            className="btn-secondary icon-label-btn"
+            title={t("plant.basicCare")}
+            aria-label={t("plant.basicCare")}
+            onClick={() => setIsCareGuideOpen(true)}
+          >
+            <BookOpen size={18} />
+          </button>
           <button type="button" className="btn-secondary" onClick={onRefresh} disabled={isRefreshing}>
             <Activity size={18} />
             {isRefreshing ? t("plant.refreshing") : t("plant.refreshReadings")}
@@ -309,36 +338,55 @@ export function PlantDetails({
         </div>
       </div>
 
-      <div className="detail-two-col">
-        <div className="detail-col">
-          <div className="plant-care-hero">
-            <div className="card plant-hero-img">
-              {plant.image_url ? (
-                <img src={plant.image_url} alt={plant.name} />
-              ) : (
-                <div className="plant-hero-fallback">{plant.name.charAt(0)}</div>
-              )}
-            </div>
-
-            <div className="card species-care-note">
+      {isCareGuideOpen ? (
+        <div className="care-guide-backdrop" role="presentation" onClick={() => setIsCareGuideOpen(false)}>
+          <div
+            className="care-guide-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="care-guide-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="care-guide-head">
               <div className="species-care-head">
                 <span className="species-care-mark">
                   <Droplet size={20} />
                   <Sun size={18} />
                 </span>
                 <div>
-                  <h3 className="section-title">{t("plant.basicCare")}</h3>
+                  <h3 className="section-title" id="care-guide-title">{t("plant.basicCare")}</h3>
                   <p className="muted small">{t("plant.basicCareIntro", { species: displayPlantSpecies(plant.species, t) })}</p>
                 </div>
               </div>
-              <div className="species-care-copy">
-                {careItems.map((item) => (
-                  <p key={item.title}>
-                    <strong>{item.title}.</strong> {item.text}
-                  </p>
-                ))}
-              </div>
+              <button
+                type="button"
+                className="icon-btn"
+                title={t("common.close")}
+                aria-label={t("common.close")}
+                onClick={() => setIsCareGuideOpen(false)}
+              >
+                <X size={18} />
+              </button>
             </div>
+            <div className="species-care-copy">
+              {careItems.map((item) => (
+                <p key={item.title}>
+                  <strong>{item.title}.</strong> {item.text}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="detail-two-col">
+        <div className="detail-col">
+          <div className="card plant-hero-img">
+            {plant.image_url ? (
+              <img src={plant.image_url} alt={plant.name} />
+            ) : (
+              <div className="plant-hero-fallback">{plant.name.charAt(0)}</div>
+            )}
           </div>
 
           <div className="card">
@@ -452,7 +500,7 @@ export function PlantDetails({
             <div className={`card metric metric-state-${metricState("light", current?.light)}`}>
               <Sun className="metric-ico yellow" size={22} />
               <p className="muted small">{t("dashboard.lightScore")}</p>
-              <p className="metric-val">{current?.light != null ? `${current.light} ${lightUnit}` : emptyValue}</p>
+              <p className="metric-val">{current?.light != null ? current.light : emptyValue}</p>
             </div>
             <div className={`card metric metric-state-${metricState("humidity", current?.humidity)}`}>
               <Wind className="metric-ico teal" size={22} />
@@ -460,7 +508,6 @@ export function PlantDetails({
               <p className="metric-val">{current?.humidity != null ? `${current.humidity}%` : emptyValue}</p>
             </div>
           </div>
-          <p className="muted small">{t("dashboard.lightHint")}</p>
 
           <div className="card chart-card">
             <h3 className="section-title">{t("plant.sensorHistory")}</h3>
@@ -499,20 +546,14 @@ export function PlantDetails({
           <div className="card action-card">
             <h3 className="section-title">{t("plant.currentCondition")}</h3>
             <p>{conditionExplanation}</p>
+            {condition?.ml_prediction ? (
+              <p className="muted">
+                {label("condition", condition.ml_prediction)} ({mlConfidenceText})
+              </p>
+            ) : null}
             {riskLabels.length ? (
               <p className="muted">{t("plant.riskFactors")}: {riskLabels.join(", ")}</p>
             ) : null}
-            <details className="technical-details">
-              <summary>{t("plant.technicalDetails")}</summary>
-              <p className="muted small">{t("plant.confidence")}: {condition ? condition.confidence : emptyValue}</p>
-              <p className="muted small">
-                {t("plant.aiPrediction")}:{" "}
-                {condition?.ml_prediction
-                  ? `${label("condition", condition.ml_prediction)} (${mlConfidenceText})`
-                  : t("common.unavailable")}
-              </p>
-              <p className="muted small">{t("plant.analysisMethod")}: {analysisMethodText}</p>
-            </details>
           </div>
 
           <div className="card action-card">

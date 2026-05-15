@@ -22,6 +22,7 @@ class AlertService:
     LOCAL_TIME_OFFSET = timedelta(hours=5)
     NIGHT_START_HOUR = 20
     NIGHT_END_HOUR = 7
+    DEDUPE_WINDOW = timedelta(minutes=5)
     SUSTAINED_HIGH_MOISTURE_WINDOW = timedelta(hours=48)
     SUSTAINED_HIGH_MOISTURE_MIN_SAMPLES = 3
 
@@ -101,6 +102,7 @@ class AlertService:
                 metric=issue.metric,
                 direction=issue.direction,
                 threshold=issue.threshold,
+                created_after=datetime.now(timezone.utc) - self.DEDUPE_WINDOW,
             )
             if existing:
                 continue

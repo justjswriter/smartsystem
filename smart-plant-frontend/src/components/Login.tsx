@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useI18n } from "../i18n";
 
 type LoginProps = {
@@ -12,6 +13,7 @@ export function Login({ isLoading, error, onSubmit, onSwitchToRegister }: LoginP
   const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -37,13 +39,24 @@ export function Login({ isLoading, error, onSubmit, onSwitchToRegister }: LoginP
 
         <label>
           {t("auth.password")}
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="******"
-            required
-          />
+          <span className="password-field">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="******"
+              required
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword((current) => !current)}
+              aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+              title={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </span>
         </label>
 
         {error ? <div className="error">{error}</div> : null}

@@ -4,7 +4,7 @@ import {
   Home,
   Leaf,
   LogOut,
-  Settings as SettingsIcon,
+  Radio,
   Shield,
   User,
 } from "lucide-react";
@@ -59,6 +59,13 @@ export function MainLayout() {
               <BarChart3 size={18} />
               {t("nav.analytics")}
             </NavLink>
+            <NavLink
+              to="/sensors"
+              className={({ isActive }) => (isActive ? "top-nav-link active" : "top-nav-link")}
+            >
+              <Radio size={18} />
+              {t("nav.sensors")}
+            </NavLink>
           </nav>
 
           <div className="top-actions">
@@ -84,12 +91,9 @@ export function MainLayout() {
               }
             >
               <span className="avatar-circle">
-                <User size={18} />
+                {user?.avatar_url ? <img src={user.avatar_url} alt={user.full_name} /> : <User size={18} />}
               </span>
               <span className="profile-name">{user?.full_name ?? t("nav.profile")}</span>
-            </NavLink>
-            <NavLink to="/settings" className="icon-btn" title={t("nav.settings")} aria-label={t("nav.settings")}>
-              <SettingsIcon size={20} />
             </NavLink>
             {user?.role === "admin" ? (
               <NavLink to="/admin" className="icon-btn" title={t("nav.admin")} aria-label={t("nav.admin")}>

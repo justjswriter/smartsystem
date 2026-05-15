@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
 
     SECRET_KEY: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
     ALGORITHM: str = "HS256"
 
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]

@@ -2,6 +2,7 @@ export type User = {
   id: number;
   email: string;
   full_name: string;
+  avatar_url?: string | null;
   role: string;
   is_active?: boolean;
   created_at?: string;
@@ -22,6 +23,17 @@ export type RegisterPayload = {
 export type LoginPayload = {
   email: string;
   password: string;
+};
+
+export type UserUpdatePayload = {
+  full_name?: string;
+  email?: string;
+};
+
+export type PasswordUpdatePayload = {
+  current_password: string;
+  new_password: string;
+  new_password_confirm: string;
 };
 
 export type Plant = {

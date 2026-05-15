@@ -14,9 +14,21 @@ class FakeAlertRepository:
     async def find_open_by_metric(self, *, plant_id: int, metric: str):
         return self.existing
 
-    async def find_open_by_metric_direction(self, *, plant_id: int, metric: str, direction: str, threshold: float | None = None):
+    async def find_open_by_metric_direction(
+        self,
+        *,
+        plant_id: int,
+        metric: str,
+        direction: str,
+        threshold: float | None = None,
+        created_after=None,
+    ):
         if not self.existing:
             return None
+        if created_after is not None:
+            created_at = getattr(self.existing, "created_at", None)
+            if created_at is not None and created_at < created_after:
+                return None
         if self.existing.value is None or self.existing.threshold is None:
             return self.existing
         if threshold is not None and abs(float(self.existing.threshold) - float(threshold)) > 0.001:
@@ -85,6 +97,33 @@ async def test_active_metric_alert_is_not_duplicated():
 
     assert service.alert_repo.created == []
     assert service.notification_service.alerts == []
+
+
+@pytest.mark.asyncio
+async def test_metric_alert_is_duplicated_after_dedupe_window():
+    service = AlertService.__new__(AlertService)
+    service.alert_repo = FakeAlertRepository(
+        existing=SimpleNamespace(
+            id=99,
+            value=10.0,
+            threshold=35.0,
+            created_at=datetime.now(timezone.utc) - AlertService.DEDUPE_WINDOW - timedelta(seconds=1),
+        )
+    )
+    service.plant_repo = FakePlantRepository()
+    service.recommendation_service = FakeRecommendationService()
+    service.notification_service = FakeNotificationService()
+    service.log_repo = FakeLogRepository()
+    service.sensor_data_repo = FakeSensorDataRepository()
+
+    await service._evaluate_thresholds(
+        sensor_id=7,
+        plant_id=3,
+        payload={"moisture": 10.0, "temperature": None, "humidity": None, "light": None},
+    )
+
+    assert len(service.alert_repo.created) == 1
+    assert len(service.notification_service.alerts) == 1
 
 
 @pytest.mark.asyncio

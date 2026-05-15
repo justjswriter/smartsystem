@@ -159,6 +159,35 @@ select {
   background: white;
 }
 
+.password-field {
+  position: relative;
+  display: block;
+}
+
+.password-field input {
+  padding-right: 44px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #4b5563;
+}
+
+.password-toggle:hover {
+  background: #eef7f1;
+  color: #15803d;
+}
+
 button {
   border: 0;
   border-radius: 8px;
@@ -202,12 +231,15 @@ button:disabled {
   margin-top: 10px;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
 .button-row button {
   background: #edf5ef;
   color: #244235;
+  min-height: 44px;
+  height: auto;
 }
 
 .bottom-nav button {
@@ -282,9 +314,9 @@ button:disabled {
 }
 
 .top-header-inner {
-  max-width: 1280px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 28px;
   min-height: 64px;
   display: flex;
   align-items: center;
@@ -431,6 +463,7 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .profile-name {
@@ -441,9 +474,9 @@ button:disabled {
 }
 
 .web-main {
-  max-width: 1280px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 28px 20px 48px;
+  padding: 28px 28px 48px;
 }
 
 .page-title {
@@ -510,6 +543,28 @@ button:disabled {
   border: 1px solid #d1d5db !important;
   padding: 10px 14px !important;
   border-radius: 10px !important;
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #dc2626 !important;
+  color: #fff !important;
+  padding: 10px 18px !important;
+  border-radius: 10px !important;
+  font-weight: 600;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #b91c1c !important;
+}
+
+.icon-label-btn {
+  width: 44px;
+  height: 44px;
+  justify-content: center;
+  padding: 0 !important;
 }
 
 .small {
@@ -627,6 +682,10 @@ button:disabled {
 
 .stats-row.three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stats-row.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .stat-tile {
@@ -923,12 +982,63 @@ button:disabled {
 
 .plant-detail-head {
   align-items: center;
+  margin-bottom: 20px;
+}
+
+.care-guide-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 64px;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.care-guide-dialog {
+  width: min(100%, 1040px);
+  min-height: min(58vh, 520px);
+  max-height: calc(100vh - 128px);
+  overflow: auto;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 42%);
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 42px 48px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+}
+
+.care-guide-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.care-guide-dialog .species-care-copy {
+  gap: 16px;
+  line-height: 1.65;
+}
+
+.care-guide-dialog .species-care-copy p {
+  font-size: 1rem;
+}
+
+.care-guide-head .icon-btn {
+  flex-shrink: 0;
 }
 
 .detail-two-col {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.detail-col {
+  display: grid;
+  gap: 22px;
+  align-content: start;
 }
 
 @media (max-width: 960px) {
@@ -941,6 +1051,7 @@ button:disabled {
 }
 
 @media (max-width: 560px) {
+  .stats-row.two,
   .stats-row.four {
     grid-template-columns: 1fr;
   }
@@ -948,7 +1059,7 @@ button:disabled {
 
 .plant-care-hero {
   display: grid;
-  grid-template-columns: minmax(220px, 0.9fr) minmax(420px, 1.35fr);
+  grid-template-columns: minmax(220px, 0.8fr) minmax(360px, 1.35fr);
   gap: 20px;
   align-items: start;
   width: 100%;
@@ -959,9 +1070,11 @@ button:disabled {
   padding: 0;
   overflow: hidden;
   min-height: 0;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 16 / 10;
   width: 100%;
-  max-width: 360px;
+  max-width: none;
+  justify-self: center;
+  border-radius: 14px;
 }
 
 .plant-hero-img img {
@@ -1047,17 +1160,13 @@ button:disabled {
   }
 
   .plant-hero-img {
-    max-width: 300px;
+    max-width: none;
   }
 }
 
 @media (max-width: 860px) {
-  .plant-care-hero {
-    grid-template-columns: 1fr;
-  }
-
   .plant-hero-img {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 10;
     max-width: none;
   }
 }
@@ -1211,17 +1320,31 @@ button:disabled {
 .metric-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 18px;
 }
 
 .metric {
-  padding: 16px;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  column-gap: 18px;
+  row-gap: 4px;
+  align-items: start;
+  min-height: 120px;
+  padding: 20px 22px 24px;
   border-width: 1px;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
+.metric .muted {
+  grid-column: 2;
+  align-self: end;
+  font-size: 0.9rem;
+}
+
 .metric-val {
-  font-size: 1.5rem;
+  grid-column: 2;
+  align-self: start;
+  font-size: 1.62rem;
   font-weight: 700;
   color: #111827;
 }
@@ -1252,7 +1375,14 @@ button:disabled {
 }
 
 .metric-ico {
-  margin-bottom: 6px;
+  grid-row: 1 / span 2;
+  grid-column: 1;
+  justify-self: center;
+  align-self: start;
+  margin-top: 18px;
+  margin-bottom: 0;
+  width: 28px;
+  height: 28px;
 }
 
 .metric-ico.orange {
@@ -1494,27 +1624,77 @@ button:disabled {
 }
 
 .profile-card-hero {
-  background: linear-gradient(to bottom right, #16a34a, #15803d);
-  color: #fff;
-  text-align: center;
-  padding: 28px 20px;
+  min-height: 320px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
-.profile-avatar {
-  width: 96px;
-  height: 96px;
-  margin: 0 auto 16px;
+.profile-card-hero > * {
+  justify-self: center;
+}
+
+.profile-photo-frame {
+  position: relative;
+  width: 230px;
+  height: 230px;
   border-radius: 50%;
-  background: #fff;
+  background: #dcfce7;
+  overflow: visible;
+}
+
+.profile-photo-frame img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 4px solid rgba(255, 255, 255, 0.9);
+}
+
+.profile-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
   color: #16a34a;
-  display: flex;
+  display: grid;
+  place-items: center;
+  font-size: 5.5rem;
+  font-weight: 800;
+  background: linear-gradient(to bottom right, #dcfce7, #f0fdf4);
+  border: 4px solid rgba(255, 255, 255, 0.9);
+}
+
+.avatar-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-photo-btn {
+  position: static;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  justify-self: center;
+  margin-left: 42px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(22, 163, 74, 0.92);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
 }
 
-.profile-role {
-  color: rgba(255, 255, 255, 0.9);
-  margin: 8px 0;
+.profile-photo-btn input {
+  display: none;
 }
 
 .quick-action {
@@ -1565,9 +1745,23 @@ button:disabled {
   color: #4b5563;
 }
 
+.profile-edit-card,
 .notification-settings-card {
   display: grid;
   gap: 12px;
+  align-content: start;
+}
+
+.profile-password-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid #dce8df;
+}
+
+.profile-password-panel h4 {
+  margin: 0;
 }
 
 .toggle-row {
@@ -1618,16 +1812,144 @@ button:disabled {
 
 .plants-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
 
 .plant-tile {
+  position: relative;
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  color: inherit;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.plant-tile-link {
+  display: grid;
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.15s ease;
 }
 
 .plant-tile:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.plant-delete-btn,
+.plant-edit-btn {
+  position: absolute;
+  top: 10px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.plant-delete-btn {
+  right: 10px;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+}
+
+.plant-delete-btn:hover {
+  background: #fef2f2;
+}
+
+.plant-edit-btn {
+  right: 56px;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
+.plant-edit-btn:hover {
+  background: #f0fdf4;
+}
+
+.plant-tile-img {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #ecfdf5;
+}
+
+.plant-tile-img img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.plant-tile-img span {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: #16a34a;
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(to bottom right, #dcfce7, #f0fdf4);
+}
+
+.plant-tile-body {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.plant-tile-body h3 {
+  margin-bottom: 4px;
+}
+
+.plant-tile-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.plant-tile-info span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: #4b5563;
+  font-size: 0.85rem;
+}
+
+.plant-tile-info svg {
+  flex-shrink: 0;
+  color: #16a34a;
+}
+
+.plant-tile-note {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .care-guide-backdrop {
+    padding: 20px;
+  }
+
+  .care-guide-dialog {
+    min-height: auto;
+    max-height: calc(100vh - 40px);
+    padding: 24px;
+  }
+
+  .plant-tile-info {
+    grid-template-columns: 1fr;
+  }
+}
+
+.confirm-dialog {
+  display: grid;
+  gap: 14px;
 }

@@ -84,15 +84,24 @@ class AlertRepository:
         return result.scalar_one_or_none()
 
     async def find_open_by_metric_direction(
-        self, *, plant_id: int, metric: str, direction: str, threshold: float | None = None
+        self,
+        *,
+        plant_id: int,
+        metric: str,
+        direction: str,
+        threshold: float | None = None,
+        created_after: datetime | None = None,
     ) -> Alert | None:
+        filters = [
+            Alert.plant_id == plant_id,
+            Alert.metric == metric,
+            Alert.status.in_([AlertStatus.CREATED, AlertStatus.VIEWED, AlertStatus.ACKNOWLEDGED]),
+        ]
+        if created_after is not None:
+            filters.append(Alert.created_at >= created_after)
         result = await self.db.execute(
             select(Alert)
-            .where(
-                Alert.plant_id == plant_id,
-                Alert.metric == metric,
-                Alert.status.in_([AlertStatus.CREATED, AlertStatus.VIEWED, AlertStatus.ACKNOWLEDGED]),
-            )
+            .where(*filters)
             .order_by(Alert.created_at.desc())
         )
         for alert in result.scalars().all():

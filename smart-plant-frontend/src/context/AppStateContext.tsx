@@ -13,6 +13,7 @@ import {
   attachSensor,
   createPlant,
   createSensor,
+  deletePlant,
   detachSensor,
   getAlerts,
   getMe,
@@ -25,6 +26,9 @@ import {
   register,
   rotateSensorToken,
   transitionAlert,
+  updateMe,
+  updatePlant,
+  uploadProfilePhoto,
 } from "../api";
 import type { Alert, Notification, Plant, Sensor, User } from "../types";
 
@@ -59,6 +63,8 @@ type AppStateContextValue = {
     password: string,
     passwordConfirm: string
   ) => Promise<boolean>;
+  updateProfile: (payload: { full_name?: string; email?: string }) => Promise<void>;
+  updateProfilePhoto: (file: File) => Promise<void>;
   logout: () => void;
   createPlantEntry: (payload: {
     name: string;
@@ -66,6 +72,8 @@ type AppStateContextValue = {
     location?: string;
     description?: string;
   }) => Promise<void>;
+  deletePlantEntry: (plantId: number) => Promise<void>;
+  renamePlantEntry: (plantId: number, name: string) => Promise<void>;
   createSensorEntry: (deviceId: string, type: string) => Promise<string | null>;
   rotateSensorDeviceToken: (sensorId: number) => Promise<string | null>;
   attachSensorToPlant: (sensorId: number, plantId: number) => Promise<void>;
@@ -87,7 +95,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [sensors, setSensors] = useState<Sensor[]>([]);
-  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(() => Boolean(localStorage.getItem(TOKEN_KEY)));
   const [isPlantsLoading, setIsPlantsLoading] = useState(false);
   const [isAlertsLoading, setIsAlertsLoading] = useState(false);
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
@@ -101,8 +109,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function bootstrap() {
       if (!token) {
+        setIsAuthLoading(false);
         return;
       }
+      setIsAuthLoading(true);
       try {
         const me = (await getMe(token)) as User;
         setUser(me);
@@ -110,6 +120,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem(TOKEN_KEY);
         setToken(null);
         setUser(null);
+      } finally {
+        setIsAuthLoading(false);
       }
     }
     void bootstrap();
@@ -170,7 +182,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setIsNotificationsLoading(true);
     setNotificationsError("");
     try {
-      const data = await getNotifications(token);
+      const data = await getNotifications(token, true);
       setNotifications(data);
     } catch (error) {
       setNotificationsError(error instanceof Error ? error.message : "Failed to load notifications");
@@ -280,6 +292,40 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       }
     },
     []
+  );
+
+  const updateProfile = useCallback(
+    async (payload: { full_name?: string; email?: string }) => {
+      if (!token) {
+        return;
+      }
+      setAuthError("");
+      try {
+        const updated = await updateMe(token, payload);
+        setUser(updated);
+      } catch (error) {
+        setAuthError(error instanceof Error ? error.message : "Failed to update profile");
+        throw error;
+      }
+    },
+    [token]
+  );
+
+  const updateProfilePhoto = useCallback(
+    async (file: File) => {
+      if (!token) {
+        return;
+      }
+      setAuthError("");
+      try {
+        const updated = await uploadProfilePhoto(token, file);
+        setUser(updated);
+      } catch (error) {
+        setAuthError(error instanceof Error ? error.message : "Failed to update profile photo");
+        throw error;
+      }
+    },
+    [token]
   );
 
   const logout = useCallback(() => {
@@ -428,6 +474,41 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     [token, loadAlerts]
   );
 
+  const deletePlantEntry = useCallback(
+    async (plantId: number) => {
+      if (!token) {
+        return;
+      }
+      setPlantsError("");
+      try {
+        await deletePlant(token, plantId);
+        await loadPlants();
+        await loadSensors();
+      } catch (error) {
+        setPlantsError(error instanceof Error ? error.message : "Failed to delete plant");
+        throw error;
+      }
+    },
+    [token, loadPlants, loadSensors]
+  );
+
+  const renamePlantEntry = useCallback(
+    async (plantId: number, name: string) => {
+      if (!token) {
+        return;
+      }
+      setPlantsError("");
+      try {
+        await updatePlant(token, plantId, { name });
+        await loadPlants();
+      } catch (error) {
+        setPlantsError(error instanceof Error ? error.message : "Failed to rename plant");
+        throw error;
+      }
+    },
+    [token, loadPlants]
+  );
+
   const markNotificationAsRead = useCallback(
     async (notificationId: number) => {
       if (!token) {
@@ -472,8 +553,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       loadSensors,
       loginWithCredentials,
       registerAccount,
+      updateProfile,
+      updateProfilePhoto,
       logout,
       createPlantEntry,
+      deletePlantEntry,
+      renamePlantEntry,
       createSensorEntry,
       rotateSensorDeviceToken,
       attachSensorToPlant,
@@ -508,8 +593,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       loadSensors,
       loginWithCredentials,
       registerAccount,
+      updateProfile,
+      updateProfilePhoto,
       logout,
       createPlantEntry,
+      deletePlantEntry,
+      renamePlantEntry,
       createSensorEntry,
       rotateSensorDeviceToken,
       attachSensorToPlant,

@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { Navigate, createBrowserRouter } from "react-router-dom";
 import { ProtectedLayout } from "./layouts/ProtectedLayout";
 import { AlertsPage } from "./pages/AlertsPage";
 import { AdminPage } from "./pages/AdminPage";
@@ -9,7 +9,7 @@ import { PlantDetailsPage } from "./pages/PlantDetailsPage";
 import { PlantsIndexPage } from "./pages/PlantsIndexPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
-import { SettingsPage } from "./pages/SettingsPage";
+import { SensorsPage } from "./pages/SensorsPage";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -22,10 +22,11 @@ export const router = createBrowserRouter([
       { path: "plants", element: <PlantsIndexPage /> },
       { path: "plants/:plantId", element: <PlantDetailsPage /> },
       { path: "analytics", element: <AnalyticsPage /> },
+      { path: "sensors", element: <SensorsPage /> },
       { path: "alerts", element: <AlertsPage /> },
       { path: "admin", element: <AdminPage /> },
       { path: "profile", element: <ProfilePage /> },
-      { path: "settings", element: <SettingsPage /> },
+      { path: "settings", element: <Navigate to="/profile" replace /> },
     ],
   },
 ]);

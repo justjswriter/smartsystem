@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getPlantCareProfiles, getPlantDashboard } from "../api";
+import { getPlantDashboard } from "../api";
 import { Dashboard } from "../components/Dashboard";
 import { useAppState } from "../context/AppStateContext";
-import type { CareProfile, DashboardResponse, PlantCondition } from "../types";
+import type { DashboardResponse, PlantCondition } from "../types";
 
 export function DashboardPage() {
   const {
@@ -12,7 +12,6 @@ export function DashboardPage() {
     isPlantsLoading,
     plantsError,
     loadPlants,
-    createPlantEntry,
   } = useAppState();
 
   const [readingsByPlant, setReadingsByPlant] = useState<
@@ -21,7 +20,6 @@ export function DashboardPage() {
   const [conditionByPlant, setConditionByPlant] = useState<
     Record<number, PlantCondition | null | undefined>
   >({});
-  const [careProfiles, setCareProfiles] = useState<CareProfile[]>([]);
 
   const loadDashboardSnapshots = useCallback(
     async (plantList = plants) => {
@@ -67,28 +65,6 @@ export function DashboardPage() {
     };
   }, [loadDashboardSnapshots]);
 
-  useEffect(() => {
-    if (!token) {
-      setCareProfiles([]);
-      return;
-    }
-    let cancelled = false;
-    void getPlantCareProfiles(token)
-      .then((profiles) => {
-        if (!cancelled) {
-          setCareProfiles(profiles);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setCareProfiles([]);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
-
   const stats = useMemo(() => {
     const total = plants.length;
     const healthValues = Object.values(conditionByPlant)
@@ -125,8 +101,6 @@ export function DashboardPage() {
         void loadPlants();
         void loadDashboardSnapshots();
       }}
-      onCreatePlant={createPlantEntry}
-      careProfiles={careProfiles}
     />
   );
 }

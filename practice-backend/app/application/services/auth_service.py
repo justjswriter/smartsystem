@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.schemas.auth import LoginRequest, RegisterRequest
+from app.application.schemas.auth import LoginRequest, PasswordUpdateRequest, RegisterRequest, UserUpdateRequest
 from app.core.security import create_access_token, hash_password, verify_password
 from app.domain.enums import UserRole
 from app.infrastructure.repositories import SystemLogRepository, UserRepository
@@ -47,3 +47,38 @@ class AuthService:
             user_id=user.id,
         )
         return token, user
+
+    async def update_profile(self, user, payload: UserUpdateRequest):
+        values = payload.model_dump(exclude_unset=True)
+        if "email" in values and values["email"] != user.email:
+            existing = await self.user_repo.get_by_email(values["email"])
+            if existing and existing.id != user.id:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already exists")
+
+        updated = await self.user_repo.update(user, values=values)
+        await self.log_repo.create(
+            event_type="user_profile_updated",
+            message=f"User {updated.email} updated profile",
+            user_id=updated.id,
+        )
+        return updated
+
+    async def update_password(self, user, payload: PasswordUpdateRequest):
+        if not verify_password(payload.current_password, user.password_hash):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
+
+        if payload.new_password != payload.new_password_confirm:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords do not match")
+
+        if payload.current_password == payload.new_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New password must be different from current password",
+            )
+
+        await self.user_repo.update(user, values={"password_hash": hash_password(payload.new_password)})
+        await self.log_repo.create(
+            event_type="user_password_updated",
+            message=f"User {user.email} updated password",
+            user_id=user.id,
+        )

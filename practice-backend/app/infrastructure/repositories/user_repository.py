@@ -23,6 +23,13 @@ class UserRepository:
         await self.db.refresh(user)
         return user
 
+    async def update(self, user: User, *, values: dict) -> User:
+        for key, value in values.items():
+            setattr(user, key, value)
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
+
     async def list(self, *, limit: int, offset: int) -> list[User]:
         result = await self.db.execute(select(User).offset(offset).limit(limit))
         return list(result.scalars().all())

@@ -18,10 +18,20 @@ class FakeAlertRepository:
         return self.existing
 
     async def find_open_by_metric_direction(
-        self, *, plant_id: int, metric: str, direction: str, threshold: float | None = None
+        self,
+        *,
+        plant_id: int,
+        metric: str,
+        direction: str,
+        threshold: float | None = None,
+        created_after=None,
     ):
         if not self.existing:
             return None
+        if created_after is not None:
+            created_at = getattr(self.existing, "created_at", None)
+            if created_at is not None and created_at < created_after:
+                return None
         value = getattr(self.existing, "value", None)
         existing_threshold = getattr(self.existing, "threshold", None)
         if value is None or existing_threshold is None:

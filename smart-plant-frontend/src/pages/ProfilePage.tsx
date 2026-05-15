@@ -1,13 +1,28 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
-import { Activity, Calendar, Leaf, Radio, Settings } from "lucide-react";
-import { getNotificationSettings, sendTestNotificationEmail, updateNotificationSettings } from "../api";
+import { Eye, EyeOff, Leaf, Radio } from "lucide-react";
+import { getNotificationSettings, sendTestNotificationEmail, updateNotificationSettings, updatePassword } from "../api";
 import { useAppState } from "../context/AppStateContext";
 import { useI18n } from "../i18n";
 
 export function ProfilePage() {
-  const { token, user, plants, sensors } = useAppState();
+  const { token, user, plants, sensors, updateProfile, updateProfilePhoto } = useAppState();
   const { t } = useI18n();
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [isProfileSaving, setIsProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
+  const [profileError, setProfileError] = useState("");
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showNewPasswordConfirm, setShowNewPasswordConfirm] = useState(false);
+  const [isPasswordFormOpen, setIsPasswordFormOpen] = useState(false);
+  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [notificationEmail, setNotificationEmail] = useState("");
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [criticalOnly, setCriticalOnly] = useState(true);
@@ -22,13 +37,97 @@ export function ProfilePage() {
   const [settingsMessage, setSettingsMessage] = useState("");
   const [settingsError, setSettingsError] = useState("");
 
-  const avgHealth =
-    plants.filter((p) => p.health != null).length > 0
-      ? Math.round(
-          plants.reduce((s, p) => s + (p.health ?? 0), 0) /
-            plants.filter((p) => p.health != null).length
-        )
-      : "--";
+  function notificationErrorMessage(error: unknown, fallbackKey: string) {
+    if (error instanceof Error && /invalid authentication|authentication required/i.test(error.message)) {
+      return t("profile.sessionExpired");
+    }
+    if (error instanceof Error && /current password is incorrect/i.test(error.message)) {
+      return t("profile.currentPasswordIncorrect");
+    }
+    if (error instanceof Error && /passwords do not match/i.test(error.message)) {
+      return t("profile.passwordMismatch");
+    }
+    if (error instanceof Error && /new password must be different/i.test(error.message)) {
+      return t("profile.passwordMustBeDifferent");
+    }
+    return error instanceof Error ? error.message : t(fallbackKey);
+  }
+
+  useEffect(() => {
+    setProfileName(user?.full_name ?? "");
+    setProfileEmail(user?.email ?? "");
+  }, [user]);
+
+  async function saveProfile(event: FormEvent) {
+    event.preventDefault();
+    if (!profileName.trim() || !profileEmail.trim()) {
+      return;
+    }
+    setIsProfileSaving(true);
+    setProfileError("");
+    setProfileMessage("");
+    try {
+      await updateProfile({
+        full_name: profileName.trim(),
+        email: profileEmail.trim(),
+      });
+      setProfileMessage(t("profile.saved"));
+    } catch (error) {
+      setProfileError(notificationErrorMessage(error, "profile.saveFailed"));
+    } finally {
+      setIsProfileSaving(false);
+    }
+  }
+
+  async function uploadAvatar(file: File | undefined) {
+    if (!file) {
+      return;
+    }
+    setIsPhotoUploading(true);
+    setProfileError("");
+    setProfileMessage("");
+    try {
+      await updateProfilePhoto(file);
+      setProfileMessage(t("profile.photoSaved"));
+    } catch (error) {
+      setProfileError(notificationErrorMessage(error, "profile.photoSaveFailed"));
+    } finally {
+      setIsPhotoUploading(false);
+    }
+  }
+
+  async function savePassword() {
+    if (!token) {
+      return;
+    }
+    setPasswordError("");
+    setPasswordMessage("");
+    if (!currentPassword || !newPassword || !newPasswordConfirm) {
+      setPasswordError(t("profile.passwordFieldsRequired"));
+      return;
+    }
+    if (newPassword !== newPasswordConfirm) {
+      setPasswordError(t("profile.passwordMismatch"));
+      return;
+    }
+    setIsPasswordSaving(true);
+    try {
+      await updatePassword(token, {
+        current_password: currentPassword,
+        new_password: newPassword,
+        new_password_confirm: newPasswordConfirm,
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setNewPasswordConfirm("");
+      setIsPasswordFormOpen(false);
+      setPasswordMessage(t("profile.passwordSaved"));
+    } catch (error) {
+      setPasswordError(notificationErrorMessage(error, "profile.passwordSaveFailed"));
+    } finally {
+      setIsPasswordSaving(false);
+    }
+  }
 
   useEffect(() => {
     if (!token) {
@@ -53,7 +152,7 @@ export function ProfilePage() {
         }
       } catch (error) {
         if (!cancelled) {
-          setSettingsError(error instanceof Error ? error.message : t("profile.notificationsLoadFailed"));
+          setSettingsError(notificationErrorMessage(error, "profile.notificationsLoadFailed"));
         }
       } finally {
         if (!cancelled) {
@@ -96,7 +195,7 @@ export function ProfilePage() {
       setEmailLightAlerts(settings.email_light_alerts);
       setSettingsMessage(t("profile.notificationsSaved"));
     } catch (error) {
-      setSettingsError(error instanceof Error ? error.message : t("profile.notificationsSaveFailed"));
+      setSettingsError(notificationErrorMessage(error, "profile.notificationsSaveFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -119,7 +218,7 @@ export function ProfilePage() {
           : statusMessage
       );
     } catch (error) {
-      setSettingsError(error instanceof Error ? error.message : t("profile.testEmailFailed"));
+      setSettingsError(notificationErrorMessage(error, "profile.testEmailFailed"));
     } finally {
       setIsTesting(false);
     }
@@ -134,40 +233,147 @@ export function ProfilePage() {
 
       <div className="profile-grid">
         <div className="profile-card-hero card">
-          <div className="profile-avatar">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-            </svg>
+          <div className="profile-photo-frame">
+            {user?.avatar_url ? (
+              <img src={user.avatar_url} alt={user.full_name} />
+            ) : (
+              <div className="profile-photo-placeholder" aria-hidden>
+                {user?.full_name?.charAt(0) ?? "U"}
+              </div>
+            )}
+            <label className="profile-photo-btn">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event) => void uploadAvatar(event.target.files?.[0])}
+                disabled={isPhotoUploading}
+              />
+              {isPhotoUploading ? t("plant.uploading") : t("profile.changePhoto")}
+            </label>
           </div>
-          <h2>{user?.full_name ?? t("profile.user")}</h2>
-          <p className="profile-role">{t("profile.role")}</p>
-          <p className="muted small">{user?.email}</p>
         </div>
 
-        <div className="card">
-          <h3 className="section-title">{t("profile.quickActions")}</h3>
-          <Link to="/settings" className="quick-action">
-            <span className="qa-icon">
-              <Settings size={18} />
-            </span>
-            <span>
-              <strong>{t("profile.iot")}</strong>
-              <span className="quick-action-subtitle">{t("profile.configureDevices")}</span>
-            </span>
-          </Link>
-        </div>
+        <form className="card profile-edit-card" onSubmit={(event) => void saveProfile(event)}>
+          <h3 className="section-title">{t("profile.profileData")}</h3>
+          <label>
+            {t("auth.fullName")}
+            <input value={profileName} onChange={(event) => setProfileName(event.target.value)} required />
+          </label>
+          <label>
+            {t("auth.email")}
+            <input
+              type="email"
+              value={profileEmail}
+              onChange={(event) => setProfileEmail(event.target.value)}
+              required
+            />
+          </label>
+          {profileError ? <div className="error">{profileError}</div> : null}
+          {profileMessage ? <div className="success">{profileMessage}</div> : null}
+          <div className="button-row">
+            <button type="submit" disabled={isProfileSaving}>
+              {isProfileSaving ? t("common.saving") : t("profile.saveProfile")}
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                setIsPasswordFormOpen((current) => !current);
+                setPasswordError("");
+                setPasswordMessage("");
+                setCurrentPassword("");
+                setNewPassword("");
+                setNewPasswordConfirm("");
+                setShowCurrentPassword(false);
+                setShowNewPassword(false);
+                setShowNewPasswordConfirm(false);
+              }}
+            >
+              {t("profile.changePassword")}
+            </button>
+          </div>
+          {isPasswordFormOpen ? (
+            <div className="profile-password-panel">
+              <h4>{t("profile.changePassword")}</h4>
+              <label>
+                {t("profile.currentPassword")}
+                <span className="password-field">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={(event) => setCurrentPassword(event.target.value)}
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowCurrentPassword((current) => !current)}
+                    aria-label={showCurrentPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+                    title={showCurrentPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+                  >
+                    {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </span>
+              </label>
+              <label>
+                {t("profile.newPassword")}
+                <span className="password-field">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowNewPassword((current) => !current)}
+                    aria-label={showNewPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+                    title={showNewPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+                  >
+                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </span>
+              </label>
+              <label>
+                {t("profile.confirmNewPassword")}
+                <span className="password-field">
+                  <input
+                    type={showNewPasswordConfirm ? "text" : "password"}
+                    value={newPasswordConfirm}
+                    onChange={(event) => setNewPasswordConfirm(event.target.value)}
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowNewPasswordConfirm((current) => !current)}
+                    aria-label={showNewPasswordConfirm ? t("auth.hidePassword") : t("auth.showPassword")}
+                    title={showNewPasswordConfirm ? t("auth.hidePassword") : t("auth.showPassword")}
+                  >
+                    {showNewPasswordConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </span>
+              </label>
+              {passwordError ? <div className="error">{passwordError}</div> : null}
+              {passwordMessage ? <div className="success">{passwordMessage}</div> : null}
+              <div className="button-row">
+                <button type="button" onClick={() => void savePassword()} disabled={isPasswordSaving}>
+                  {isPasswordSaving ? t("common.saving") : t("profile.savePassword")}
+                </button>
+              </div>
+            </div>
+          ) : passwordMessage ? (
+            <div className="success">{passwordMessage}</div>
+          ) : null}
+        </form>
       </div>
 
-      <div className="stats-row three">
+      <div className="stats-row two">
         <div className="card stat-card">
           <Leaf className="stat-ico" size={22} />
           <p className="stat-value">{plants.length}</p>
           <p className="muted small">{t("profile.monitoredPlants")}</p>
-        </div>
-        <div className="card stat-card">
-          <Activity className="stat-ico" size={22} />
-          <p className="stat-value">{avgHealth}%</p>
-          <p className="muted small">{t("profile.avgHealth")}</p>
         </div>
         <div className="card stat-card">
           <Radio className="stat-ico" size={22} />
@@ -267,14 +473,6 @@ export function ProfilePage() {
         </div>
       </form>
 
-      <div className="card">
-        <h3 className="section-title">{t("profile.recentFocus")}</h3>
-        <p className="muted">{t("profile.focusText")}</p>
-        <div className="activity-row">
-          <Calendar size={18} />
-          <span>{t("profile.openAnalytics")}</span>
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useI18n } from "../i18n";
 
 type RegisterProps = {
@@ -19,6 +20,8 @@ export function Register({ isLoading, error, onSubmit, onSwitchToLogin }: Regist
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -55,23 +58,45 @@ export function Register({ isLoading, error, onSubmit, onSwitchToLogin }: Regist
 
         <label>
           {t("auth.password")}
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="******"
-            required
-          />
+          <span className="password-field">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="******"
+              required
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword((current) => !current)}
+              aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+              title={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </span>
         </label>
         <label>
           {t("auth.confirmPassword")}
-          <input
-            type="password"
-            value={passwordConfirm}
-            onChange={(e) => setPasswordConfirm(e.target.value)}
-            placeholder="******"
-            required
-          />
+          <span className="password-field">
+            <input
+              type={showPasswordConfirm ? "text" : "password"}
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+              placeholder="******"
+              required
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPasswordConfirm((current) => !current)}
+              aria-label={showPasswordConfirm ? t("auth.hidePassword") : t("auth.showPassword")}
+              title={showPasswordConfirm ? t("auth.hidePassword") : t("auth.showPassword")}
+            >
+              {showPasswordConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </span>
         </label>
 
         {error ? <div className="error">{error}</div> : null}

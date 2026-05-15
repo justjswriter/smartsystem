@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { API_BASE_URL, getPlant, getPlantDashboard, updatePlant, uploadPlantPhoto } from "../api";
 import { PlantDetails } from "../components/PlantDetails";
 import { useAppState } from "../context/AppStateContext";
@@ -10,6 +10,7 @@ import type { DashboardResponse, Plant } from "../types";
 export function PlantDetailsPage() {
   const { t } = useI18n();
   const { plantId } = useParams();
+  const location = useLocation();
   const { token, sensors, loadPlants } = useAppState();
   const [plant, setPlant] = useState<Plant | null>(null);
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
@@ -20,6 +21,9 @@ export function PlantDetailsPage() {
   const [notesSaving, setNotesSaving] = useState(false);
 
   const id = plantId ? Number(plantId) : NaN;
+  const routeState = location.state as { backTo?: string; backLabelKey?: string } | null;
+  const backTo = routeState?.backTo ?? "/plants";
+  const backLabel = t(routeState?.backLabelKey ?? "common.backToPlants");
 
   const loadPlantDetails = useCallback(async () => {
     if (!token || !Number.isFinite(id)) {
@@ -143,6 +147,8 @@ export function PlantDetailsPage() {
       isPhotoUploading={photoUploading}
       onNotesSave={saveNotes}
       isNotesSaving={notesSaving}
+      backTo={backTo}
+      backLabel={backLabel}
     />
   );
 }
