@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Activity, Hash, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { getPlantCareProfiles, getPlantDashboard } from "../api";
+import { CustomSelect } from "../components/CustomSelect";
 import { useAppState } from "../context/AppStateContext";
 import { useI18n } from "../i18n";
 import {
@@ -163,13 +164,11 @@ export function PlantsIndexPage() {
           <label>{t("dashboard.name")}<input value={name} onChange={(e) => setName(e.target.value)} required /></label>
           <label>
             {t("dashboard.species")}
-            <select value={species} onChange={(e) => setSpecies(e.target.value)}>
-              {speciesOptions.map((option) => (
-                <option key={option} value={option}>
-                  {speciesLabel(option)}
-                </option>
-              ))}
-            </select>
+            <CustomSelect
+              value={species}
+              onChange={setSpecies}
+              options={speciesOptions.map((option) => ({ value: option, label: speciesLabel(option) }))}
+            />
           </label>
           <p className="muted small">{supportedPlantTypeName(t)}</p>
           <label>{t("dashboard.location")}<input value={location} onChange={(e) => setLocation(e.target.value)} /></label>

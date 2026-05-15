@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { Activity, Download } from "lucide-react";
+import { CustomSelect } from "./CustomSelect";
 import { useI18n } from "../i18n";
 import type { DashboardResponse, Plant } from "../types";
 
@@ -138,24 +139,26 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
       </div>
 
       <div className="toolbar dashboard-toolbar">
-        <select
-          value={selectedPlantId ?? ""}
-          onChange={(e) => setSelectedPlantId(Number(e.target.value))}
+        <CustomSelect
+          value={String(selectedPlantId ?? "")}
+          onChange={(value) => setSelectedPlantId(Number(value))}
           disabled={plants.length === 0}
-        >
-          {plants.length === 0 ? <option value="">{t("plants.title")}</option> : null}
-          {plants.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <select value={hours} onChange={(e) => setHours(Number(e.target.value))}>
-          <option value={24}>{t("analytics.last24h")}</option>
-          <option value={72}>{t("analytics.last3d")}</option>
-          <option value={168}>{t("analytics.last7d")}</option>
-          <option value={720}>{t("analytics.last30d")}</option>
-        </select>
+          options={
+            plants.length === 0
+              ? [{ value: "", label: t("plants.title") }]
+              : plants.map((p) => ({ value: String(p.id), label: p.name }))
+          }
+        />
+        <CustomSelect
+          value={String(hours)}
+          onChange={(value) => setHours(Number(value))}
+          options={[
+            { value: "24", label: t("analytics.last24h") },
+            { value: "72", label: t("analytics.last3d") },
+            { value: "168", label: t("analytics.last7d") },
+            { value: "720", label: t("analytics.last30d") },
+          ]}
+        />
         <button
           type="button"
           className="btn-primary"

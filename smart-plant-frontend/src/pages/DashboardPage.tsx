@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getPlantDashboard } from "../api";
 import { Dashboard } from "../components/Dashboard";
 import { useAppState } from "../context/AppStateContext";
+import { DEFAULT_WEATHER_CITY, WEATHER_CITY_KEY, getWeatherCity } from "../weatherCities";
 import type { DashboardResponse, PlantCondition } from "../types";
 
 export function DashboardPage() {
@@ -20,6 +21,9 @@ export function DashboardPage() {
   const [conditionByPlant, setConditionByPlant] = useState<
     Record<number, PlantCondition | null | undefined>
   >({});
+  const [weatherTemp, setWeatherTemp] = useState<number | null>(null);
+  const [weatherCityId] = useState(() => localStorage.getItem(WEATHER_CITY_KEY) ?? DEFAULT_WEATHER_CITY);
+  const weatherCity = getWeatherCity(weatherCityId);
 
   const loadDashboardSnapshots = useCallback(
     async (plantList = plants) => {
@@ -65,6 +69,32 @@ export function DashboardPage() {
     };
   }, [loadDashboardSnapshots]);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function loadWeather() {
+      try {
+        const response = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${weatherCity.latitude}&longitude=${weatherCity.longitude}&current=temperature_2m`
+        );
+        if (!response.ok) {
+          throw new Error("Weather request failed");
+        }
+        const data = (await response.json()) as { current?: { temperature_2m?: number } };
+        if (!cancelled && typeof data.current?.temperature_2m === "number") {
+          setWeatherTemp(Math.round(data.current.temperature_2m * 10) / 10);
+        }
+      } catch {
+        if (!cancelled) {
+          setWeatherTemp(null);
+        }
+      }
+    }
+    void loadWeather();
+    return () => {
+      cancelled = true;
+    };
+  }, [weatherCity.latitude, weatherCity.longitude]);
+
   const stats = useMemo(() => {
     const total = plants.length;
     const healthValues = Object.values(conditionByPlant)
@@ -95,6 +125,8 @@ export function DashboardPage() {
       readingsByPlant={readingsByPlant}
       conditionByPlant={conditionByPlant}
       stats={stats}
+      weatherTemp={weatherTemp}
+      weatherCityName={weatherCity.label}
       isLoading={isPlantsLoading}
       error={plantsError}
       onRefresh={() => {

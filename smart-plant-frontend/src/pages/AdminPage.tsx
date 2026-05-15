@@ -12,6 +12,7 @@ import {
   getSensors,
   rotateSensorToken,
 } from "../api";
+import { CustomSelect } from "../components/CustomSelect";
 import { useAppState } from "../context/AppStateContext";
 import { useI18n } from "../i18n";
 import type { AdminLog, AdminPlant, Alert, Sensor, User } from "../types";
@@ -286,13 +287,17 @@ function AdminSensorProvisioning({
         </label>
         <label>
           {t("sensors.sensorType")}
-          <select value={newSensorType} onChange={(event) => setNewSensorType(event.target.value)}>
-            <option value="multi">{t("sensors.multi")}</option>
-            <option value="soil_moisture">{t("sensors.soil")}</option>
-            <option value="temperature">{t("sensors.temperature")}</option>
-            <option value="air_humidity">{t("sensors.airHumidity")}</option>
-            <option value="light">{t("sensors.light")}</option>
-          </select>
+          <CustomSelect
+            value={newSensorType}
+            onChange={setNewSensorType}
+            options={[
+              { value: "multi", label: t("sensors.multi") },
+              { value: "soil_moisture", label: t("sensors.soil") },
+              { value: "temperature", label: t("sensors.temperature") },
+              { value: "air_humidity", label: t("sensors.airHumidity") },
+              { value: "light", label: t("sensors.light") },
+            ]}
+          />
         </label>
         <button type="submit" disabled={loading}>{t("admin.createNewSensor")}</button>
       </form>
@@ -313,24 +318,21 @@ function AdminSensorProvisioning({
         </div>
         <label>
           {t("admin.selectSensor")}
-          <select
+          <CustomSelect
             value={selectedSensorId}
-            onChange={(event) => {
-              const sensor = sensors.find((item) => String(item.id) === event.target.value);
+            onChange={(value) => {
+              const sensor = sensors.find((item) => String(item.id) === value);
               if (sensor) {
                 selectSensor(sensor);
               } else {
                 setSelectedSensorId("");
               }
             }}
-          >
-            <option value="">{t("admin.selectSensorPlaceholder")}</option>
-            {sensors.map((sensor) => (
-              <option key={sensor.id} value={sensor.id}>
-                {sensorOptionLabel(sensor)}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: "", label: t("admin.selectSensorPlaceholder") },
+              ...sensors.map((sensor) => ({ value: String(sensor.id), label: sensorOptionLabel(sensor) })),
+            ]}
+          />
         </label>
 
         {!selectedSensor ? <p className="empty-state">{t("admin.selectSensorEmptyHint")}</p> : null}
@@ -476,40 +478,38 @@ function SelectedSensorCard({
         <div className="attach-row">
           <label>
             {t("admin.assignedUser")}
-            <select
+            <CustomSelect
               value={selectedUserId}
-              onChange={(event) => {
-                const nextUserId = event.target.value;
+              onChange={(value) => {
+                const nextUserId = value;
                 const nextPlant = plants.find((plant) => plant.user_id === Number(nextUserId));
                 setAssignedUserBySensor((current) => ({ ...current, [sensor.id]: nextUserId }));
                 setAttachPlantBySensor((current) => ({ ...current, [sensor.id]: nextPlant ? String(nextPlant.id) : "" }));
               }}
               disabled={assignableUsers.length === 0}
-            >
-              <option value="">{assignableUsers.length === 0 ? t("admin.noUsers") : t("admin.selectUser")}</option>
-              {assignableUsers.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.full_name} ({item.email})
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: assignableUsers.length === 0 ? t("admin.noUsers") : t("admin.selectUser") },
+                ...assignableUsers.map((item) => ({
+                  value: String(item.id),
+                  label: `${item.full_name} (${item.email})`,
+                })),
+              ]}
+            />
           </label>
           <label>
             {t("sensors.attachedPlant")}
-            <select
+            <CustomSelect
               value={selectedPlantId}
-              onChange={(event) =>
-                setAttachPlantBySensor((current) => ({ ...current, [sensor.id]: event.target.value }))
-              }
+              onChange={(value) => setAttachPlantBySensor((current) => ({ ...current, [sensor.id]: value }))}
               disabled={!selectedUserId || userPlants.length === 0}
-            >
-              <option value="">{userPlants.length === 0 ? t("admin.noPlantsForUser") : t("admin.selectPlant")}</option>
-              {userPlants.map((plant) => (
-                <option key={plant.id} value={plant.id}>
-                  {plant.name}{plant.location ? ` - ${plant.location}` : ""} #{plant.id}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: userPlants.length === 0 ? t("admin.noPlantsForUser") : t("admin.selectPlant") },
+                ...userPlants.map((plant) => ({
+                  value: String(plant.id),
+                  label: `${plant.name}${plant.location ? ` - ${plant.location}` : ""} #${plant.id}`,
+                })),
+              ]}
+            />
           </label>
         </div>
         <button

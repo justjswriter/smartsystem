@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Activity, ChevronDown, Droplet, Search, Sun, Thermometer } from "lucide-react";
+import { Activity, ArrowDownUp, Droplet, Search, Sun, Thermometer } from "lucide-react";
+import { CustomSelect } from "./CustomSelect";
 import { useI18n } from "../i18n";
 import { displayPlantSpecies } from "../plantKnowledge";
 import type { DashboardPoint, Plant, PlantCondition } from "../types";
@@ -17,18 +18,22 @@ type DashboardProps = {
   readingsByPlant: Record<number, DashboardPoint | null | undefined>;
   conditionByPlant: Record<number, PlantCondition | null | undefined>;
   stats: DashboardStats;
+  weatherTemp: number | null;
+  weatherCityName: string;
   isLoading: boolean;
   error: string;
   onRefresh: () => void;
 };
 
-type SortKey = "health" | "name";
+type SortKey = "health" | "name" | "species";
 
 export function Dashboard({
   plants,
   readingsByPlant,
   conditionByPlant,
   stats,
+  weatherTemp,
+  weatherCityName,
   isLoading,
   error,
   onRefresh,
@@ -36,6 +41,7 @@ export function Dashboard({
   const { t, label } = useI18n();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("health");
+  const [sortDirection, setSortDirection] = useState<"desc" | "asc">("desc");
   const temperatureUnit = t("units.temperature");
   const lightUnit = t("units.light");
 
@@ -54,13 +60,17 @@ export function Dashboard({
         (p.species ?? "").toLowerCase().includes(q) ||
         (p.location ?? "").toLowerCase().includes(q)
     );
-    return [...filtered].sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       if (sortBy === "name") {
         return a.name.localeCompare(b.name);
       }
+      if (sortBy === "species") {
+        return displayPlantSpecies(a.species, t).localeCompare(displayPlantSpecies(b.species, t));
+      }
       return (b.health ?? 0) - (a.health ?? 0);
     });
-  }, [plants, search, sortBy]);
+    return sortDirection === "asc" ? sorted.reverse() : sorted;
+  }, [plants, search, sortBy, sortDirection]);
 
   function healthClass(health: number | undefined) {
     if (health == null) {
@@ -125,12 +135,25 @@ export function Dashboard({
           />
         </div>
         <div className="sort-wrap">
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)}>
-            <option value="health">{t("dashboard.sortHealth")}</option>
-            <option value="name">{t("dashboard.sortName")}</option>
-          </select>
-          <ChevronDown className="select-chevron" size={18} />
+          <CustomSelect
+            value={sortBy}
+            onChange={(value) => setSortBy(value as SortKey)}
+            options={[
+              { value: "health", label: t("dashboard.sortHealth") },
+              { value: "name", label: t("dashboard.sortName") },
+              { value: "species", label: t("dashboard.sortSpecies") },
+            ]}
+          />
         </div>
+        <button
+          type="button"
+          className="sort-direction-btn"
+          onClick={() => setSortDirection((current) => (current === "desc" ? "asc" : "desc"))}
+          title={sortDirection === "desc" ? t("dashboard.sortDesc") : t("dashboard.sortAsc")}
+          aria-label={sortDirection === "desc" ? t("dashboard.sortDesc") : t("dashboard.sortAsc")}
+        >
+          <ArrowDownUp size={20} />
+        </button>
         <button type="button" className="btn-secondary" onClick={onRefresh} disabled={isLoading}>
           {t("common.refresh")}
         </button>
@@ -216,8 +239,8 @@ export function Dashboard({
             <p className="muted-light">{t("dashboard.weatherText")}</p>
           </div>
           <div className="weather-temp">
-            <span className="temp-big">{stats.avgTemp != null ? `${stats.avgTemp}${temperatureUnit}` : "--"}</span>
-            <span className="muted-light small">{t("dashboard.avgFromSensors")}</span>
+            <span className="temp-big">{weatherTemp != null ? `${weatherTemp}${temperatureUnit}` : "--"}</span>
+            <span className="muted-light small">{t("dashboard.cityTemperature", { city: weatherCityName })}</span>
           </div>
         </div>
       </div>

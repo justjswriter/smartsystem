@@ -1,14 +1,17 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Eye, EyeOff, Leaf, Radio } from "lucide-react";
 import { getNotificationSettings, sendTestNotificationEmail, updateNotificationSettings, updatePassword } from "../api";
+import { CustomSelect } from "../components/CustomSelect";
 import { useAppState } from "../context/AppStateContext";
 import { useI18n } from "../i18n";
+import { DEFAULT_WEATHER_CITY, WEATHER_CITIES, WEATHER_CITY_KEY } from "../weatherCities";
 
 export function ProfilePage() {
   const { token, user, plants, sensors, updateProfile, updateProfilePhoto } = useAppState();
   const { t } = useI18n();
   const [profileName, setProfileName] = useState("");
   const [profileEmail, setProfileEmail] = useState("");
+  const [weatherCity, setWeatherCity] = useState(() => localStorage.getItem(WEATHER_CITY_KEY) ?? DEFAULT_WEATHER_CITY);
   const [isProfileSaving, setIsProfileSaving] = useState(false);
   const [profileMessage, setProfileMessage] = useState("");
   const [profileError, setProfileError] = useState("");
@@ -71,6 +74,7 @@ export function ProfilePage() {
         full_name: profileName.trim(),
         email: profileEmail.trim(),
       });
+      localStorage.setItem(WEATHER_CITY_KEY, weatherCity);
       setProfileMessage(t("profile.saved"));
     } catch (error) {
       setProfileError(notificationErrorMessage(error, "profile.saveFailed"));
@@ -266,6 +270,14 @@ export function ProfilePage() {
               value={profileEmail}
               onChange={(event) => setProfileEmail(event.target.value)}
               required
+            />
+          </label>
+          <label>
+            {t("profile.weatherCity")}
+            <CustomSelect
+              value={weatherCity}
+              onChange={setWeatherCity}
+              options={WEATHER_CITIES.map((city) => ({ value: city.id, label: city.label }))}
             />
           </label>
           {profileError ? <div className="error">{profileError}</div> : null}

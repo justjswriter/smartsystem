@@ -9,6 +9,7 @@ import {
   User,
 } from "lucide-react";
 import { NotificationsPanel } from "../components/NotificationsPanel";
+import { CustomSelect } from "../components/CustomSelect";
 import { useAppState } from "../context/AppStateContext";
 import { useI18n, type Language } from "../i18n";
 
@@ -71,11 +72,16 @@ export function MainLayout() {
           <div className="top-actions">
             <label className="language-select">
               <span className="visually-hidden">{t("language.label")}</span>
-              <select value={language} onChange={(e) => setLanguage(e.target.value as Language)}>
-                <option value="kk">KK</option>
-                <option value="ru">RU</option>
-                <option value="en">EN</option>
-              </select>
+              <CustomSelect
+                value={language}
+                ariaLabel={t("language.label")}
+                onChange={(value) => setLanguage(value as Language)}
+                options={[
+                  { value: "kk", label: "KK" },
+                  { value: "ru", label: "RU" },
+                  { value: "en", label: "EN" },
+                ]}
+              />
             </label>
             <NotificationsPanel
               notifications={notifications}

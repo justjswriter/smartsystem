@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { localizeCareText } from "../careText";
+import { CustomSelect } from "./CustomSelect";
 import { useI18n } from "../i18n";
 import type { Alert } from "../types";
 
@@ -50,21 +51,29 @@ export function Alerts({
       </div>
 
       <div className="toolbar">
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">{t("alerts.allStatuses")}</option>
-          <option value="created">{t("alerts.created")}</option>
-          <option value="viewed">{t("alerts.viewed")}</option>
-          <option value="acknowledged">{t("alerts.acknowledged")}</option>
-          <option value="resolved">{t("alerts.resolved")}</option>
-          <option value="closed">{t("alerts.closed")}</option>
-        </select>
-        <select value={severity} onChange={(e) => setSeverity(e.target.value)}>
-          <option value="">{t("alerts.allSeverities")}</option>
-          <option value="low">{t("alerts.low")}</option>
-          <option value="medium">{t("alerts.medium")}</option>
-          <option value="high">{t("alerts.high")}</option>
-          <option value="critical">{t("alerts.critical")}</option>
-        </select>
+        <CustomSelect
+          value={status}
+          onChange={setStatus}
+          options={[
+            { value: "", label: t("alerts.allStatuses") },
+            { value: "created", label: t("alerts.created") },
+            { value: "viewed", label: t("alerts.viewed") },
+            { value: "acknowledged", label: t("alerts.acknowledged") },
+            { value: "resolved", label: t("alerts.resolved") },
+            { value: "closed", label: t("alerts.closed") },
+          ]}
+        />
+        <CustomSelect
+          value={severity}
+          onChange={setSeverity}
+          options={[
+            { value: "", label: t("alerts.allSeverities") },
+            { value: "low", label: t("alerts.low") },
+            { value: "medium", label: t("alerts.medium") },
+            { value: "high", label: t("alerts.high") },
+            { value: "critical", label: t("alerts.critical") },
+          ]}
+        />
       </div>
 
       {error ? <div className="error">{error}</div> : null}

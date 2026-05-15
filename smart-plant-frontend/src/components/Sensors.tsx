@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { CustomSelect } from "./CustomSelect";
 import { useI18n } from "../i18n";
 import type { Plant, Sensor } from "../types";
 
@@ -109,13 +110,17 @@ export function Sensors({
           </label>
           <label>
             {t("sensors.sensorType")}
-            <select value={newType} onChange={(e) => setNewType(e.target.value)}>
-              <option value="multi">{t("sensors.multi")}</option>
-              <option value="soil_moisture">{t("sensors.soil")}</option>
-              <option value="temperature">{t("sensors.temperature")}</option>
-              <option value="air_humidity">{t("sensors.airHumidity")}</option>
-              <option value="light">{t("sensors.light")}</option>
-            </select>
+            <CustomSelect
+              value={newType}
+              onChange={setNewType}
+              options={[
+                { value: "multi", label: t("sensors.multi") },
+                { value: "soil_moisture", label: t("sensors.soil") },
+                { value: "temperature", label: t("sensors.temperature") },
+                { value: "air_humidity", label: t("sensors.airHumidity") },
+                { value: "light", label: t("sensors.light") },
+              ]}
+            />
           </label>
           <button type="submit">{t("sensors.create")}</button>
         </form>
@@ -178,23 +183,21 @@ export function Sensors({
                   <div className="attach-panel">
                     <h4>{t("sensors.attachToPlant")}</h4>
                     <div className="attach-row">
-                      <select
+                      <CustomSelect
                         value={selectedPlantId}
-                        onChange={(e) =>
+                        onChange={(value) =>
                           setAttachPlantBySensor((current) => ({
                             ...current,
-                            [sensor.id]: e.target.value,
+                            [sensor.id]: value,
                           }))
                         }
                         disabled={plants.length === 0}
-                      >
-                        {plants.length === 0 ? <option value="">{t("sensors.createPlantFirst")}</option> : null}
-                        {plants.map((plant) => (
-                          <option key={plant.id} value={plant.id}>
-                            {plant.name}
-                          </option>
-                        ))}
-                      </select>
+                        options={
+                          plants.length === 0
+                            ? [{ value: "", label: t("sensors.createPlantFirst") }]
+                            : plants.map((plant) => ({ value: String(plant.id), label: plant.name }))
+                        }
+                      />
                       <button type="button" onClick={() => attach(sensor)} disabled={plants.length === 0}>
                         {t("sensors.attach")}
                       </button>
