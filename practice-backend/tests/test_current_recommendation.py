@@ -87,6 +87,12 @@ class FakePlantRepository:
     async def get_for_user(self, plant_id: int, user_id: int):
         return SimpleNamespace(id=plant_id, user_id=user_id)
 
+    async def list_for_user(self, user_id: int):
+        return [
+            SimpleNamespace(id=7, user_id=user_id, species="Epipremnum aureum"),
+            SimpleNamespace(id=8, user_id=user_id, species="Epipremnum aureum"),
+        ]
+
 
 class FakeSensorDataRepository:
     def __init__(self, current: DashboardPoint):
@@ -95,7 +101,7 @@ class FakeSensorDataRepository:
     async def latest_for_plant(self, plant_id: int):
         return self.current
 
-    async def history_for_plant(self, plant_id: int, hours: int):
+    async def history_for_plant(self, plant_id: int, hours: int, max_points: int = 500):
         return [self.current]
 
 
@@ -111,3 +117,18 @@ async def test_dashboard_uses_current_reading_recommendation():
 
     assert dashboard.active_recommendation is not None
     assert dashboard.active_recommendation.metric == "moisture"
+
+
+@pytest.mark.asyncio
+async def test_dashboard_snapshots_return_condition_without_history_payload():
+    service = MonitoringService.__new__(MonitoringService)
+    service.plant_repo = FakePlantRepository()
+    service.sensor_data_repo = FakeSensorDataRepository(point(moisture=5.0, light=50.0))
+    service.condition_service = PlantConditionService()
+
+    snapshots = await service.get_snapshots(user_id=42)
+
+    assert [snapshot.plant_id for snapshot in snapshots] == [7, 8]
+    assert snapshots[0].current is not None
+    assert snapshots[0].condition.condition_status in {"normal", "attention", "critical", "insufficient_data"}
+    assert not hasattr(snapshots[0], "history")

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getPlantDashboard } from "../api";
+import { getDashboardSnapshots } from "../api";
 import { Dashboard } from "../components/Dashboard";
 import { useAppState } from "../context/AppStateContext";
 import { DEFAULT_WEATHER_CITY, WEATHER_CITY_KEY, getWeatherCity } from "../weatherCities";
-import type { DashboardResponse, PlantCondition } from "../types";
+import type { DashboardResponse, DashboardSnapshot, PlantCondition } from "../types";
 
 export function DashboardPage() {
   const {
@@ -33,23 +33,23 @@ export function DashboardPage() {
         return;
       }
 
-      const slice = plantList.slice(0, 20);
-      const rows = await Promise.all(
-        slice.map(async (p) => {
-          try {
-            const dash = await getPlantDashboard(token, p.id, 24);
-            return { id: p.id, current: dash.current, condition: dash.condition };
-          } catch {
-            return { id: p.id, current: null, condition: null };
-          }
-        })
-      );
-
+      let rows: DashboardSnapshot[] = [];
+      try {
+        rows = await getDashboardSnapshots(token);
+      } catch {
+        setReadingsByPlant({});
+        setConditionByPlant({});
+        return;
+      }
+      const visiblePlantIds = new Set(plantList.map((plant) => plant.id));
       const next: Record<number, DashboardResponse["current"] | null | undefined> = {};
       const nextCondition: Record<number, PlantCondition | null | undefined> = {};
       for (const row of rows) {
-        next[row.id] = row.current;
-        nextCondition[row.id] = row.condition;
+        if (!visiblePlantIds.has(row.plant_id)) {
+          continue;
+        }
+        next[row.plant_id] = row.current;
+        nextCondition[row.plant_id] = row.condition;
       }
       setReadingsByPlant(next);
       setConditionByPlant(nextCondition);

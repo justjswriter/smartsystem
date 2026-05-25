@@ -5,7 +5,7 @@ import { API_BASE_URL, getPlant, getPlantDashboard, updatePlant, uploadPlantPhot
 import { PlantDetails } from "../components/PlantDetails";
 import { useAppState } from "../context/AppStateContext";
 import { useI18n } from "../i18n";
-import type { DashboardResponse, Plant } from "../types";
+import type { DashboardPoint, DashboardResponse, Plant } from "../types";
 
 export function PlantDetailsPage() {
   const { t } = useI18n();
@@ -58,6 +58,43 @@ export function PlantDetailsPage() {
       setRefreshing(false);
     }
   }, [token, id, t]);
+
+  const applySensorDataEvent = useCallback(
+    (eventData: string) => {
+      try {
+        const payload = JSON.parse(eventData) as {
+          plant_id?: number;
+          data?: Partial<DashboardPoint>;
+        };
+        if (payload.plant_id !== id || !payload.data?.recorded_at) {
+          void refreshDashboard();
+          return;
+        }
+        const point: DashboardPoint = {
+          recorded_at: payload.data.recorded_at,
+          moisture: payload.data.moisture ?? null,
+          temperature: payload.data.temperature ?? null,
+          humidity: payload.data.humidity ?? null,
+          light: payload.data.light ?? null,
+        };
+        setDashboard((currentDashboard) => {
+          if (!currentDashboard) {
+            return currentDashboard;
+          }
+          const history = [...currentDashboard.history, point].slice(-500);
+          return {
+            ...currentDashboard,
+            current: point,
+            history,
+            last_updated_at: point.recorded_at,
+          };
+        });
+      } catch {
+        void refreshDashboard();
+      }
+    },
+    [id, refreshDashboard]
+  );
 
   const updatePhoto = useCallback(
     async (file: File) => {
@@ -116,14 +153,14 @@ export function PlantDetailsPage() {
         if (event.event === "heartbeat") {
           return;
         }
-        void refreshDashboard();
+        applySensorDataEvent(event.data);
       },
       onerror() {
         // fetch-event-source retries automatically.
       },
     });
     return () => abortController.abort();
-  }, [token, id, refreshDashboard]);
+  }, [token, id, applySensorDataEvent]);
 
   if (!Number.isFinite(id)) {
     return (

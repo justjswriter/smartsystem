@@ -140,7 +140,10 @@ class SensorData(Base):
 
     sensor: Mapped[Sensor] = relationship(back_populates="data_points")
 
-    __table_args__ = (Index("ix_sensor_data_sensor_recorded", "sensor_id", "recorded_at"),)
+    __table_args__ = (
+        Index("ix_sensor_data_sensor_recorded", "sensor_id", "recorded_at"),
+        Index("ix_sensor_data_plant_recorded", "plant_id", "recorded_at"),
+    )
 
 
 class Alert(Base, TimestampMixin):

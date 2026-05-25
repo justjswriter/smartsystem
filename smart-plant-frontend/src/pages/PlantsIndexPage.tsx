@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Activity, Hash, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
-import { getPlantCareProfiles, getPlantDashboard } from "../api";
+import { getDashboardSnapshots, getPlantCareProfiles } from "../api";
 import { CustomSelect } from "../components/CustomSelect";
 import { useAppState } from "../context/AppStateContext";
 import { useI18n } from "../i18n";
@@ -41,25 +41,25 @@ export function PlantsIndexPage() {
     }
 
     let cancelled = false;
-    void Promise.all(
-      plants.map(async (plant) => {
-        try {
-          const dashboard = await getPlantDashboard(token, plant.id, 24);
-          return { id: plant.id, condition: dashboard.condition };
-        } catch {
-          return { id: plant.id, condition: null };
+    void getDashboardSnapshots(token)
+      .then((rows) => {
+        if (cancelled) {
+          return;
         }
+        const visiblePlantIds = new Set(plants.map((plant) => plant.id));
+        const next: Record<number, PlantCondition | null> = {};
+        for (const row of rows) {
+          if (visiblePlantIds.has(row.plant_id)) {
+            next[row.plant_id] = row.condition;
+          }
+        }
+        setConditionByPlant(next);
       })
-    ).then((rows) => {
-      if (cancelled) {
-        return;
-      }
-      const next: Record<number, PlantCondition | null> = {};
-      for (const row of rows) {
-        next[row.id] = row.condition;
-      }
-      setConditionByPlant(next);
-    });
+      .catch(() => {
+        if (!cancelled) {
+          setConditionByPlant({});
+        }
+      });
 
     return () => {
       cancelled = true;

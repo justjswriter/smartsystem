@@ -34,6 +34,16 @@ type ChartPoint = {
   light: number;
 };
 
+const MAX_CHART_POINTS = 500;
+
+function downsamplePoints<T>(items: T[], maxPoints = MAX_CHART_POINTS): T[] {
+  if (items.length <= maxPoints) {
+    return items;
+  }
+  const step = (items.length - 1) / (maxPoints - 1);
+  return Array.from({ length: maxPoints }, (_, index) => items[Math.round(index * step)]);
+}
+
 function csvValue(value: string | number | null | undefined) {
   if (value == null) {
     return "";
@@ -63,7 +73,7 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
     if (!dashboard?.history.length) {
       return [];
     }
-    return dashboard.history.map((h, i) => ({
+    return downsamplePoints(dashboard.history).map((h, i) => ({
       i,
       t: formatDate(h.recorded_at),
       recordedAt: h.recorded_at,

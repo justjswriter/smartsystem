@@ -66,6 +66,13 @@ export type DashboardResponse = {
   today_care?: CareActionItem[];
 };
 
+export type DashboardSnapshot = {
+  plant_id: number;
+  last_updated_at: string | null;
+  current: DashboardPoint | null;
+  condition: PlantCondition;
+};
+
 export type CareTextItem = {
   icon: "water" | "light" | "humidity" | "temperature" | string;
   color: "blue" | "amber" | "green" | "orange" | string;

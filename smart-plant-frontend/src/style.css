@@ -632,6 +632,11 @@ button:disabled {
   padding: 0 !important;
 }
 
+.refresh-readings-btn {
+  min-width: 230px;
+  justify-content: center;
+}
+
 .small {
   font-size: 0.8125rem;
 }

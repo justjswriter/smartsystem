@@ -17,6 +17,7 @@ import type {
   AdminLog,
   AdminPlant,
   CareProfile,
+  DashboardSnapshot,
 } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
@@ -253,6 +254,10 @@ export async function getPlantDashboard(
     { method: "GET" },
     token
   );
+}
+
+export async function getDashboardSnapshots(token: string): Promise<DashboardSnapshot[]> {
+  return apiFetch<DashboardSnapshot[]>("/dashboard/snapshots", { method: "GET" }, token);
 }
 
 export async function getPlantCareProfiles(token: string): Promise<CareProfile[]> {

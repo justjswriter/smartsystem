@@ -10,6 +10,11 @@ from app.ml import FEATURE_COLUMNS, METADATA_PATH, MODEL_PATH
 
 
 class MLConditionService:
+    _cached_model = None
+    _cached_metadata: dict[str, object] = {}
+    _cached_load_error: str | None = None
+    _cached_paths: tuple[Path, Path] | None = None
+
     def __init__(
         self,
         *,
@@ -32,8 +37,19 @@ class MLConditionService:
         return self._metadata
 
     def _load_artifacts(self) -> None:
+        paths = (self.model_path, self.metadata_path)
+        if MLConditionService._cached_paths == paths:
+            self._model = MLConditionService._cached_model
+            self._metadata = MLConditionService._cached_metadata
+            self._load_error = MLConditionService._cached_load_error
+            return
+
         if not self.model_path.exists():
             self._load_error = f"Model file not found: {self.model_path.name}"
+            MLConditionService._cached_paths = paths
+            MLConditionService._cached_model = None
+            MLConditionService._cached_metadata = {}
+            MLConditionService._cached_load_error = self._load_error
             return
         try:
             self._model = joblib.load(self.model_path)
@@ -43,6 +59,11 @@ class MLConditionService:
             self._model = None
             self._metadata = {}
             self._load_error = str(exc)
+        finally:
+            MLConditionService._cached_paths = paths
+            MLConditionService._cached_model = self._model
+            MLConditionService._cached_metadata = self._metadata
+            MLConditionService._cached_load_error = self._load_error
 
     @staticmethod
     def _safe_result(model_available: bool = False) -> dict[str, object]:

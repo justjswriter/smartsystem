@@ -65,3 +65,10 @@ class DashboardResponse(BaseModel):
     active_recommendation: RecommendationSummary | None
     care_profile: CareProfileResponse | None = None
     today_care: list[CareActionItem] = Field(default_factory=list)
+
+
+class DashboardSnapshotResponse(BaseModel):
+    plant_id: int
+    last_updated_at: datetime | None
+    current: DashboardPoint | None
+    condition: PlantConditionResponse

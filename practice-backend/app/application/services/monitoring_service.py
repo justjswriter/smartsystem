@@ -3,7 +3,13 @@ from datetime import timedelta
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.schemas.dashboard import CareActionItem, CareProfileResponse, DashboardPoint, DashboardResponse
+from app.application.schemas.dashboard import (
+    CareActionItem,
+    CareProfileResponse,
+    DashboardPoint,
+    DashboardResponse,
+    DashboardSnapshotResponse,
+)
 from app.application.services.plant_condition_service import PlantConditionService
 from app.application.services.recommendation_service import RecommendationService
 from app.domain.plant_knowledge import resolve_plant_profile
@@ -81,6 +87,45 @@ class MonitoringService:
             else None,
             today_care=self._build_today_care(current=current, history=history, condition=condition),
         )
+
+    async def get_snapshots(self, *, user_id: int) -> list[DashboardSnapshotResponse]:
+        plants = await self.plant_repo.list_for_user(user_id)
+        snapshots: list[DashboardSnapshotResponse] = []
+        for plant in plants:
+            current_data = await self.sensor_data_repo.latest_for_plant(plant.id)
+            history_data = await self.sensor_data_repo.history_for_plant(plant.id, 24, max_points=100)
+            current = (
+                DashboardPoint(
+                    recorded_at=current_data.recorded_at,
+                    moisture=current_data.moisture,
+                    temperature=current_data.temperature,
+                    humidity=current_data.humidity,
+                    light=current_data.light,
+                )
+                if current_data
+                else None
+            )
+            history = [
+                DashboardPoint(
+                    recorded_at=item.recorded_at,
+                    moisture=item.moisture,
+                    temperature=item.temperature,
+                    humidity=item.humidity,
+                    light=item.light,
+                )
+                for item in history_data
+            ]
+            plant_profile = resolve_plant_profile(getattr(plant, "species", None))
+            condition = self.condition_service.evaluate(current=current, history=history, plant_profile=plant_profile)
+            snapshots.append(
+                DashboardSnapshotResponse(
+                    plant_id=plant.id,
+                    last_updated_at=current_data.recorded_at if current_data else None,
+                    current=current,
+                    condition=condition,
+                )
+            )
+        return snapshots
 
     @staticmethod
     def _build_today_care(

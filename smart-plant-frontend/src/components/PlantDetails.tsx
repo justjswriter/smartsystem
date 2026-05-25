@@ -304,6 +304,10 @@ export function PlantDetails({
           <p className="muted page-lead">{displayPlantSpecies(plant.species, t)}</p>
         </div>
         <div className="button-row">
+          <button type="button" className="btn-secondary refresh-readings-btn" onClick={onRefresh} disabled={isRefreshing}>
+            <Activity size={18} />
+            {isRefreshing ? t("plant.refreshing") : t("plant.refreshReadings")}
+          </button>
           <button
             type="button"
             className="btn-secondary icon-label-btn"
@@ -312,10 +316,6 @@ export function PlantDetails({
             onClick={() => setIsCareGuideOpen(true)}
           >
             <BookOpen size={18} />
-          </button>
-          <button type="button" className="btn-secondary" onClick={onRefresh} disabled={isRefreshing}>
-            <Activity size={18} />
-            {isRefreshing ? t("plant.refreshing") : t("plant.refreshReadings")}
           </button>
           <input
             ref={photoInputRef}

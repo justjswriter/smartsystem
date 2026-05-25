@@ -81,3 +81,28 @@ def test_ml_service_predicts_supported_label(tmp_path):
     assert isinstance(result["class_probabilities"], dict)
     assert {"normal", "attention", "critical"}.issubset(result["class_probabilities"].keys())
     assert 0.0 <= float(result["ml_confidence"]) <= 1.0
+
+
+def test_ml_service_reuses_loaded_model_for_same_paths(tmp_path, monkeypatch):
+    model_path, metadata_path = _create_temp_model(tmp_path)
+    MLConditionService._cached_paths = None
+    MLConditionService._cached_model = None
+    MLConditionService._cached_metadata = {}
+    MLConditionService._cached_load_error = None
+
+    original_load = joblib.load
+    calls = 0
+
+    def counted_load(path):
+        nonlocal calls
+        calls += 1
+        return original_load(path)
+
+    monkeypatch.setattr(joblib, "load", counted_load)
+
+    first = MLConditionService(model_path=model_path, metadata_path=metadata_path)
+    second = MLConditionService(model_path=model_path, metadata_path=metadata_path)
+
+    assert calls == 1
+    assert first.model_available is True
+    assert second.model_available is True

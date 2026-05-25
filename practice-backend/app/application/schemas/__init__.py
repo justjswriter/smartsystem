@@ -16,7 +16,7 @@ from app.application.schemas.auth import (
     TokenResponse,
     UserResponse,
 )
-from app.application.schemas.dashboard import DashboardPoint, DashboardResponse
+from app.application.schemas.dashboard import DashboardPoint, DashboardResponse, DashboardSnapshotResponse
 from app.application.schemas.notification import NotificationResponse
 from app.application.schemas.notification_settings import (
     NotificationSettingsResponse,
@@ -41,6 +41,7 @@ __all__ = [
     "AlertTransitionResponse",
     "DashboardPoint",
     "DashboardResponse",
+    "DashboardSnapshotResponse",
     "LoginRequest",
     "NotificationResponse",
     "NotificationSettingsResponse",
