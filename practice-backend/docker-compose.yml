@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:17.1-alpine
+    container_name: practice_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: practice_db
+      POSTGRES_USER: practice_user
+      POSTGRES_PASSWORD: practice_pass
+    ports:
+      - "5444:5432"
+    volumes:
+      - practice_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U practice_user -d practice_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  practice_postgres_data:

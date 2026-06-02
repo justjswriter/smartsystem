@@ -1,0 +1,196 @@
+@baseUrl = http://127.0.0.1:8000
+@api = {{baseUrl}}/api/v1
+
+### Health
+GET {{baseUrl}}/health
+
+### US1 Register demo user
+POST {{api}}/auth/register
+Content-Type: application/json
+
+{
+  "full_name": "Smoke Demo User",
+  "email": "smoke-demo@example.com",
+  "password": "SmokePass123!",
+  "password_confirm": "SmokePass123!"
+}
+
+### US1 Login demo user
+# Copy access_token from response into @userToken below.
+# Copy user.id from response into @userId below.
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "smoke-demo@example.com",
+  "password": "SmokePass123!"
+}
+
+### Login admin for sensor provisioning
+# Seeded admin: admin@example.com / AdminPass123!
+# Copy access_token from response into @adminToken below.
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "AdminPass123!"
+}
+
+### Set token/IDs manually from previous responses
+@userToken = REPLACE_WITH_USER_TOKEN
+@adminToken = REPLACE_WITH_ADMIN_TOKEN
+@userId = 1
+@plantId = 1
+@sensorId = 1
+@alertId = 1
+@deviceId = smoke-sensor-001
+@deviceToken = REPLACE_WITH_DEVICE_TOKEN
+
+### US1 /me
+GET {{api}}/auth/me
+Authorization: Bearer {{userToken}}
+
+### US2 Create plant
+POST {{api}}/plants
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "name": "Smoke Golden Pothos",
+  "species": "Epipremnum aureum",
+  "location": "Desk",
+  "description": "Smoke-test plant"
+}
+
+### US2 List plants
+GET {{api}}/plants
+Authorization: Bearer {{userToken}}
+
+### US3 Admin creates sensor
+POST {{api}}/sensors
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "device_id": "{{deviceId}}",
+  "type": "soil_moisture"
+}
+
+### US3 Admin assigns sensor to user
+POST {{api}}/sensors/{{sensorId}}/assign
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "user_id": {{userId}}
+}
+
+### US3 Admin attaches sensor to user's plant
+POST {{api}}/sensors/{{sensorId}}/attach
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "plant_id": {{plantId}}
+}
+
+### US3 User lists assigned/attached sensors read-only
+GET {{api}}/sensors
+Authorization: Bearer {{userToken}}
+
+### US4 Dashboard before ingest
+GET {{api}}/dashboard/plants/{{plantId}}?hours=24
+Authorization: Bearer {{userToken}}
+
+### US5 Ingest critical data -> should generate alert/recommendation
+POST {{api}}/ingest/sensors/{{deviceId}}/data
+X-Device-Token: {{deviceToken}}
+Content-Type: application/json
+
+{
+  "moisture": 12.0,
+  "temperature": 39.0,
+  "humidity": 20.0,
+  "light": 120.0
+}
+
+### US7 List alerts
+GET {{api}}/alerts
+Authorization: Bearer {{userToken}}
+
+### US7A List notifications created from alerts
+GET {{api}}/notifications?unread_only=false&limit=20&offset=0
+Authorization: Bearer {{userToken}}
+
+### US7A Mark all notifications read
+POST {{api}}/notifications/read-all
+Authorization: Bearer {{userToken}}
+
+### US7 Alert transition: created -> viewed
+POST {{api}}/alerts/{{alertId}}/transition
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "to_status": "viewed",
+  "note": "Seen by smoke test"
+}
+
+### US7 Alert transition: viewed -> acknowledged
+POST {{api}}/alerts/{{alertId}}/transition
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "to_status": "acknowledged",
+  "note": "Acknowledged by smoke test"
+}
+
+### US7 Alert transition: acknowledged -> resolved
+POST {{api}}/alerts/{{alertId}}/transition
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "to_status": "resolved",
+  "note": "Resolved by smoke test"
+}
+
+### US7 Alert transition: resolved -> closed
+POST {{api}}/alerts/{{alertId}}/transition
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "to_status": "closed",
+  "note": "Closed by smoke test"
+}
+
+### US8 Admin users
+GET {{api}}/admin/users
+Authorization: Bearer {{adminToken}}
+
+### US8 Admin sensors
+GET {{api}}/admin/sensors
+Authorization: Bearer {{adminToken}}
+
+### US8 Admin alerts
+GET {{api}}/admin/alerts
+Authorization: Bearer {{adminToken}}
+
+### US8 Admin logs
+GET {{api}}/admin/logs
+Authorization: Bearer {{adminToken}}
+
+### SSE stream: alerts (run separately and keep connection open)
+GET {{api}}/stream/alerts
+Authorization: Bearer {{userToken}}
+
+### SSE stream: dashboard updates (run separately and keep connection open)
+GET {{api}}/stream/dashboard/{{plantId}}
+Authorization: Bearer {{userToken}}
+
+### SSE stream: notifications (run separately and keep connection open)
+GET {{api}}/stream/notifications
+Authorization: Bearer {{userToken}}
