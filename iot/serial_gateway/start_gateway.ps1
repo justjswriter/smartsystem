@@ -4,16 +4,27 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ConfigPath = Join-Path $ScriptDir "gateway.env"
 $PythonPath = Join-Path $ScriptDir ".venv\Scripts\python.exe"
 $GatewayPath = Join-Path $ScriptDir "serial_gateway.py"
+$LogDir = Join-Path $ScriptDir "logs"
+$LogPath = Join-Path $LogDir "gateway.log"
+
+New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
+
+function Write-GatewayLog {
+    param([string]$Message)
+    $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $Message"
+    Write-Host $line
+    Add-Content -Path $LogPath -Value $line
+}
 
 if (-not (Test-Path $ConfigPath)) {
     Copy-Item (Join-Path $ScriptDir "gateway.env.example") $ConfigPath
-    Write-Host "Created gateway.env. Fill DEVICE_TOKEN, then run this file again."
+    Write-GatewayLog "Created gateway.env. Fill DEVICE_TOKEN, then run this file again."
     Read-Host "Press Enter to close"
     exit 1
 }
 
 if (-not (Test-Path $PythonPath)) {
-    Write-Host "Python virtual environment was not found. Run setup first or create .venv in this folder."
+    Write-GatewayLog "Python virtual environment was not found. Run setup first or create .venv in this folder."
     Read-Host "Press Enter to close"
     exit 1
 }
@@ -48,22 +59,17 @@ if ($sourceLabel) {
     $baseArgs += @("--source-label", $sourceLabel)
 }
 
-Write-Host "Smart Plant IoT Gateway"
-Write-Host "Backend: $env:BACKEND_URL"
-Write-Host "Device:  $env:DEVICE_ID"
-Write-Host "Port:    $port"
-Write-Host ""
-Write-Host "Leave this window open while Arduino is connected."
-Write-Host "Press Ctrl+C to stop."
-Write-Host ""
+Write-GatewayLog "Smart Plant IoT Gateway starting"
+Write-GatewayLog "Backend: $env:BACKEND_URL"
+Write-GatewayLog "Device:  $env:DEVICE_ID"
+Write-GatewayLog "Port:    $port"
 
 while ($true) {
-    & $PythonPath @baseArgs
+    & $PythonPath @baseArgs 2>&1 | Tee-Object -FilePath $LogPath -Append
     $exitCode = $LASTEXITCODE
     if ($exitCode -eq 130) {
         exit 0
     }
-    Write-Host ""
-    Write-Host "Gateway stopped with exit code $exitCode. Retrying in 10 seconds..."
+    Write-GatewayLog "Gateway stopped with exit code $exitCode. Retrying in 10 seconds..."
     Start-Sleep -Seconds 10
 }

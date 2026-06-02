@@ -5,7 +5,7 @@ This is the simple user-facing way to start Arduino data transfer after the web 
 ## What The User Does
 
 1. Connect Arduino Uno to the notebook with USB.
-2. Double-click:
+2. Double-click for manual visible start:
 
 ```text
 iot/serial_gateway/start_gateway.bat
@@ -36,15 +36,29 @@ SOIL_DRY_RAW=473
 
 The `DEVICE_TOKEN` must match the token generated in the admin panel for the same sensor.
 
-## Optional Windows Autostart
+## Recommended Hidden Windows Autostart
 
-To start the gateway automatically when the user logs into Windows, run PowerShell in the gateway folder:
+To start the gateway automatically and silently when the user logs into Windows, run PowerShell in the gateway folder:
 
 ```powershell
-.\install_autostart_task.ps1
+powershell -ExecutionPolicy Bypass -File .\install_autostart_task.ps1
 ```
 
-After that, Windows Task Scheduler starts the gateway on login.
+After that, Windows Task Scheduler starts the gateway hidden in the background. The user does not need to keep a console window open.
+
+The hidden gateway waits for Arduino USB automatically because `PORT=auto`.
+
+Logs are written to:
+
+```text
+iot/serial_gateway/logs/gateway.log
+```
+
+To remove hidden autostart:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\uninstall_autostart_task.ps1
+```
 
 ## When Bult Redeploy Is Needed
 
