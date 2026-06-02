@@ -11,6 +11,7 @@ from typing import Any
 import httpx
 import serial
 from serial import SerialException
+from serial.tools import list_ports
 
 
 SOIL_WET_RAW = 0.0
@@ -27,7 +28,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Read Arduino Uno JSON lines from USB Serial and forward readings to the FastAPI backend."
     )
-    parser.add_argument("--port", required=True, help="Serial port, for example COM3 on Windows.")
+    parser.add_argument("--port", required=True, help="Serial port, for example COM3 on Windows, or auto.")
     parser.add_argument("--baud-rate", type=int, default=9600, help="Serial baud rate. Default: 9600.")
     parser.add_argument(
         "--backend-url",
@@ -59,6 +60,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=2.0,
         help="Delay after opening serial port because Arduino resets on connect. Default: 2.",
+    )
+    parser.add_argument(
+        "--auto-port-probe-seconds",
+        type=float,
+        default=8.0,
+        help="Seconds to wait for JSON data on each port when --port auto is used. Default: 8.",
     )
     parser.add_argument(
         "--source-label",
@@ -241,7 +248,66 @@ def send_reading(
     return False
 
 
-def open_serial_port(port: str, baud_rate: int, reset_delay: float) -> serial.Serial:
+def _available_ports() -> list[str]:
+    return [port.device for port in list_ports.comports()]
+
+
+def _looks_like_sensor_payload(payload: dict[str, Any]) -> bool:
+    return "soil_raw" in payload and "light_raw" in payload
+
+
+def _probe_serial_port(port: str, baud_rate: int, reset_delay: float, probe_seconds: float) -> serial.Serial | None:
+    try:
+        ser = serial.Serial(port=port, baudrate=baud_rate, timeout=1)
+    except SerialException as exc:
+        logger.debug("Skipping serial port %s: %s", port, exc)
+        return None
+
+    logger.info("Probing serial port %s at %s baud", port, baud_rate)
+    if reset_delay > 0:
+        time.sleep(reset_delay)
+
+    deadline = time.monotonic() + probe_seconds
+    while time.monotonic() < deadline:
+        try:
+            raw_bytes = ser.readline()
+        except SerialException as exc:
+            logger.debug("Probe read failed on %s: %s", port, exc)
+            ser.close()
+            return None
+        if not raw_bytes:
+            continue
+        line = raw_bytes.decode("utf-8", errors="replace").strip()
+        payload = parse_json_line(line)
+        if payload and _looks_like_sensor_payload(payload):
+            logger.info("Selected serial port %s after receiving sensor JSON", port)
+            return ser
+
+    ser.close()
+    return None
+
+
+def auto_open_serial_port(baud_rate: int, reset_delay: float, probe_seconds: float) -> serial.Serial:
+    ports = _available_ports()
+    if not ports:
+        raise RuntimeError("No serial ports found. Connect Arduino over USB and try again.")
+
+    logger.info("Auto-detecting Arduino serial port from: %s", ", ".join(ports))
+    for port in ports:
+        ser = _probe_serial_port(port, baud_rate, reset_delay, probe_seconds)
+        if ser:
+            return ser
+
+    raise RuntimeError(
+        "Could not auto-detect Arduino JSON output. Close Serial Monitor, verify the uploaded sketch, "
+        "or run with an explicit --port COMx."
+    )
+
+
+def open_serial_port(port: str, baud_rate: int, reset_delay: float, probe_seconds: float) -> serial.Serial:
+    if port.lower() == "auto":
+        return auto_open_serial_port(baud_rate, reset_delay, probe_seconds)
+
     try:
         ser = serial.Serial(port=port, baudrate=baud_rate, timeout=1)
     except SerialException as exc:
@@ -263,10 +329,17 @@ def run(args: argparse.Namespace) -> int:
     last_send_at = 0.0
 
     try:
-        ser = open_serial_port(args.port, args.baud_rate, args.arduino_reset_delay)
+        ser = open_serial_port(
+            args.port,
+            args.baud_rate,
+            args.arduino_reset_delay,
+            args.auto_port_probe_seconds,
+        )
     except RuntimeError as exc:
         logger.error("%s", exc)
         return 2
+    if args.port.lower() == "auto":
+        source_label = args.source_label or f"serial:{ser.port}"
 
     logger.info("Forwarding readings to %s with source %s", url, source_label)
     with ser, httpx.Client(timeout=args.http_timeout) as client:
