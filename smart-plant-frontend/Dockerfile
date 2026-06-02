@@ -2,7 +2,7 @@ FROM node:24-alpine AS build
 
 WORKDIR /app
 
-ARG VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1
+ARG VITE_API_BASE_URL=https://smartsystem-backens-smart-plant-system-mainly.fin1.bult.app/api/v1
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 COPY smart-plant-frontend/package*.json ./
