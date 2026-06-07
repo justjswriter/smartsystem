@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { useI18n } from "../i18n";
 
@@ -31,6 +32,9 @@ export function Register({ isLoading, error, onSubmit, onSwitchToLogin }: Regist
   return (
     <div className="auth-layout">
       <form className="card auth-card" onSubmit={handleSubmit}>
+        <Link to="/" className="auth-home-link">
+          Smart Plant Monitor info
+        </Link>
         <h1>{t("auth.register.title")}</h1>
         <p className="muted">{t("auth.register.subtitle")}</p>
 
@@ -112,6 +116,9 @@ export function Register({ isLoading, error, onSubmit, onSwitchToLogin }: Regist
           </button>
         </p>
       </form>
+      <p className="auth-copyright">
+        © 2026 Smart Plant Monitor. Certificate No. 73639.
+      </p>
     </div>
   );
 }

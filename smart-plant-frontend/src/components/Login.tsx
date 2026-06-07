@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { useI18n } from "../i18n";
 
@@ -23,6 +24,9 @@ export function Login({ isLoading, error, onSubmit, onSwitchToRegister }: LoginP
   return (
     <div className="auth-layout">
       <form className="card auth-card" onSubmit={handleSubmit}>
+        <Link to="/" className="auth-home-link">
+          Smart Plant Monitor info
+        </Link>
         <h1>{t("auth.login.title")}</h1>
         <p className="muted">{t("auth.login.subtitle")}</p>
 
@@ -72,6 +76,9 @@ export function Login({ isLoading, error, onSubmit, onSwitchToRegister }: LoginP
           </button>
         </p>
       </form>
+      <p className="auth-copyright">
+        © 2026 Smart Plant Monitor. Certificate No. 73639.
+      </p>
     </div>
   );
 }

@@ -494,8 +494,11 @@ select {
 
 .auth-layout {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
   padding: 16px;
   background: linear-gradient(to bottom, #e6f8ea, #ffffff);
 }
@@ -504,6 +507,26 @@ select {
   width: min(100%, 440px);
   display: grid;
   gap: 12px;
+}
+
+.auth-home-link {
+  justify-self: start;
+  color: #15803d;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-home-link:hover {
+  text-decoration: underline;
+}
+
+.auth-copyright {
+  max-width: 440px;
+  color: #5f6f66;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-align: center;
 }
 
 label {
@@ -593,6 +616,11 @@ select {
 
 .password-field input {
   padding-right: 44px;
+}
+
+.password-field input::-ms-reveal,
+.password-field input::-ms-clear {
+  display: none;
 }
 
 .password-toggle {
@@ -903,7 +931,21 @@ button:disabled {
 .web-main {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 28px 28px 48px;
+  padding: 28px 28px 36px;
+}
+
+.app-footer {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 28px 26px;
+  color: #647166;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.app-footer p + p {
+  margin-top: 4px;
 }
 
 .page-title {

@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Home,
+  Info,
   Leaf,
   LogOut,
   Radio,
@@ -38,6 +39,14 @@ export function MainLayout() {
           </div>
 
           <nav className="top-nav" aria-label={t("nav.main")}>
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) => (isActive ? "top-nav-link active" : "top-nav-link")}
+            >
+              <Info size={18} />
+              Info
+            </NavLink>
             <NavLink
               to="/dashboard"
               end
@@ -116,6 +125,13 @@ export function MainLayout() {
       <main className="web-main">
         <Outlet />
       </main>
+      <footer className="app-footer">
+        <p>© 2026 Smart Plant Monitor. All rights reserved.</p>
+        <p>
+          Copyright certificate No. 73639: Smart System with IoT Integration and
+          Artificial Intelligence Technologies for Plant Condition Monitoring.
+        </p>
+      </footer>
     </div>
   );
 }
