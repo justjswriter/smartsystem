@@ -4,6 +4,7 @@ import { AlertsPage } from "./pages/AlertsPage";
 import { AdminPage } from "./pages/AdminPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { PlantDetailsPage } from "./pages/PlantDetailsPage";
 import { PlantsIndexPage } from "./pages/PlantsIndexPage";
@@ -12,13 +13,28 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { SensorsPage } from "./pages/SensorsPage";
 
 export const router = createBrowserRouter([
+  { path: "/", element: <HomePage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/register", element: <RegisterPage /> },
+  {
+    path: "/dashboard",
+    element: <ProtectedLayout />,
+    children: [
+      { index: true, element: <DashboardPage /> },
+      { path: "plants", element: <PlantsIndexPage /> },
+      { path: "plants/:plantId", element: <PlantDetailsPage /> },
+      { path: "analytics", element: <AnalyticsPage /> },
+      { path: "sensors", element: <SensorsPage /> },
+      { path: "alerts", element: <AlertsPage /> },
+      { path: "admin", element: <AdminPage /> },
+      { path: "profile", element: <ProfilePage /> },
+      { path: "settings", element: <Navigate to="/dashboard/profile" replace /> },
+    ],
+  },
   {
     path: "/",
     element: <ProtectedLayout />,
     children: [
-      { index: true, element: <DashboardPage /> },
       { path: "plants", element: <PlantsIndexPage /> },
       { path: "plants/:plantId", element: <PlantDetailsPage /> },
       { path: "analytics", element: <AnalyticsPage /> },

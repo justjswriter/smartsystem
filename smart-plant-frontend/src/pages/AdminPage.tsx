@@ -67,7 +67,7 @@ export function AdminPage() {
   }, [load]);
 
   if (user && user.role !== "admin") {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   async function handleCreateSensor(event: FormEvent) {

@@ -7,7 +7,7 @@ export function RegisterPage() {
   const navigate = useNavigate();
 
   if (token && user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   async function handleSubmit(

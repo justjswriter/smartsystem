@@ -39,7 +39,7 @@ export function MainLayout() {
 
           <nav className="top-nav" aria-label={t("nav.main")}>
             <NavLink
-              to="/"
+              to="/dashboard"
               end
               className={({ isActive }) => (isActive ? "top-nav-link active" : "top-nav-link")}
             >

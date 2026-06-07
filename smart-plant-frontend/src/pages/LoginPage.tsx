@@ -8,13 +8,13 @@ export function LoginPage() {
   const navigate = useNavigate();
 
   if (token && user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   async function handleSubmit(email: string, password: string) {
     try {
       await loginWithCredentials(email, password);
-      navigate("/", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch {
       // Error already in context
     }
