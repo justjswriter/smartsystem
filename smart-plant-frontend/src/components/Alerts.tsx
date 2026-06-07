@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { localizeCareText } from "../careText";
 import { CustomSelect } from "./CustomSelect";
 import { useI18n } from "../i18n";
-import type { Alert } from "../types";
+import type { Alert, AlertStatus } from "../types";
 
 type AlertsProps = {
   alerts: Alert[];
@@ -14,6 +14,26 @@ type AlertsProps = {
   onAcknowledge: (alertId: number) => Promise<void>;
   onResolve: (alertId: number) => Promise<void>;
   onClose: (alertId: number) => Promise<void>;
+};
+
+type AlertAction = {
+  status: Exclude<AlertStatus, "created">;
+  labelKey: string;
+};
+
+const allowedTransitions: Record<AlertStatus, AlertAction[]> = {
+  created: [
+    { status: "viewed", labelKey: "alerts.viewed" },
+    { status: "acknowledged", labelKey: "alerts.ack" },
+    { status: "resolved", labelKey: "alerts.resolve" },
+  ],
+  viewed: [
+    { status: "acknowledged", labelKey: "alerts.ack" },
+    { status: "resolved", labelKey: "alerts.resolve" },
+  ],
+  acknowledged: [{ status: "resolved", labelKey: "alerts.resolve" }],
+  resolved: [{ status: "closed", labelKey: "common.close" }],
+  closed: [],
 };
 
 export function Alerts({
@@ -33,6 +53,18 @@ export function Alerts({
   const [selected, setSelected] = useState<Alert | null>(null);
 
   const localizeAlertText = (text: string | null | undefined) => localizeCareText(text, t);
+
+  async function moveAlert(alertId: number, toStatus: AlertAction["status"]) {
+    if (toStatus === "viewed") {
+      await onMarkViewed(alertId);
+    } else if (toStatus === "acknowledged") {
+      await onAcknowledge(alertId);
+    } else if (toStatus === "resolved") {
+      await onResolve(alertId);
+    } else {
+      await onClose(alertId);
+    }
+  }
 
   const sortedAlerts = useMemo(() => {
     return [...alerts]
@@ -94,10 +126,17 @@ export function Alerts({
             </p>
             <div className="button-row">
               <button type="button" onClick={() => void onLoadDetail(alert.id).then(setSelected)}>{t("alerts.details")}</button>
-              <button type="button" onClick={() => onMarkViewed(alert.id)}>{t("alerts.viewed")}</button>
-              <button type="button" onClick={() => onAcknowledge(alert.id)}>{t("alerts.ack")}</button>
-              <button type="button" onClick={() => onResolve(alert.id)}>{t("alerts.resolve")}</button>
-              <button type="button" onClick={() => onClose(alert.id)}>{t("common.close")}</button>
+              {allowedTransitions[alert.status].map((action) => (
+                <button
+                  key={action.status}
+                  type="button"
+                  onClick={() => {
+                    void moveAlert(alert.id, action.status);
+                  }}
+                >
+                  {t(action.labelKey)}
+                </button>
+              ))}
             </div>
           </article>
         ))}
