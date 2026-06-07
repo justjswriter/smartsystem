@@ -7,7 +7,7 @@ This guide explains how to connect the Arduino Uno sensor node to the deployed S
 Frontend:
 
 ```text
-https://smartsystem-frontend-smart-plant-system-new.fin1.bult.app
+https://plantcaresystem-smart-plant-system-hit.fin1.bult.app
 ```
 
 Backend:
@@ -90,7 +90,7 @@ If data appears, close Serial Monitor before running the Python gateway. Only on
 Open the frontend:
 
 ```text
-https://smartsystem-frontend-smart-plant-system-new.fin1.bult.app
+https://plantcaresystem-smart-plant-system-hit.fin1.bult.app
 ```
 
 Log in as admin.
