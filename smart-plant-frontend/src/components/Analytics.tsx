@@ -49,7 +49,7 @@ function csvValue(value: string | number | null | undefined) {
     return "";
   }
   const text = String(value);
-  if (/[",\n\r]/.test(text)) {
+  if (/[;"\n\r]/.test(text)) {
     return `"${text.replace(/"/g, '""')}"`;
   }
   return text;
@@ -102,20 +102,21 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
     if (!dashboard?.history.length || selectedPlantId == null) {
       return;
     }
-    const csv = [
-      ["recorded_at", "temperature", "moisture", "humidity", "light_score"],
+    const csvRows = [
+      ["Recorded at", "Temperature (C)", "Soil moisture (%)", "Air humidity (%)", "Light level"],
       ...dashboard.history.map((point) => [
-        point.recorded_at,
+        formatDateTime(point.recorded_at),
         point.temperature,
         point.moisture,
         point.humidity,
         point.light,
       ]),
     ]
-      .map((row) => row.map(csvValue).join(","))
-      .join("\n");
+      .map((row) => row.map(csvValue).join(";"))
+      .join("\r\n");
+    const csv = `sep=;\r\n${csvRows}`;
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

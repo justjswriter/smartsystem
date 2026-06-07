@@ -90,7 +90,7 @@ export function PlantDetails({
   const riskLabels = condition?.risk_factors.map((risk) => label("issue", risk)) ?? [];
   const primaryRisk = riskLabels[0];
   const conditionExplanation = buildHumanConditionSummary();
-  const gardenerAdvice = dashboard?.today_care?.length ? dashboard.today_care : buildGardenerAdvice();
+  const gardenerAdvice = buildGardenerAdvice();
 
   useEffect(() => {
     setNotesDraft(plant?.description ?? "");
@@ -476,7 +476,7 @@ export function PlantDetails({
                   </span>
                   <div>
                     <strong>{item.title}</strong>
-                    <p>{"action" in item ? item.action : item.text}</p>
+                    <p>{item.action}</p>
                     <span className="gardener-detail">{item.detail}</span>
                   </div>
                 </div>
