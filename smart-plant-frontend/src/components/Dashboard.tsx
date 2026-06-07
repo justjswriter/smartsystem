@@ -158,8 +158,6 @@ export function Dashboard({
           {t("common.refresh")}
         </button>
       </div>
-      <p className="muted small">{t("dashboard.lightHint")}</p>
-
       {error ? <div className="error">{error}</div> : null}
       {isLoading ? <p className="muted">{t("dashboard.loadingPlants")}</p> : null}
 
