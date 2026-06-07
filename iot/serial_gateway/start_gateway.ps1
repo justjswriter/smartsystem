@@ -65,8 +65,18 @@ Write-GatewayLog "Device:  $env:DEVICE_ID"
 Write-GatewayLog "Port:    $port"
 
 while ($true) {
-    & $PythonPath @baseArgs 2>&1 | Tee-Object -FilePath $LogPath -Append
-    $exitCode = $LASTEXITCODE
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & $PythonPath @baseArgs 2>&1 | ForEach-Object {
+            $text = $_.ToString()
+            Write-Host $text
+            Add-Content -Path $LogPath -Value $text
+        }
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
     if ($exitCode -eq 130) {
         exit 0
     }
