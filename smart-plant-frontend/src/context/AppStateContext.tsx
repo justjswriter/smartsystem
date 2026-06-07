@@ -33,6 +33,7 @@ import {
 import type { Alert, Notification, Plant, Sensor, User } from "../types";
 
 const TOKEN_KEY = "smart-plant-token";
+const LIVE_DATA_POLL_INTERVAL_MS = 5000;
 
 type AppStateContextValue = {
   token: string | null;
@@ -244,6 +245,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     });
     return () => abortController.abort();
   }, [token, loadNotifications]);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+    const intervalId = window.setInterval(() => {
+      if (document.hidden) {
+        return;
+      }
+      void loadAlerts();
+      void loadNotifications();
+    }, LIVE_DATA_POLL_INTERVAL_MS);
+    return () => window.clearInterval(intervalId);
+  }, [token, loadAlerts, loadNotifications]);
 
   const loginWithCredentials = useCallback(async (email: string, password: string) => {
     setIsAuthLoading(true);

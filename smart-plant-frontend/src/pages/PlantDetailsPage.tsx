@@ -7,6 +7,8 @@ import { useAppState } from "../context/AppStateContext";
 import { useI18n } from "../i18n";
 import type { DashboardPoint, DashboardResponse, Plant } from "../types";
 
+const DASHBOARD_POLL_INTERVAL_MS = 5000;
+
 export function PlantDetailsPage() {
   const { t } = useI18n();
   const { plantId } = useParams();
@@ -43,11 +45,13 @@ export function PlantDetailsPage() {
     }
   }, [token, id, t]);
 
-  const refreshDashboard = useCallback(async () => {
+  const refreshDashboard = useCallback(async (showIndicator = true) => {
     if (!token || !Number.isFinite(id)) {
       return;
     }
-    setRefreshing(true);
+    if (showIndicator) {
+      setRefreshing(true);
+    }
     setError("");
     try {
       const d = await getPlantDashboard(token, id, 72);
@@ -55,7 +59,9 @@ export function PlantDetailsPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : t("common.failedRefreshReadings"));
     } finally {
-      setRefreshing(false);
+      if (showIndicator) {
+        setRefreshing(false);
+      }
     }
   }, [token, id, t]);
 
@@ -89,8 +95,9 @@ export function PlantDetailsPage() {
             last_updated_at: point.recorded_at,
           };
         });
+        void refreshDashboard(false);
       } catch {
-        void refreshDashboard();
+        void refreshDashboard(false);
       }
     },
     [id, refreshDashboard]
@@ -161,6 +168,19 @@ export function PlantDetailsPage() {
     });
     return () => abortController.abort();
   }, [token, id, applySensorDataEvent]);
+
+  useEffect(() => {
+    if (!token || !Number.isFinite(id)) {
+      return;
+    }
+    const intervalId = window.setInterval(() => {
+      if (document.hidden) {
+        return;
+      }
+      void refreshDashboard(false);
+    }, DASHBOARD_POLL_INTERVAL_MS);
+    return () => window.clearInterval(intervalId);
+  }, [token, id, refreshDashboard]);
 
   if (!Number.isFinite(id)) {
     return (
