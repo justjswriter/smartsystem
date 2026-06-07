@@ -96,7 +96,6 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
     ];
   }, [dashboard, t]);
 
-  const selectedPlant = plants.find((plant) => plant.id === selectedPlantId);
   const hasHistory = Boolean(dashboard?.history.length);
 
   function exportCsv() {
@@ -178,10 +177,6 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
           {isLoading ? t("common.loading") : t("common.load")}
         </button>
       </div>
-      <p className="muted small">
-        {t("analytics.showing", { plant: selectedPlant?.name ?? t("dashboard.plant") })} {t("dashboard.lightHint")}
-      </p>
-
       {error ? <div className="error">{error}</div> : null}
 
       {plants.length === 0 ? (

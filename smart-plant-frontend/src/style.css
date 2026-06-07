@@ -2453,3 +2453,152 @@ button:disabled {
   display: grid;
   gap: 14px;
 }
+
+@media (max-width: 760px) {
+  .top-header {
+    position: static;
+  }
+
+  .top-header-inner {
+    min-height: 0;
+    padding: 12px 14px;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .brand-block {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .brand-title,
+  .brand-sub {
+    overflow-wrap: anywhere;
+  }
+
+  .top-nav {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .top-nav-link {
+    min-width: 0;
+    justify-content: center;
+    padding: 10px 8px;
+    font-size: 0.9rem;
+  }
+
+  .top-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(92px, 1fr) auto auto auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .language-select,
+  .language-select .custom-select {
+    width: 100%;
+  }
+
+  .profile-name,
+  .top-divider {
+    display: none;
+  }
+
+  .profile-pill {
+    justify-content: center;
+    padding: 6px;
+  }
+
+  .web-main {
+    width: 100%;
+    padding: 20px 14px 28px;
+  }
+
+  .app-footer {
+    padding: 0 14px 22px;
+  }
+
+  .page-head,
+  .dashboard-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .analytics-actions,
+  .analytics-actions .btn-primary,
+  .dashboard-toolbar .btn-primary,
+  .dashboard-toolbar .btn-secondary {
+    width: 100%;
+  }
+
+  .dashboard-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .search-wrap,
+  .sort-wrap {
+    width: 100%;
+    min-width: 0;
+    flex: none;
+  }
+
+  .sort-direction-btn {
+    width: 100%;
+  }
+
+  .stats-row.two,
+  .stats-row.three,
+  .stats-row.four {
+    grid-template-columns: 1fr;
+  }
+
+  .table-card {
+    width: 100%;
+  }
+
+  .data-table {
+    min-width: 760px;
+  }
+
+  .chart-card {
+    padding: 14px;
+  }
+
+  .notification-panel {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - 24px);
+    z-index: 100;
+    border-radius: 12px;
+  }
+
+  .notification-panel-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .notification-panel-head button,
+  .notification-item button {
+    width: 100%;
+  }
+
+  .notification-meta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .notification-item a span,
+  .notification-meta {
+    overflow-wrap: anywhere;
+  }
+}
