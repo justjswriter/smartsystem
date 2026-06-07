@@ -319,6 +319,20 @@ select {
   overflow-wrap: anywhere;
 }
 
+.public-footer {
+  width: min(1180px, calc(100% - 40px));
+  margin: -34px auto 0;
+  padding: 26px 0 34px;
+  border-top: 1px solid #dce8df;
+  color: #526158;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.public-footer p + p {
+  margin-top: 6px;
+}
+
 @media (max-width: 920px) {
   .public-hero-grid,
   .public-band {
@@ -353,7 +367,8 @@ select {
   }
 
   .public-section,
-  .public-band {
+  .public-band,
+  .public-footer {
     width: min(100% - 28px, 1180px);
   }
 }

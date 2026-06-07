@@ -137,6 +137,15 @@ export function HomePage() {
           <Mail size={24} />
         </div>
       </section>
+
+      <footer className="public-footer">
+        <p>© 2026 Smart Plant Monitor. Барлық құқықтар қорғалған.</p>
+        <p>
+          Авторлық құқық туралы куәлік № 73639: Smart System with IoT Integration
+          and Artificial Intelligence Technologies for Plant Condition Monitoring.
+        </p>
+        <p>Астана, Қазақстан.</p>
+      </footer>
     </main>
   );
 }
