@@ -64,6 +64,10 @@ select {
   gap: 12px;
 }
 
+.public-nav-actions {
+  flex-wrap: nowrap;
+}
+
 .public-brand {
   color: #fff;
   text-decoration: none;
@@ -89,9 +93,22 @@ select {
 }
 
 .public-link {
+  min-width: 112px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 8px;
+  padding: 0 18px;
   color: #fff;
   text-decoration: none;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.public-link:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .public-language-select {
@@ -114,6 +131,7 @@ select {
 
 .public-button,
 .public-outline {
+  min-width: 112px;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
@@ -122,6 +140,7 @@ select {
   border-radius: 8px;
   text-decoration: none;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .public-button {
@@ -509,18 +528,6 @@ select {
   gap: 12px;
 }
 
-.auth-home-link {
-  justify-self: start;
-  color: #15803d;
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.auth-home-link:hover {
-  text-decoration: underline;
-}
-
 .auth-copyright {
   max-width: 440px;
   color: #5f6f66;
@@ -784,6 +791,8 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 12px;
+  color: inherit;
+  text-decoration: none;
 }
 
 .brand-icon {

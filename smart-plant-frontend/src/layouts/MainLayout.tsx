@@ -1,8 +1,7 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Home,
-  Info,
   Leaf,
   LogOut,
   Radio,
@@ -28,7 +27,7 @@ export function MainLayout() {
     <div className="web-layout">
       <header className="top-header">
         <div className="top-header-inner">
-          <div className="brand-block">
+          <Link to="/" className="brand-block" aria-label="Smart Plant Monitor information">
             <div className="brand-icon" aria-hidden>
               <Leaf size={22} strokeWidth={2} />
             </div>
@@ -36,17 +35,9 @@ export function MainLayout() {
               <div className="brand-title">Smart Plant Monitor</div>
               <div className="brand-sub">IoT &amp; AI-Powered System</div>
             </div>
-          </div>
+          </Link>
 
           <nav className="top-nav" aria-label={t("nav.main")}>
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) => (isActive ? "top-nav-link active" : "top-nav-link")}
-            >
-              <Info size={18} />
-              Info
-            </NavLink>
             <NavLink
               to="/dashboard"
               end

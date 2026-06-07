@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import {
   Activity,
+  BarChart3,
   Bell,
-  Database,
   Leaf,
   Mail,
   MapPin,
@@ -29,20 +29,20 @@ const homeText = {
     light: "Жарық деңгейі",
     temperature: "Температура",
     humidity: "Ауа ылғалы",
-    signal: "Arduino Uno сенсорынан деректер backend арқылы PostgreSQL базасына сақталады.",
+    signal: "Arduino Uno сенсорынан алынған өлшемдер жеке кабинетте сақталып, графиктерде көрсетіледі.",
     sectionTitle: "Жүйе не істейді?",
     sectionText: "Үйдегі, кеңседегі немесе оқу жобасындағы өсімдіктерді жүйелі бақылауға арналған веб-қосымша.",
     featureIot: "IoT мониторинг",
-    featureIotText: "Arduino сенсоры USB gateway арқылы backend-ке өлшемдерді жібереді.",
+    featureIotText: "Arduino сенсоры өсімдіктің жағдайын өлшеп, нәтижені сайтта көруге мүмкіндік береді.",
     featureAlerts: "Ескертулер",
     featureAlertsText: "Қауіпті көрсеткіштер байқалса, жүйе сайт ішінде notification көрсетеді.",
     featureCare: "Күтім ұсыныстары",
-    featureCareText: "Rule-based логика өсімдікке су, жарық және орналасу бойынша кеңес береді.",
+    featureCareText: "Жүйе суару, жарық және өсімдіктің орналасуы бойынша түсінікті кеңес береді.",
     featureHistory: "Тарих және аналитика",
-    featureHistoryText: "Өлшемдер PostgreSQL базасында сақталып, графиктерде көрсетіледі.",
+    featureHistoryText: "Өлшемдер тарихы сақталып, өсімдіктің өзгерісі графиктер арқылы көрсетіледі.",
     bandTitle: "Қазақстандағы демо және оқу жобаларына ыңғайлы",
     bandText:
-      "Жүйе Астана қаласынан бастап Қазақстан бойынша интернеті бар кез келген жерде ашылады. IoT gateway ноутбукта жұмыс істейді, ал сайт пен база Bult cloud инфрақұрылымында орналасқан.",
+      "Жүйе Астана қаласынан бастап Қазақстан бойынша интернеті бар кез келген жерде ашылады. Оны оқу жобасында, демонстрацияда немесе күнделікті өсімдік күтімінде қолдануға болады.",
     contact: "Байланыс",
     rights: "© 2026 Smart Plant Monitor. Барлық құқықтар қорғалған.",
     certificate:
@@ -63,20 +63,20 @@ const homeText = {
     light: "Уровень света",
     temperature: "Температура",
     humidity: "Влажность воздуха",
-    signal: "Данные с Arduino Uno через backend сохраняются в PostgreSQL.",
+    signal: "Измерения с Arduino Uno сохраняются в личном кабинете и отображаются на графиках.",
     sectionTitle: "Что делает система?",
     sectionText: "Веб-приложение для регулярного контроля растений дома, в офисе или в учебном проекте.",
     featureIot: "IoT мониторинг",
-    featureIotText: "Сенсор Arduino отправляет измерения на backend через USB gateway.",
+    featureIotText: "Сенсор Arduino измеряет состояние растения, а результат можно смотреть на сайте.",
     featureAlerts: "Уведомления",
     featureAlertsText: "Если показатели становятся опасными, система показывает уведомления внутри сайта.",
     featureCare: "Рекомендации по уходу",
-    featureCareText: "Rule-based логика дает советы по поливу, свету и расположению растения.",
+    featureCareText: "Система дает понятные советы по поливу, свету и расположению растения.",
     featureHistory: "История и аналитика",
-    featureHistoryText: "Измерения сохраняются в PostgreSQL и отображаются на графиках.",
+    featureHistoryText: "История измерений сохраняется и помогает видеть изменения состояния растения.",
     bandTitle: "Подходит для демо и учебных проектов в Казахстане",
     bandText:
-      "Система доступна из Астаны и любого региона Казахстана, где есть интернет. IoT gateway работает на ноутбуке, а сайт и база размещены в Bult cloud.",
+      "Система доступна из Астаны и любого региона Казахстана, где есть интернет. Ее можно использовать для учебного проекта, демонстрации или ежедневного ухода за растениями.",
     contact: "Контакты",
     rights: "© 2026 Smart Plant Monitor. Все права защищены.",
     certificate:
@@ -97,20 +97,20 @@ const homeText = {
     light: "Light level",
     temperature: "Temperature",
     humidity: "Air humidity",
-    signal: "Arduino Uno readings are sent through the backend and stored in PostgreSQL.",
+    signal: "Arduino Uno readings are saved in the account and shown in charts.",
     sectionTitle: "What does the system do?",
     sectionText: "A web app for regular plant monitoring at home, in an office, or as an educational project.",
     featureIot: "IoT monitoring",
-    featureIotText: "The Arduino sensor sends measurements to the backend through a USB gateway.",
+    featureIotText: "The Arduino sensor measures the plant condition and shows the result on the site.",
     featureAlerts: "Notifications",
     featureAlertsText: "When values become risky, the system shows notifications inside the site.",
     featureCare: "Care recommendations",
-    featureCareText: "Rule-based logic gives advice on watering, light, and plant placement.",
+    featureCareText: "The system gives clear advice on watering, light, and plant placement.",
     featureHistory: "History and analytics",
-    featureHistoryText: "Measurements are stored in PostgreSQL and displayed in charts.",
+    featureHistoryText: "Reading history is saved so plant changes are easy to track.",
     bandTitle: "Convenient for demos and educational projects in Kazakhstan",
     bandText:
-      "The system is available from Astana and any region of Kazakhstan with internet access. The IoT gateway runs on a laptop, while the site and database are hosted on Bult cloud.",
+      "The system is available from Astana and any region of Kazakhstan with internet access. It works well for education, demos, and everyday plant care.",
     contact: "Contact",
     rights: "© 2026 Smart Plant Monitor. All rights reserved.",
     certificate:
@@ -238,7 +238,7 @@ export function HomePage() {
             <p>{text.featureCareText}</p>
           </article>
           <article className="public-feature">
-            <Database />
+            <BarChart3 />
             <h3>{text.featureHistory}</h3>
             <p>{text.featureHistoryText}</p>
           </article>
