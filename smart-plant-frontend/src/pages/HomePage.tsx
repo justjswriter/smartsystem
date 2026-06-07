@@ -10,8 +10,12 @@ import {
   ShieldCheck,
   Sprout,
 } from "lucide-react";
+import { useAppState } from "../context/AppStateContext";
 
 export function HomePage() {
+  const { token, user } = useAppState();
+  const isSignedIn = Boolean(token && user);
+
   return (
     <main className="public-home">
       <section className="public-hero">
@@ -22,16 +26,24 @@ export function HomePage() {
             </span>
             <span>
               <strong>Smart Plant Monitor</strong>
-              <small>IoT & AI-Powered System</small>
+              <small>IoT &amp; AI-Powered System</small>
             </span>
           </Link>
           <div className="public-nav-actions">
-            <Link to="/login" className="public-link">
-              Кіру
-            </Link>
-            <Link to="/register" className="public-button">
-              Аккаунт жасау
-            </Link>
+            {isSignedIn ? (
+              <Link to="/dashboard" className="public-button">
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" className="public-link">
+                  Sign in
+                </Link>
+                <Link to="/register" className="public-button">
+                  Sign up
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
@@ -43,9 +55,9 @@ export function HomePage() {
             </span>
             <h1>Ақылды өсімдік күтімі жүйесі</h1>
             <p>
-              Smart Plant Monitor өсімдіктің топырақ ылғалын, температураны,
-              ауа ылғалдылығын және жарық деңгейін IoT сенсор арқылы бақылап,
-              веб-қосымшада нақты уақытқа жақын көрсетеді.
+              Smart Plant Monitor өсімдіктің топырақ ылғалын, температурасын,
+              ауа ылғалдығын және жарық деңгейін IoT сенсор арқылы бақылап,
+              деректерді веб-қосымшада нақты уақытқа жақын көрсетеді.
             </p>
             <div className="public-hero-actions">
               <Link to="/register" className="public-button large">
@@ -82,7 +94,8 @@ export function HomePage() {
             </div>
             <div className="public-signal">
               <Activity size={18} />
-              Arduino Uno сенсорынан деректер backend арқылы PostgreSQL базасына сақталады.
+              Arduino Uno сенсорынан деректер backend арқылы PostgreSQL
+              базасына сақталады.
             </div>
           </div>
         </div>
@@ -92,29 +105,41 @@ export function HomePage() {
         <div className="public-section-head">
           <h2>Жүйе не істейді?</h2>
           <p>
-            Үйдегі, кеңседегі немесе оқу жобасындағы өсімдіктерді жүйелі бақылауға арналған.
+            Үйдегі, кеңседегі немесе оқу жобасындағы өсімдіктерді жүйелі
+            бақылауға арналған веб-қосымша.
           </p>
         </div>
         <div className="public-feature-grid">
           <article className="public-feature">
             <Radio />
             <h3>IoT мониторинг</h3>
-            <p>Arduino сенсоры USB gateway арқылы backend-ке өлшемдерді жібереді.</p>
+            <p>
+              Arduino сенсоры USB gateway арқылы backend-ке өлшемдерді
+              жібереді.
+            </p>
           </article>
           <article className="public-feature">
             <Bell />
             <h3>Ескертулер</h3>
-            <p>Қауіпті көрсеткіштер байқалса, жүйе сайт ішінде notification көрсетеді.</p>
+            <p>
+              Қауіпті көрсеткіштер байқалса, жүйе сайт ішінде notification
+              көрсетеді.
+            </p>
           </article>
           <article className="public-feature">
             <Sprout />
             <h3>Күтім ұсыныстары</h3>
-            <p>Rule-based логика өсімдікке су, жарық және орын бойынша кеңес береді.</p>
+            <p>
+              Rule-based логика өсімдікке су, жарық және орналасу бойынша
+              кеңес береді.
+            </p>
           </article>
           <article className="public-feature">
             <Database />
             <h3>Тарих және аналитика</h3>
-            <p>Өлшемдер PostgreSQL базасында сақталып, графиктерде көрсетіледі.</p>
+            <p>
+              Өлшемдер PostgreSQL базасында сақталып, графиктерде көрсетіледі.
+            </p>
           </article>
         </div>
       </section>
@@ -123,16 +148,18 @@ export function HomePage() {
         <div>
           <h2>Қазақстандағы демо және оқу жобаларына ыңғайлы</h2>
           <p>
-            Жүйе Астана қаласынан бастап Қазақстан бойынша интернеті бар кез келген
-            жерде ашылады. IoT gateway ноутбукта жұмыс істейді, ал сайт пен база Bult
-            cloud инфрақұрылымында орналасқан.
+            Жүйе Астана қаласынан бастап Қазақстан бойынша интернеті бар кез
+            келген жерде ашылады. IoT gateway ноутбукта жұмыс істейді, ал сайт
+            пен база Bult cloud инфрақұрылымында орналасқан.
           </p>
         </div>
         <div className="public-contact">
           <ShieldCheck size={24} />
           <div>
             <strong>Байланыс</strong>
-            <a href="mailto:zaremabazarova11@gmail.com">zaremabazarova11@gmail.com</a>
+            <a href="mailto:zaremabazarova11@gmail.com">
+              zaremabazarova11@gmail.com
+            </a>
           </div>
           <Mail size={24} />
         </div>
@@ -141,8 +168,9 @@ export function HomePage() {
       <footer className="public-footer">
         <p>© 2026 Smart Plant Monitor. Барлық құқықтар қорғалған.</p>
         <p>
-          Авторлық құқық туралы куәлік № 73639: Smart System with IoT Integration
-          and Artificial Intelligence Technologies for Plant Condition Monitoring.
+          Авторлық құқық туралы куәлік № 73639: Smart System with IoT
+          Integration and Artificial Intelligence Technologies for Plant
+          Condition Monitoring.
         </p>
         <p>Астана, Қазақстан.</p>
       </footer>

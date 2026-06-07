@@ -10,7 +10,7 @@ export function ProtectedLayout() {
     return <p className="muted page-lead">{t("common.loading")}</p>;
   }
   if (!token || !user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
   return <MainLayout />;
 }
