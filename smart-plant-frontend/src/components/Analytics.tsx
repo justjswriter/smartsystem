@@ -44,15 +44,15 @@ function downsamplePoints<T>(items: T[], maxPoints = MAX_CHART_POINTS): T[] {
   return Array.from({ length: maxPoints }, (_, index) => items[Math.round(index * step)]);
 }
 
-function escapeHtml(value: string | number | null | undefined) {
+function csvValue(value: string | number | null | undefined) {
   if (value == null) {
     return "";
   }
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+  const text = String(value);
+  if (/[;"\n\r]/.test(text)) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
 }
 
 function pad(value: number) {
@@ -65,34 +65,6 @@ function exportDate(value: string) {
     return value;
   }
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-function metricClass(metric: "temperature" | "moisture" | "humidity" | "light", value: number | null | undefined) {
-  if (value == null) {
-    return "empty";
-  }
-  if (metric === "temperature") {
-    if (value < 16 || value > 34) return "bad";
-    if (value < 18 || value > 30) return "warn";
-    return "ok";
-  }
-  if (metric === "moisture") {
-    if (value < 20 || value > 85) return "bad";
-    if (value < 35 || value > 75) return "warn";
-    return "ok";
-  }
-  if (metric === "humidity") {
-    if (value < 25 || value > 85) return "bad";
-    if (value < 40 || value > 75) return "warn";
-    return "ok";
-  }
-  if (value < 20 || value > 260) return "bad";
-  if (value < 40 || value > 180) return "warn";
-  return "ok";
-}
-
-function metricCell(metric: "temperature" | "moisture" | "humidity" | "light", value: number | null | undefined) {
-  return `<td class="${metricClass(metric, value)}">${escapeHtml(value ?? "")}</td>`;
 }
 
 export function Analytics({ plants, dashboard, isLoading, error, onLoad }: AnalyticsProps) {
@@ -142,53 +114,31 @@ export function Analytics({ plants, dashboard, isLoading, error, onLoad }: Analy
     if (!dashboard?.history.length || selectedPlantId == null) {
       return;
     }
-    const rows = dashboard.history
-      .map(
-        (point) => `
-          <tr>
-            <td>${escapeHtml(exportDate(point.recorded_at))}</td>
-            ${metricCell("temperature", point.temperature)}
-            ${metricCell("moisture", point.moisture)}
-            ${metricCell("humidity", point.humidity)}
-            ${metricCell("light", point.light)}
-          </tr>`
-      )
-      .join("");
-    const html = `<!doctype html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <style>
-            table { border-collapse: collapse; font-family: Arial, sans-serif; }
-            th, td { border: 1px solid #999; padding: 6px 8px; white-space: nowrap; }
-            th { background: #d9ead3; font-weight: 700; }
-            .ok { background: #d9ead3; }
-            .warn { background: #fff2cc; }
-            .bad { background: #f4cccc; }
-            .empty { background: #eeeeee; }
-          </style>
-        </head>
-        <body>
-          <table>
-            <thead>
-              <tr>
-                <th>Recorded at</th>
-                <th>Temperature (C)<br />Normal: 18-30</th>
-                <th>Soil moisture (%)<br />Normal: 35-75</th>
-                <th>Air humidity (%)<br />Normal: 40-75</th>
-                <th>Light level<br />Normal: 40-180</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </body>
-      </html>`;
+    const csvRows = [
+      [
+        "Recorded at",
+        "Temperature (C, normal 18-30)",
+        "Soil moisture (%, normal 35-75)",
+        "Air humidity (%, normal 40-75)",
+        "Light level (normal 40-180)",
+      ],
+      ...dashboard.history.map((point) => [
+        exportDate(point.recorded_at),
+        point.temperature,
+        point.moisture,
+        point.humidity,
+        point.light,
+      ]),
+    ]
+      .map((row) => row.map(csvValue).join(";"))
+      .join("\r\n");
+    const csv = `sep=;\r\n${csvRows}`;
 
-    const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `analytics-plant-${selectedPlantId}-${hours}h.xls`;
+    link.download = `analytics-plant-${selectedPlantId}-${hours}h.csv`;
     document.body.appendChild(link);
     link.click();
     link.remove();
