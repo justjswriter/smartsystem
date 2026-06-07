@@ -1,5 +1,4 @@
-from pathlib import Path
-from uuid import uuid4
+import base64
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +11,6 @@ from app.infrastructure.models import User
 
 router = APIRouter(prefix="/plants", tags=["plants"])
 
-PLANT_UPLOAD_DIR = Path("uploads/plants")
 MAX_PHOTO_BYTES = 5 * 1024 * 1024
 ALLOWED_IMAGE_TYPES = {
     "image/jpeg": ".jpg",
@@ -79,15 +77,13 @@ async def upload_plant_photo(
     service = PlantService(db)
     await service.get(user_id=current_user.id, plant_id=plant_id)
 
-    PLANT_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    filename = f"plant-{plant_id}-{uuid4().hex}{extension}"
-    file_path = PLANT_UPLOAD_DIR / filename
-    file_path.write_bytes(contents)
+    encoded = base64.b64encode(contents).decode("ascii")
+    image_url = f"data:{content_type};base64,{encoded}"
 
     return await service.update(
         user_id=current_user.id,
         plant_id=plant_id,
-        payload=PlantUpdate(image_url=f"/uploads/plants/{filename}"),
+        payload=PlantUpdate(image_url=image_url),
     )
 
 
