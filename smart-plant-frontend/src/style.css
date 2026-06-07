@@ -94,6 +94,24 @@ select {
   font-weight: 700;
 }
 
+.public-language-select {
+  width: 92px;
+}
+
+.public-language-select .custom-select-trigger {
+  min-height: 44px;
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-weight: 800;
+  backdrop-filter: blur(10px);
+}
+
+.public-language-select .custom-select-trigger:hover {
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.22);
+}
+
 .public-button,
 .public-outline {
   min-height: 44px;
