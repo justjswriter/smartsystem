@@ -3,7 +3,15 @@ import { Register } from "../components/Register";
 import { useAppState } from "../context/AppStateContext";
 
 export function RegisterPage() {
-  const { registerAccount, isAuthLoading, authError, setAuthError, token, user } = useAppState();
+  const {
+    registerAccount,
+    loginWithCredentials,
+    isAuthLoading,
+    authError,
+    setAuthError,
+    token,
+    user,
+  } = useAppState();
   const navigate = useNavigate();
 
   if (token && user) {
@@ -18,7 +26,8 @@ export function RegisterPage() {
   ) {
     const ok = await registerAccount(fullName, email, password, passwordConfirm);
     if (ok) {
-      navigate("/login");
+      await loginWithCredentials(email, password);
+      navigate("/dashboard", { replace: true });
     }
   }
 
